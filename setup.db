@@ -1,0 +1,183 @@
+-- Database Schema for JKUATfindmyid
+-- Based on Supabase (Postgres)
+
+-- ENUMS
+CREATE TYPE user_role AS ENUM ('student', 'admin');
+CREATE TYPE id_status AS ENUM ('pending', 'verified', 'claimed', 'returned', 'archived');
+CREATE TYPE claim_status AS ENUM ('pending', 'approved', 'rejected', 'completed');
+CREATE TYPE request_status AS ENUM ('submitted', 'matched', 'closed');
+CREATE TYPE id_type AS ENUM ('national_id', 'student_id', 'drivers_license', 'passport', 'other');
+CREATE TYPE forum_category AS ENUM ('General', 'Suggestions', 'Lost & Found', 'Announcements');
+
+-- PROFILES (Extends auth.users)
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  role user_role DEFAULT 'student'::user_role,
+  avatar_url TEXT,
+  phone_number TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on profiles
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- FOUND IDS
+CREATE TABLE found_ids (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id_type id_type NOT NULL,
+  full_name TEXT NOT NULL, -- Name on the ID
+  registration_number TEXT NOT NULL, -- ID number
+  image_url TEXT NOT NULL, -- Cloudinary secure_url
+  sighting_location TEXT, -- Where it was found
+  holding_location TEXT, -- Where it is currently held
+  description TEXT,
+  status id_status DEFAULT 'pending'::id_status,
+  visibility BOOLEAN DEFAULT TRUE,
+  found_date DATE,
+  claimed_by UUID REFERENCES profiles(id),
+  created_by UUID REFERENCES profiles(id), -- Admin who uploaded or NULL if public submission (handled via submissions)
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on found_ids
+ALTER TABLE found_ids ENABLE ROW LEVEL SECURITY;
+
+-- LOST REQUESTS
+CREATE TABLE lost_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  id_type id_type NOT NULL,
+  full_name TEXT NOT NULL,
+  registration_number TEXT,
+  description TEXT,
+  status request_status DEFAULT 'submitted'::request_status,
+  contact_phone TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on lost_requests
+ALTER TABLE lost_requests ENABLE ROW LEVEL SECURITY;
+
+-- CLAIMS
+CREATE TABLE claims (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  item_id UUID REFERENCES found_ids(id) ON DELETE CASCADE NOT NULL,
+  claimant_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  status claim_status DEFAULT 'pending'::claim_status,
+  proof_description TEXT,
+  admin_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(item_id, claimant_id) -- Prevent duplicate claims
+);
+
+-- ENABLE RLS on claims
+ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
+
+-- SUBMISSIONS (Public uploads of found IDs)
+CREATE TABLE submissions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id_type id_type NOT NULL,
+  full_name TEXT NOT NULL,
+  registration_number TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  location_found TEXT,
+  contact_info TEXT, -- Email or phone of finder
+  approved BOOLEAN DEFAULT FALSE,
+  reviewed_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on submissions
+ALTER TABLE submissions ENABLE ROW LEVEL SECURITY;
+
+-- NOTIFICATIONS
+CREATE TABLE notifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT NOT NULL, -- 'system', 'claim_update', 'request_match'
+  read BOOLEAN DEFAULT FALSE,
+  link TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on notifications
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- FORUM POSTS
+CREATE TABLE forum_posts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  author_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  category forum_category NOT NULL DEFAULT 'General'::forum_category,
+  likes_count INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on forum_posts
+ALTER TABLE forum_posts ENABLE ROW LEVEL SECURITY;
+
+-- FORUM COMMENTS
+CREATE TABLE forum_comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  post_id UUID REFERENCES forum_posts(id) ON DELETE CASCADE NOT NULL,
+  author_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on forum_comments
+ALTER TABLE forum_comments ENABLE ROW LEVEL SECURITY;
+
+-- FORUM LIKES (To track who liked what)
+CREATE TABLE forum_likes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  post_id UUID REFERENCES forum_posts(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(post_id, user_id)
+);
+
+-- ENABLE RLS on forum_likes
+ALTER TABLE forum_likes ENABLE ROW LEVEL SECURITY;
+
+
+-- AUDIT LOGS
+CREATE TABLE audit_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  actor_id UUID REFERENCES profiles(id),
+  action TEXT NOT NULL, -- 'create_id', 'approve_claim', etc.
+  entity_type TEXT NOT NULL, -- 'found_ids', 'claims'
+  entity_id UUID NOT NULL,
+  details JSONB,
+  timestamp TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ENABLE RLS on audit_logs
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Trigger to create profile on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, email, role)
+  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, 'student');
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

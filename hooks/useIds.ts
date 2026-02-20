@@ -1,38 +1,43 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export interface FoundID {
   id: string;
-  name: string; // Name on the ID
-  id_type: string; // e.g., National ID, Student ID
-  serial_number: string; // Masked for public view
+  name: string;
+  id_type: string;
+  serial_number: string | null;
   location_found: string;
+  holding_location?: string;
   image_url?: string;
   date_found: string;
-  status: 'FOUND' | 'CLAIMED' | 'RETURNED';
+  status: string;
+  visibility?: boolean;
+  created_at?: string;
 }
 
 export function useIds() {
   const [ids, setIds] = useState<FoundID[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
-  useEffect(() => {
-    fetchIds();
-  }, []);
-
-  const fetchIds = async () => {
+  const fetchIds = useCallback(async (query?: string, idType?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/ids');
+      
+      const params = new URLSearchParams();
+      if (query) params.set('query', query);
+      if (idType && idType !== 'all') params.set('id_type', idType);
+      
+      const response = await fetch(`/api/ids?${params.toString()}`);
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to verify IDs. Please check your connection.');
+        throw new Error(data.message || 'Failed to fetch IDs. Please check your connection.');
       }
       
-      // Handle the wrapper { success: true, data: [...] }
       setIds(Array.isArray(data.data) ? data.data : []);
       
     } catch (err) {
@@ -40,28 +45,18 @@ export function useIds() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const searchIds = async (query: string) => {
-    try {
-        setLoading(true);
-        setError(null);
-        // Ensure query parameter key matches API expectation (route says 'query')
-        const response = await fetch(`/api/ids?query=${encodeURIComponent(query)}`);
-        
-        const data = await response.json();
+  const search = useCallback(async (query: string, idType?: string) => {
+    await fetchIds(query, idType);
+  }, [fetchIds]);
 
-        if (!response.ok) {
-           throw new Error(data.message || 'Search failed. Please try again.');
-        }
+  // Initial fetch and when URL params change
+  useEffect(() => {
+    const query = searchParams.get('query') || '';
+    const idType = searchParams.get('id_type') || 'all';
+    fetchIds(query, idType);
+  }, [searchParams, fetchIds]);
 
-        setIds(Array.isArray(data.data) ? data.data : []);
-    } catch (err) {
-        setError(err instanceof Error ? err.message : 'Search failed due to a network issue.');
-    } finally {
-        setLoading(false);
-    }
-  };
-
-  return { ids, loading, error, refresh: fetchIds, search: searchIds };
+  return { ids, loading, error, refresh: fetchIds, search };
 }

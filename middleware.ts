@@ -38,12 +38,26 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Paths that should be accessible without authentication
+  const publicPaths = [
+    '/api/auth/login',
+    '/api/auth/register', 
+    '/api/auth/reset-password',
+    '/api/auth/me',
+    '/api/admin/create-admin',
+    '/api/debug/profile'
+  ];
+  
+  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path));
+
   // If accessing protected routes and not authenticated
   if (
     !user &&
+    !isPublicPath &&
     (request.nextUrl.pathname.startsWith("/api/claims") ||
       request.nextUrl.pathname.startsWith("/api/notifications") ||
-      request.nextUrl.pathname.startsWith("/api/admin"))
+      request.nextUrl.pathname.startsWith("/api/admin") ||
+      request.nextUrl.pathname.startsWith("/api/debug"))
   ) {
     // For API routes, return 401
     return NextResponse.json(

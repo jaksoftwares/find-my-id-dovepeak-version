@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     }
 
     // Apply filters
-    if (id_type) dbQuery = dbQuery.eq("id_type", id_type);
+    if (id_type && id_type !== "all") dbQuery = dbQuery.eq("id_type", id_type);
     if (query) {
       dbQuery = dbQuery.or(`full_name.ilike.%${query}%,registration_number.ilike.%${query}%`);
     }
@@ -57,8 +57,7 @@ export async function GET(request: Request) {
       if (session?.profile.role !== "admin") {
         return {
           ...item,
-          registration_number: item.registration_number.replace(/.(?=.{4})/g, "*"), // Mask all but last 4
-          // holding_location might be sensitive? Not specified, assume public.
+          registration_number: item.registration_number ? item.registration_number.replace(/.(?=.{4})/g, "*") : null,
         };
       }
       return item;

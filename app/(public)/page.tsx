@@ -29,6 +29,7 @@ export default function HomePage() {
     if (category !== "all") params.set("id_type", category);
     router.push(`/ids?${params.toString()}`);
   };
+
   return (
     <div className="flex flex-col min-h-screen bg-white  overflow-hidden selection:bg-primary/20 selection:text-primary">
       
@@ -138,22 +139,59 @@ export default function HomePage() {
            initial={{ y: 40, opacity: 0 }}
            whileInView={{ y: 0, opacity: 1 }}
            viewport={{ once: true }}
-           className="bg-white  rounded-2xl shadow-xl border border-zinc-100  p-8 md:p-10 max-w-3xl mx-auto"
+           className="bg-white rounded-2xl shadow-xl border border-zinc-100 p-8 md:p-10 max-w-3xl mx-auto"
          >
-             <div className="flex flex-col md:flex-row gap-4">
-               <div className="flex-1 relative">
-                 <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
-                 <Input 
-                   placeholder="Search by ID Number, Name, or Serial..." 
-                   className="pl-12 h-12 rounded-lg border-zinc-200 focus:border-primary focus:ring-primary/20 text-base"
-                 />
+             <form onSubmit={handleSearch}>
+               <div className="flex flex-col md:flex-row gap-4">
+                 <div className="flex-1 relative">
+                   <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
+                   <Input 
+                     placeholder="Search by ID Number, Name, or Serial..." 
+                     className="pl-12 h-12 rounded-lg border-zinc-200 focus:border-primary focus:ring-primary/20 text-base"
+                     value={searchQuery}
+                     onChange={(e) => setSearchQuery(e.target.value)}
+                   />
+                 </div>
+                 <Button type="submit" size="lg" className="h-12 px-8 rounded-lg">
+                   Search Now
+                 </Button>
                </div>
-               <Button size="lg" className="h-12 px-8 rounded-lg">
-                 Search Now
-               </Button>
+             </form>
+             
+             {/* Category Filters */}
+             <div className="mt-4 flex flex-wrap gap-2 justify-center">
+               {[
+                 { value: "all", label: "All" },
+                 { value: "student_id", label: "Student ID" },
+                 { value: "national_id", label: "National ID" },
+                 { value: "passport", label: "Passport" },
+                 { value: "atm_card", label: "ATM Card" },
+                 { value: "nhif", label: "NHIF" },
+                 { value: "driving_license", label: "Driving License" },
+               ].map((cat) => (
+                 <button
+                   key={cat.value}
+                   type="button"
+                   onClick={() => handleCategoryClick(cat.value)}
+                   className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                     selectedCategory === cat.value
+                       ? "bg-primary text-white"
+                       : "bg-zinc-100 text-zinc-600 hover:bg-primary/10 hover:text-primary"
+                   }`}
+                 >
+                   {cat.label}
+                 </button>
+               ))}
              </div>
+
              <p className="text-center mt-4 text-sm text-muted-foreground">
-               Popular searches: <span className="text-primary cursor-pointer hover:underline">Student ID</span>, <span className="text-primary cursor-pointer hover:underline">National ID</span>, <span className="text-primary cursor-pointer hover:underline">ATM Card</span>
+               Popular searches: <span 
+                 className="text-primary cursor-pointer hover:underline" 
+                 onClick={() => handleCategoryClick("student_id")}>Student ID</span>, <span 
+                 className="text-primary cursor-pointer hover:underline"
+                 onClick={() => handleCategoryClick("national_id")}>National ID</span>, <span 
+                 className="text-primary cursor-pointer hover:underline"
+                 onClick={() => handleCategoryClick("atm_card")}>ATM Card</span>
              </p>
          </motion.div>
       </section>
@@ -185,8 +223,8 @@ export default function HomePage() {
                   desc: "Built by students, for students. A trusted platform fostering accountability." 
                 }
               ].map((feature, i) => (
-                <div key={i} className="bg-white  p-8 rounded-xl shadow-sm border border-zinc-100  hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
-                   <div className="w-16 h-16 rounded-2xl bg-zinc-50  flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors">
+                <div key={i} className="bg-white p-8 rounded-xl shadow-sm border border-zinc-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+                   <div className="w-16 h-16 rounded-2xl bg-zinc-50 flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors">
                       {feature.icon}
                    </div>
                    <h3 className="text-xl font-bold mb-3 text-foreground">{feature.title}</h3>

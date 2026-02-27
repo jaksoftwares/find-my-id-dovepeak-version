@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     // Fetch full profile info with role
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, email, role, avatar_url, phone_number')
+      .select('id, full_name, role, avatar_url, phone')
       .eq('id', user?.id)
       .single();
 
@@ -47,7 +47,11 @@ export async function POST(request: Request) {
       message: "Login successful",
       data: {
         session,
-        user: profile || user,
+        user: {
+          ...profile,
+          ...user,
+          email: user?.email,
+        },
       },
     });
   } catch (error) {

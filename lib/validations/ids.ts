@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const idTypeEnum = z.enum(['national_id', 'student_id', 'drivers_license', 'passport', 'other']);
+export const idTypeEnum = z.enum(['national_id', 'student_id', 'passport', 'atm_card', 'nhif', 'driving_license', 'other']);
 export const idStatusEnum = z.enum(['pending', 'verified', 'claimed', 'returned', 'archived']);
 
 export const createIdSchema = z.object({

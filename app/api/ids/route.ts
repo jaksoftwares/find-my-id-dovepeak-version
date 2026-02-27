@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     
     // Pagination
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const limit = parseInt(searchParams.get("limit") || "24");
     const offset = (page - 1) * limit;
 
     // Filters
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     // Apply filters
     if (id_type && id_type !== "all") dbQuery = dbQuery.eq("id_type", id_type);
     if (query) {
-      dbQuery = dbQuery.or(`full_name.ilike.%${query}%,registration_number.ilike.%${query}%`);
+      dbQuery = dbQuery.or(`full_name.ilike.%${query}%,registration_number.ilike.%${query}%,serial_number.ilike.%${query}%`);
     }
 
     // Sorting

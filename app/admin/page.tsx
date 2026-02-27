@@ -1,26 +1,154 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, FileSearch, HandHeart, BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, FileSearch, HandHeart, BarChart3, TrendingUp, TrendingDown, Loader2, Calendar } from 'lucide-react';
+import { authFetch } from '@/app/lib/apiClient';
+
+interface AnalyticsData {
+  totalIds: number;
+  verifiedIds: number;
+  recoveredIds: number;
+  lostRequests: number;
+  recoveryRate: number;
+  thisMonthFound: number;
+}
+
+interface RecentUser {
+  id: string;
+  full_name: string;
+  email: string;
+  created_at: string;
+}
+
+interface RecentActivity {
+  id: string;
+  type: string;
+  description: string;
+  created_at: string;
+}
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== 'admin')) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (user && user.role === 'admin') {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch analytics
+      const analyticsRes = await authFetch('/api/admin/analytics');
+      const analyticsData = await analyticsRes.json();
+      if (analyticsData.success) {
+        setAnalytics(analyticsData.data);
+      }
+
+      // Fetch recent users
+      const usersRes = await authFetch('/api/admin/users?limit=5');
+      const usersData = await usersRes.json();
+      if (usersData.success) {
+        setRecentUsers(usersData.data || []);
+      }
+
+      // Fetch recent activity from multiple sources
+      const activityPromises = [
+        authFetch('/api/admin/ids?limit=3'),
+        authFetch('/api/admin/claims?limit=3'),
+        authFetch('/api/admin/requests?limit=3'),
+      ];
+
+      const [idsRes, claimsRes, requestsRes] = await Promise.all(activityPromises);
+      
+      const idsData = await idsRes.json();
+      const claimsData = await claimsRes.json();
+      const requestsData = await requestsRes.json();
+
+      const activities: RecentActivity[] = [];
+      
+      if (idsData.success) {
+        (idsData.data || []).forEach((item: any) => {
+          activities.push({
+            id: item.id,
+            type: 'id_found',
+            description: `New ID found: ${item.full_name}`,
+            created_at: item.created_at,
+          });
+        });
+      }
+
+      if (claimsData.success) {
+        (claimsData.data || []).forEach((item: any) => {
+          activities.push({
+            id: item.id,
+            type: 'claim',
+            description: `Claim ${item.status}: ${item.ids_found?.full_name || 'Unknown'}`,
+            created_at: item.created_at,
+          });
+        });
+      }
+
+      if (requestsData.success) {
+        (requestsData.data || []).forEach((item: any) => {
+          activities.push({
+            id: item.id,
+            type: 'request',
+            description: `Lost request: ${item.full_name}`,
+            created_at: item.created_at,
+          });
+        });
+      }
+
+      // Sort by created_at and take top 5
+      activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setRecentActivity(activities.slice(0, 5));
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const stats = [
     {
       title: 'Total Users',
-      value: '1,234',
-      change: '+12%',
+      value: recentUsers.length > 0 ? '...' : '0',
+      change: '+0%',
       changeType: 'increase',
-      description: 'Active users on platform',
+      description: 'Registered users',
       icon: Users,
       color: 'bg-blue-100 text-blue-600',
     },
     {
-      title: 'IDs Reported',
-      value: '456',
-      change: '+8%',
+      title: 'Lost Requests',
+      value: analytics?.lostRequests?.toString() || '0',
+      change: '+0%',
       changeType: 'increase',
       description: 'Lost IDs reported',
       icon: FileSearch,
@@ -28,23 +156,37 @@ export default function AdminDashboardPage() {
     },
     {
       title: 'IDs Found',
-      value: '234',
-      change: '+15%',
+      value: analytics?.totalIds?.toString() || '0',
+      change: '+0%',
       changeType: 'increase',
       description: 'Found and submitted',
       icon: HandHeart,
       color: 'bg-green-100 text-green-600',
     },
     {
-      title: 'Claims Processed',
-      value: '89',
-      change: '-3%',
-      changeType: 'decrease',
-      description: 'This month',
+      title: 'Recovery Rate',
+      value: `${analytics?.recoveryRate || 0}%`,
+      change: '+0%',
+      changeType: 'increase',
+      description: 'IDs returned to owners',
       icon: BarChart3,
       color: 'bg-purple-100 text-purple-600',
     },
   ];
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor(diff / (1000 * 60));
+
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  };
 
   return (
     <div className="space-y-8">
@@ -97,25 +239,36 @@ export default function AdminDashboardPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader>
             <CardTitle>Recent Registrations</CardTitle>
-            <CardDescription>New users in the last 7 days</CardDescription>
+            <CardDescription>New users on the platform</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-xs font-medium text-primary">U{i}</span>
+            {recentUsers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No recent registrations</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xs font-medium text-primary">
+                          {user.full_name?.charAt(0) || 'U'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{user.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">User {i}</p>
-                      <p className="text-xs text-muted-foreground">user{i}@example.com</p>
-                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(user.created_at)}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{i} day{i > 1 ? 's' : ''} ago</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -125,23 +278,24 @@ export default function AdminDashboardPage() {
             <CardDescription>Latest platform activities</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[
-                { action: 'New ID reported', location: 'Nairobi, Kenya', time: '2 min ago' },
-                { action: 'ID claimed', location: 'Mombasa, Kenya', time: '15 min ago' },
-                { action: 'User registered', location: 'Online', time: '1 hour ago' },
-                { action: 'ID verified', location: 'Kisumu, Kenya', time: '2 hours ago' },
-                { action: 'Claim approved', location: 'Nairobi, Kenya', time: '3 hours ago' },
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">{activity.location}</p>
+            {recentActivity.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No recent activity</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div>
+                      <p className="text-sm font-medium">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{activity.type.replace('_', ' ')}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatDate(activity.created_at)}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{activity.time}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

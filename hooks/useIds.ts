@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 
 export interface FoundID {
   id: string;
-  name: string;
+  full_name: string;
   id_type: string;
   serial_number: string | null;
   location_found: string;
@@ -20,9 +20,10 @@ export function useIds() {
   const [ids, setIds] = useState<FoundID[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [meta, setMeta] = useState({ page: 1, totalPages: 1, total: 0 });
   const searchParams = useSearchParams();
 
-  const fetchIds = useCallback(async (query?: string, idType?: string) => {
+  const fetchIds = useCallback(async (query?: string, idType?: string, page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
@@ -30,6 +31,7 @@ export function useIds() {
       const params = new URLSearchParams();
       if (query) params.set('query', query);
       if (idType && idType !== 'all') params.set('id_type', idType);
+      params.set('page', page.toString());
       
       const response = await fetch(`/api/ids?${params.toString()}`);
       const data = await response.json();
@@ -39,6 +41,9 @@ export function useIds() {
       }
       
       setIds(Array.isArray(data.data) ? data.data : []);
+      if (data.meta) {
+        setMeta(data.meta);
+      }
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected network error occurred.');
@@ -48,15 +53,22 @@ export function useIds() {
   }, []);
 
   const search = useCallback(async (query: string, idType?: string) => {
-    await fetchIds(query, idType);
+    await fetchIds(query, idType, 1);
   }, [fetchIds]);
+
+  const setPage = useCallback((newPage: number) => {
+    const query = searchParams.get('query') || '';
+    const idType = searchParams.get('id_type') || 'all';
+    fetchIds(query, idType, newPage);
+  }, [searchParams, fetchIds]);
 
   // Initial fetch and when URL params change
   useEffect(() => {
     const query = searchParams.get('query') || '';
     const idType = searchParams.get('id_type') || 'all';
-    fetchIds(query, idType);
+    const page = parseInt(searchParams.get('page') || '1');
+    fetchIds(query, idType, page);
   }, [searchParams, fetchIds]);
 
-  return { ids, loading, error, refresh: fetchIds, search };
+  return { ids, loading, error, refresh: fetchIds, search, meta, setPage };
 }

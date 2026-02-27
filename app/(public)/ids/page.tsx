@@ -1,15 +1,17 @@
-
 "use client";
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useIds, FoundID } from "@/hooks/useIds";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, MapPin, Calendar } from "lucide-react";
+import { Search, Loader2, MapPin, Calendar, AlertCircle, CheckCircle2 } from "lucide-react";
 import { ErrorDisplay } from "@/components/ui/error-display";
+import { useAuth } from "@/app/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const ID_CATEGORIES = [
   { value: "all", label: "All" },
@@ -24,13 +26,73 @@ const ID_CATEGORIES = [
 
 export default function BrowseIdsPage() {
   const searchParams = useSearchParams();
-  const { ids, loading, error, search } = useIds();
+  const { ids, loading, error, search, meta, setPage } = useIds();
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
+  
   const [query, setQuery] = useState(searchParams.get('query') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('id_type') || 'all');
+
+  // Claim states
+  const [showClaimModal, setShowClaimModal] = useState(false);
+  const [selectedIdForClaim, setSelectedIdForClaim] = useState<FoundID | null>(null);
+  const [proofDescription, setProofDescription] = useState('');
+  const [isSubmittingClaim, setIsSubmittingClaim] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const [claimSuccess, setClaimSuccess] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     search(query, selectedCategory);
+  };
+
+  const handleClaimInitiate = (id: FoundID) => {
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=/ids`);
+      return;
+    }
+    setSelectedIdForClaim(id);
+    setShowClaimModal(true);
+    setClaimError(null);
+    setClaimSuccess(false);
+    setProofDescription('');
+  };
+
+  const handleClaimSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedIdForClaim || !proofDescription) return;
+
+    if (proofDescription.length < 10) {
+      setClaimError("Please provide a more detailed proof description (at least 10 characters).");
+      return;
+    }
+
+    setIsSubmittingClaim(true);
+    setClaimError(null);
+
+    try {
+      const response = await fetch('/api/claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_id: selectedIdForClaim.id,
+          proof_description: proofDescription,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setClaimSuccess(true);
+        // Refresh the list to reflect any status changes (though matching the API's 'verified' requirement)
+      } else {
+        setClaimError(data.message || "Failed to submit claim. Please try again.");
+      }
+    } catch (err) {
+      setClaimError("A network error occurred. Please check your connection.");
+    } finally {
+      setIsSubmittingClaim(false);
+    }
   };
 
   const handleCategoryChange = (category: string) => {
@@ -123,57 +185,178 @@ export default function BrowseIdsPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ids.map((id) => (
-            <Card key={id.id} className="overflow-hidden hover:shadow-lg transition-shadow border-zinc-200">
-              <div className="aspect-video bg-zinc-100 relative flex items-center justify-center text-zinc-400">
-                {id.image_url ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ids.map((id) => (
+              <Card key={id.id} className="overflow-hidden hover:shadow-lg transition-shadow border-zinc-200">
+                <div className="aspect-video bg-zinc-100 relative flex items-center justify-center text-zinc-400">
                   <img 
-                    src={id.image_url} 
-                    alt={`ID of ${id.name}`} 
+                    src={id.image_url || '/images/id-placeholder.png'} 
+                    alt={`ID of ${id.full_name}`} 
                     className="w-full h-full object-cover" 
                     loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/id-placeholder.png';
+                    }}
                   />
-                ) : (
-                  <span className="text-sm">No Image</span>
-                )}
-                <div className="absolute top-2 right-2">
-                  <Badge variant={getStatusBadgeVariant(id.status)}>
-                    {formatIdType(id.status)}
-                  </Badge>
+                  <div className="absolute top-2 right-2">
+                    <Badge variant={getStatusBadgeVariant(id.status)}>
+                      {formatIdType(id.status)}
+                    </Badge>
+                  </div>
                 </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-bold text-foreground capitalize">
+                    {id.full_name}
+                  </CardTitle>
+                  <CardDescription className="uppercase tracking-wider text-xs font-semibold text-primary">
+                    {formatIdType(id.id_type)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-sm space-y-2 pb-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="w-4 h-4 flex items-center justify-center font-bold text-primary">#</div>
+                    <span className="font-mono bg-zinc-100 px-1 rounded">
+                      {id.serial_number || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span>Found at {id.location_found}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <span>{id.date_found ? new Date(id.date_found).toLocaleDateString() : 'N/A'}</span>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-4 border-t bg-zinc-50/50">
+                  <Button 
+                    className="w-full" 
+                    disabled={id.status !== 'verified'}
+                    onClick={() => handleClaimInitiate(id)}
+                  >
+                    {id.status === 'verified' ? 'Claim This ID' : 'Not Available'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          {meta.totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-12">
+              <Button
+                variant="outline"
+                disabled={meta.page <= 1}
+                onClick={() => setPage(meta.page - 1)}
+              >
+                Previous
+              </Button>
+              <div className="text-sm font-medium">
+                Page {meta.page} of {meta.totalPages}
               </div>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-bold text-foreground capitalize">
-                  {id.name}
-                </CardTitle>
-                <CardDescription className="uppercase tracking-wider text-xs font-semibold text-primary">
-                  {formatIdType(id.id_type)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm space-y-2 pb-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-4 h-4 flex items-center justify-center font-bold text-primary">#</div>
-                  <span className="font-mono bg-zinc-100 px-1 rounded">
-                    {id.serial_number || 'N/A'}
-                  </span>
+              <Button
+                variant="outline"
+                disabled={meta.page >= meta.totalPages}
+                onClick={() => setPage(meta.page + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Claim Modal */}
+      {showClaimModal && selectedIdForClaim && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-lg border-zinc-200 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-6 w-6 text-primary" />
+                Claim This ID
+              </CardTitle>
+              <CardDescription>
+                Provide details to prove you are the rightful owner of this ID.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {claimSuccess ? (
+                <div className="py-6 text-center space-y-4">
+                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="h-10 w-10" />
+                  </div>
+                  <h3 className="text-xl font-bold">Claim Submitted!</h3>
+                  <p className="text-zinc-600 font-medium">
+                    Your request has been sent for verification. You will be notified once an admin reviews it.
+                  </p>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      setShowClaimModal(false);
+                      setSelectedIdForClaim(null);
+                    }}
+                  >
+                    Done
+                  </Button>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  <span>Found at {id.location_found}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  <span>{id.date_found ? new Date(id.date_found).toLocaleDateString() : 'N/A'}</span>
-                </div>
-              </CardContent>
-              <CardFooter className="pt-4 border-t bg-zinc-50/50">
-                <Button className="w-full" disabled={id.status !== 'verified'}>
-                  {id.status === 'verified' ? 'Claim This ID' : 'Not Available'}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+              ) : (
+                <form onSubmit={handleClaimSubmit} className="space-y-4">
+                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+                    <p className="text-sm font-semibold text-primary mb-1 uppercase tracking-wider">Item Details</p>
+                    <p className="font-bold text-lg">{selectedIdForClaim.full_name}</p>
+                    <p className="text-sm text-zinc-600 uppercase font-mono">{selectedIdForClaim.id_type.replace('_', ' ')}</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="proof" className="text-sm font-bold text-zinc-700">Proof of Ownership</label>
+                    <Textarea
+                      id="proof"
+                      placeholder="e.g., Mention your middle name, specific unique details on the ID, or where you lost it..."
+                      value={proofDescription}
+                      onChange={(e) => setProofDescription(e.target.value)}
+                      rows={6}
+                      className="resize-none"
+                      disabled={isSubmittingClaim}
+                      required
+                    />
+                    <p className="text-xs text-zinc-500">
+                      The admin will compare this information with the actual physical ID.
+                    </p>
+                  </div>
+
+                  {claimError && (
+                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2 text-red-600 text-sm font-medium">
+                      <AlertCircle className="h-4 w-4" />
+                      {claimError}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setShowClaimModal(false)}
+                      disabled={isSubmittingClaim}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1" disabled={isSubmittingClaim}>
+                      {isSubmittingClaim ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Claim'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

@@ -24,7 +24,7 @@ export default function LoginPage() {
   const redirectParam = searchParams.get('redirect');
   const redirect = (redirectParam === '/admin' || !redirectParam) ? '/dashboard' : redirectParam;
   
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   
   // Use auth service directly to get the full response with user data
   const handleLogin = async (email: string, password: string) => {
@@ -49,12 +49,17 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  // Check if already authenticated - redirect to dashboard
+  // Check if already authenticated - redirect based on role
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      window.location.replace('/dashboard');
+    if (!authLoading && isAuthenticated && authUser) {
+      // Redirect based on user role
+      if (authUser.role === 'admin') {
+        window.location.replace('/admin');
+      } else {
+        window.location.replace('/dashboard');
+      }
     }
-  }, [authLoading, isAuthenticated]);
+  }, [authLoading, isAuthenticated, authUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -79,14 +84,14 @@ export default function LoginPage() {
         // Use the role from the login result (which already fetched the profile)
         const userRole = result.data?.user?.role;
         
-        console.log('Login success, user role:', userRole);
+        console.log('Login success, user role:', userRole, 'Full user data:', result.data?.user);
         
         if (userRole === 'admin') {
           window.location.replace('/admin');
           return;
         }
         
-        // Default redirect for non-admin users
+        // Default redirect for non-admin users (students and other roles)
         window.location.replace('/dashboard');
       } else {
         setError(result.message || 'Invalid email or password');

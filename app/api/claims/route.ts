@@ -26,10 +26,9 @@ export async function GET(request: Request) {
           id_type,
           image_url
         ),
-        profiles (
+        profiles!claimant (
           full_name,
-          email,
-          phone_number
+          phone
         )
       `)
       .order("created_at", { ascending: false });

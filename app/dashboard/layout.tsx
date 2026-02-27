@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   Loader2,
-  Bell
+  Bell,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'My IDs', href: '/dashboard/ids', icon: FileSearch },
   { name: 'Report Lost', href: '/dashboard/requests', icon: FilePlus },
   { name: 'Claims', href: '/dashboard/claims', icon: HandHeart },
+  { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
   { name: 'Profile', href: '/dashboard/profile', icon: User },
 ];
 
@@ -199,10 +201,12 @@ export default function DashboardLayout({
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full"></span>
-              </Button>
+              <Link href="/dashboard/notifications">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full"></span>
+                </Button>
+              </Link>
               <Link href="/dashboard/profile">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <User className="h-4 w-4" />

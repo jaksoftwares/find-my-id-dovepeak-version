@@ -29,7 +29,7 @@ export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
-  role: 'user' | 'admin';
+  role: 'student' | 'admin';
   avatar_url?: string;
   phone_number?: string;
   created_at?: string;
@@ -71,7 +71,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     try {
       const result = await supabase
         .from('profiles')
-        .select('id, full_name, email, role, avatar_url, phone_number')
+        .select('id, full_name, role, avatar_url, phone')
         .eq('id', user?.id)
         .single();
       
@@ -85,16 +85,16 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     // Create user profile - use profile if exists, otherwise fall back to auth data
     const userProfile: UserProfile = profile ? {
       id: profile.id,
-      email: profile.email,
+      email: user?.email || '',
       full_name: profile.full_name,
-      role: profile.role || 'user',
+      role: profile.role || 'student',
       avatar_url: profile.avatar_url,
-      phone_number: profile.phone_number,
+      phone_number: profile.phone,
     } : {
       id: user?.id!,
       email: user?.email!,
       full_name: user?.user_metadata?.full_name || 'User',
-      role: 'user',
+      role: 'student',
     };
 
     return {
@@ -150,7 +150,7 @@ export async function register(userData: RegisterData): Promise<AuthResponse> {
     // Fetch updated profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, full_name, email, role, avatar_url, phone_number')
+      .select('id, full_name, role, avatar_url, phone')
       .eq('id', data.user?.id)
       .single();
 
@@ -158,9 +158,9 @@ export async function register(userData: RegisterData): Promise<AuthResponse> {
       id: data.user?.id!,
       email: data.user?.email!,
       full_name: profile?.full_name || userData.full_name,
-      role: profile?.role || 'user',
+      role: profile?.role || 'student',
       avatar_url: profile?.avatar_url,
-      phone_number: profile?.phone_number,
+      phone_number: profile?.phone,
     };
 
     return {
@@ -201,7 +201,7 @@ export async function getCurrentUser(): Promise<{
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, email, role, avatar_url, phone_number')
+      .select('id, full_name, role, avatar_url, phone')
       .eq('id', user.id)
       .single();
 
@@ -214,7 +214,7 @@ export async function getCurrentUser(): Promise<{
           id: user.id,
           email: user.email!,
           full_name: user.user_metadata?.full_name || 'User',
-          role: 'user', // Default role
+          role: 'student', // Default role
           avatar_url: user.user_metadata?.avatar_url,
         },
       };
@@ -222,11 +222,11 @@ export async function getCurrentUser(): Promise<{
 
     const userProfile: UserProfile = {
       id: profile.id,
-      email: profile.email,
+      email: user.email || '',
       full_name: profile.full_name,
       role: profile.role,
       avatar_url: profile.avatar_url,
-      phone_number: profile.phone_number,
+      phone_number: profile.phone,
     };
 
     return {
@@ -346,5 +346,5 @@ export function hasRole(user: UserProfile | null, requiredRole: string): boolean
     return user.role === 'admin';
   }
   
-  return true; // All authenticated users have 'user' role
+  return true; // All authenticated users have 'student' role
 }

@@ -9,38 +9,57 @@ export async function GET() {
     
     const supabase = await createClient();
 
-    // 1. Total IDs found
-    const { count: totalIds } = await supabase
-      .from("ids_found")
-      .select("*", { count: "exact", head: true });
-
-    // 2. Verified IDs
-    const { count: verifiedIds } = await supabase
-      .from("ids_found")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "verified");
-
-    // 3. Claimed/Returned IDs (Recovered)
-    const { count: recoveredIds } = await supabase
-      .from("ids_found")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["claimed", "returned"]);
-
-    // 4. Lost Requests
-    const { count: lostRequests } = await supabase
-      .from("lost_requests")
-      .select("*", { count: "exact", head: true });
-
-    // 5. Monthly stats
-    const currentDate = new Date();
-    const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-
-    const { count: thisMonthFound } = await supabase
+    // Run all queries in parallel for better performance
+    const [
+      totalIdsResult,
+      verifiedIdsResult,
+      recoveredIdsResult,
+      lostRequestsResult,
+      thisMonthFoundResult
+    ] = await Promise.all([
+      // 1. Total IDs found
+      supabase
+        .from("ids_found")
+        .select("*", { count: "exact", head: true }),
+      
+      // 2. Verified IDs
+      supabase
         .from("ids_found")
         .select("*", { count: "exact", head: true })
-        .gte("created_at", currentMonthStart);
+        .eq("status", "verified"),
+      
+      // 3. Claimed/Returned IDs (Recovered)
+      supabase
+        .from("ids_found")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["claimed", "returned"]),
+      
+      // 4. Lost Requests
+      supabase
+        .from("lost_requests")
+        .select("*", { count: "exact", head: true }),
+      
+      // 5. Monthly stats - IDs found this month
+      Promise.resolve(
+        (async () => {
+          const currentDate = new Date();
+          const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
+          
+          return supabase
+            .from("ids_found")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", currentMonthStart);
+        })()
+      )
+    ]);
 
-    const recoveryRate = totalIds ? ((recoveredIds || 0) / totalIds) * 100 : 0;
+    const totalIds = totalIdsResult.count || 0;
+    const verifiedIds = verifiedIdsResult.count || 0;
+    const recoveredIds = recoveredIdsResult.count || 0;
+    const lostRequests = lostRequestsResult.count || 0;
+    const thisMonthFound = thisMonthFoundResult.count || 0;
+
+    const recoveryRate = totalIds ? ((recoveredIds) / totalIds) * 100 : 0;
 
     return NextResponse.json({
       success: true,
@@ -54,6 +73,7 @@ export async function GET() {
       },
     });
   } catch (error) {
+    console.error("Error in GET /api/admin/analytics:", error);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
       { status: 500 }

@@ -53,7 +53,7 @@ export default function ForumPage() {
            <div className="bg-white p-6 rounded-xl border border-zinc-200 sticky top-24">
               <h3 className="font-bold text-lg mb-4 text-foreground">Categories</h3>
               <nav className="flex flex-col space-y-2">
-                 {["All", "General", "Suggestions", "Lost & Found", "Announcements"].map((cat) => (
+                 {["All", "General", "Suggestions", "Lost & Found", "Announcements", "Member Thoughts"].map((cat) => (
                     <button
                       key={cat}
                       onClick={() => setFilter(cat)}
@@ -92,45 +92,51 @@ export default function ForumPage() {
               </div>
             </div>
 
-            {/* Quick Thought / New Discussion for Admins */}
-            {isAdmin && (
+            {/* Quick Thought / New Discussion - Visible to all authenticated users */}
+            {user && (
               <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm">
                 <div className="flex gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold">
-                    {user?.full_name?.charAt(0) || 'A'}
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold ${
+                    isAdmin ? 'bg-primary' : 'bg-zinc-200 text-zinc-600'
+                  }`}>
+                    {user?.full_name?.charAt(0) || 'U'}
                   </div>
                   <div className="flex-1 space-y-3">
                     <textarea 
                         className="w-full bg-zinc-50 border-none rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary/30 min-h-[50px] resize-none"
-                        placeholder="Share a quick thought or announcement with the community..."
+                        placeholder={isAdmin ? "Share a quick thought or announcement..." : "Share your experience or a quick thought..."}
                         value={quickThought}
                         onChange={(e) => setQuickThought(e.target.value)}
                     />
                     <div className="flex justify-end gap-2">
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-xs"
-                            onClick={() => setQuickThought("")}
-                        >
-                            Cancel
-                        </Button>
+                        {quickThought.trim() && (
+                          <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-xs"
+                              onClick={() => setQuickThought("")}
+                          >
+                              Cancel
+                          </Button>
+                        )}
                         <Button 
                             size="sm" 
                             className="text-xs font-semibold px-6"
                             disabled={!quickThought.trim() || isPosting}
                             onClick={async () => {
                                 setIsPosting(true);
-                                await createPost({ 
+                                const success = await createPost({ 
                                     title: quickThought.slice(0, 50) + (quickThought.length > 50 ? '...' : ''), 
                                     content: quickThought, 
-                                    category: 'General' 
+                                    category: isAdmin ? 'General' : 'Member Thoughts' 
                                 });
-                                setQuickThought("");
+                                if (success) {
+                                  setQuickThought("");
+                                }
                                 setIsPosting(false);
                             }}
                         >
-                            Post Thought
+                            {isAdmin ? 'Post Discussion' : 'Share Thought'}
                         </Button>
                     </div>
                   </div>

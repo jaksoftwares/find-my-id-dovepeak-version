@@ -12,6 +12,7 @@ export interface ForumComment {
   content: string;
   likes_count: number;
   dislikes_count: number;
+  user_vote: 'like' | 'dislike' | null;
   created_at: string;
 }
 
@@ -63,6 +64,32 @@ export function usePostComments(postId: string) {
   };
 
   const voteComment = async (commentId: string, type: 'like' | 'dislike') => {
+    // Optimistic Update
+    const oldComments = [...comments];
+    setComments(prev => prev.map(c => {
+        if (c.id !== commentId) return c;
+        
+        let newLikes = c.likes_count;
+        let newDislikes = c.dislikes_count;
+        let newUserVote: 'like' | 'dislike' | null = type;
+
+        if (c.user_vote === type) {
+            newUserVote = null;
+            if (type === 'like') newLikes--;
+            else newDislikes--;
+        } else {
+            if (type === 'like') {
+                newLikes++;
+                if (c.user_vote === 'dislike') newDislikes--;
+            } else {
+                newDislikes++;
+                if (c.user_vote === 'like') newLikes--;
+            }
+        }
+
+        return { ...c, likes_count: newLikes, dislikes_count: newDislikes, user_vote: newUserVote };
+    }));
+
     try {
       const res = await fetch(`/api/forum/comments/${commentId}/vote`, {
         method: "POST",
@@ -71,8 +98,8 @@ export function usePostComments(postId: string) {
       });
       if (!res.ok) throw new Error("Failed to vote on comment");
       
-      fetchComments(); // Refresh counts
     } catch (error) {
+      setComments(oldComments); // Rollback
       toast.error("Action failed. Please login.");
     }
   };

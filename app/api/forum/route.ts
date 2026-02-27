@@ -26,16 +26,29 @@ export async function GET(req: Request) {
     query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
   const { data: posts, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Transform data to match frontend expectations if necessary
-  // The join returns author as an object, which works fine.
+  // Attach user_vote if logged in
+  let transformedPosts = posts;
+  if (user) {
+    const { data: userVotes } = await supabase
+      .from("forum_likes")
+      .select("post_id, vote_type")
+      .eq("user_id", user.id);
+    
+    const voteMap = new Map(userVotes?.map(v => [v.post_id, v.vote_type]));
+    transformedPosts = posts.map(post => ({
+      ...post,
+      user_vote: voteMap.get(post.id) || null
+    }));
+  }
   
-  return NextResponse.json(posts);
+  return NextResponse.json(transformedPosts);
 }
 
 // POST /api/forum - Create a new post

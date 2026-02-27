@@ -110,20 +110,24 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
             <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-7 w-auto gap-2 text-muted-foreground hover:text-primary rounded-full px-3" 
+                className={`h-7 w-auto gap-2 rounded-full px-3 transition-colors ${
+                  post.user_vote === 'like' ? 'text-primary bg-primary/10 hover:bg-primary/20' : 'text-muted-foreground hover:text-primary'
+                }`}
                 onClick={() => onLike?.('like')}
             >
-                <ThumbsUp className="h-4 w-4" />
+                <ThumbsUp className={`h-4 w-4 ${post.user_vote === 'like' ? 'fill-current' : ''}`} />
                 <span className="text-xs font-semibold">{post.likes_count}</span>
             </Button>
             <div className="w-[1px] h-4 bg-zinc-200" />
             <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-7 w-auto gap-2 text-muted-foreground hover:text-destructive rounded-full px-3" 
+                className={`h-7 w-auto gap-2 rounded-full px-3 transition-colors ${
+                  post.user_vote === 'dislike' ? 'text-destructive bg-destructive/10 hover:bg-destructive/20' : 'text-muted-foreground hover:text-destructive'
+                }`}
                 onClick={() => onLike?.('dislike')}
             >
-                <ThumbsDown className="h-4 w-4" />
+                <ThumbsDown className={`h-4 w-4 ${post.user_vote === 'dislike' ? 'fill-current' : ''}`} />
                 <span className="text-xs font-semibold">{post.dislikes_count}</span>
             </Button>
           </div>
@@ -165,21 +169,25 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
                            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                         </span>
                       </div>
-                      <p className="text-zinc-600 dark:text-zinc-300 mt-0.5">{comment.content}</p>
+                      <p className="text-foreground dark:text-zinc-200 mt-1 text-sm leading-relaxed">{comment.content}</p>
                       
                       <div className="flex items-center gap-3 mt-1.5">
                         <button 
                             onClick={() => voteComment(comment.id, 'like')}
-                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                            className={`flex items-center gap-1 text-[10px] transition-colors ${
+                              comment.user_vote === 'like' ? 'text-primary font-bold' : 'text-muted-foreground hover:text-primary'
+                            }`}
                         >
-                            <ThumbsUp className="h-3 w-3" />
+                            <ThumbsUp className={`h-3 w-3 ${comment.user_vote === 'like' ? 'fill-current' : ''}`} />
                             <span>{comment.likes_count}</span>
                         </button>
                         <button 
                             onClick={() => voteComment(comment.id, 'dislike')}
-                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                            className={`flex items-center gap-1 text-[10px] transition-colors ${
+                              comment.user_vote === 'dislike' ? 'text-destructive font-bold' : 'text-muted-foreground hover:text-destructive'
+                            }`}
                         >
-                            <ThumbsDown className="h-3 w-3" />
+                            <ThumbsDown className={`h-3 w-3 ${comment.user_vote === 'dislike' ? 'fill-current' : ''}`} />
                             <span>{comment.dislikes_count}</span>
                         </button>
                       </div>

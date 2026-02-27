@@ -11,10 +11,11 @@ export interface ForumPost {
   };
   title: string;
   content: string;
-  category: 'General' | 'Suggestions' | 'Lost & Found' | 'Announcements';
+  category: 'General' | 'Suggestions' | 'Lost & Found' | 'Announcements' | 'Member Thoughts';
   likes_count: number;
   dislikes_count: number;
   comments_count: number;
+  user_vote: 'like' | 'dislike' | null;
   created_at: string;
 }
 
@@ -22,22 +23,26 @@ export function useForum() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [currentParams, setCurrentParams] = useState({ category: 'All', search: '' });
+
   const fetchPosts = async (category?: string, search?: string) => {
+    const activeCategory = category ?? currentParams.category;
+    const activeSearch = search ?? currentParams.search;
+    
+    if (category !== undefined || search !== undefined) {
+        setCurrentParams({ category: activeCategory, search: activeSearch });
+    }
+
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (category && category !== "All") params.append("category", category);
-      if (search) params.append("search", search);
+      if (activeCategory && activeCategory !== "All") params.append("category", activeCategory);
+      if (activeSearch) params.append("search", activeSearch);
 
       const res = await fetch(`/api/forum?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch posts");
       
       const data = await res.json();
-      
-      // Transform data to match UI needs if necessary, though DB returns similar structure
-      // Our API returns author object as { full_name, role } inside the post object
-      // DB: author: { full_name, role }
-      // UI expects: author: { name, role } -- we need to map full_name to name
       
       const mappedPosts = data.map((post: any) => ({
         ...post,
@@ -80,28 +85,58 @@ export function useForum() {
 
       const createdPost = await res.json();
       
-       // Optimistic update or refetch
       const mappedPost = {
         ...createdPost,
          author: {
-            name: createdPost.author?.full_name || 'You', // Since we just created it, likely us
+            name: createdPost.author?.full_name || 'You',
             role: createdPost.author?.role || 'student',
              ...createdPost.author
         },
         likes: 0,
         comments: 0,
-        createdAt: createdPost.created_at
+        createdAt: createdPost.created_at,
+        user_vote: null
       };
 
       setPosts([mappedPost, ...posts]);
-      toast.success("Discussion started successfully!");
+      toast.success("Posted successfully!");
+      return true;
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Failed to create post. Are you logged in?");
+      return false;
     }
   };
   
   const likePost = async (postId: string, type: 'like' | 'dislike' = 'like') => {
+      // Optimistic Update
+      const oldPosts = [...posts];
+      setPosts(prev => prev.map(p => {
+          if (p.id !== postId) return p;
+          
+          let newLikes = p.likes_count;
+          let newDislikes = p.dislikes_count;
+          let newUserVote: 'like' | 'dislike' | null = type;
+
+          if (p.user_vote === type) {
+              // Toggling off
+              newUserVote = null;
+              if (type === 'like') newLikes--;
+              else newDislikes--;
+          } else {
+              // New vote or switching
+              if (type === 'like') {
+                  newLikes++;
+                  if (p.user_vote === 'dislike') newDislikes--;
+              } else {
+                  newDislikes++;
+                  if (p.user_vote === 'like') newLikes--;
+              }
+          }
+
+          return { ...p, likes_count: newLikes, dislikes_count: newDislikes, user_vote: newUserVote };
+      }));
+
       try {
           const res = await fetch(`/api/forum/${postId}/like`, { 
             method: "POST",
@@ -110,11 +145,12 @@ export function useForum() {
           });
           if (!res.ok) throw new Error("Failed to vote on post");
           
-          // Refetch posts to get updated counts and state (alternatively update optimistically)
-          // For now, let's just trigger a refetch of the list or update the specific post
-          fetchPosts(); 
+          // No need to refetch if optimistic set was successful, 
+          // but we can refetch to be safe or sync with server state
+          // fetchPosts(); 
           
       } catch (error) {
+          setPosts(oldPosts); // Rollback
           toast.error("Action failed. Please login.");
       }
   }

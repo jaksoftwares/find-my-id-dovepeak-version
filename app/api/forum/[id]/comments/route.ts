@@ -11,6 +11,8 @@ export async function GET(
   const supabase = await createClient();
   const { id: postId } = await params;
 
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { data: comments, error } = await supabase
     .from("forum_comments")
     .select(`
@@ -24,8 +26,22 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Transform author if necessary, but frontend can handle it
-  return NextResponse.json(comments);
+  // Attach user_vote if logged in
+  let transformedComments = comments;
+  if (user) {
+    const { data: userVotes } = await supabase
+      .from("forum_comment_votes")
+      .select("comment_id, vote_type")
+      .eq("user_id", user.id);
+    
+    const voteMap = new Map(userVotes?.map(v => [v.comment_id, v.vote_type]));
+    transformedComments = (comments || []).map(comment => ({
+      ...comment,
+      user_vote: voteMap.get(comment.id) || null
+    }));
+  }
+
+  return NextResponse.json(transformedComments);
 }
 
 // POST /api/forum/[id]/comments - Add a comment

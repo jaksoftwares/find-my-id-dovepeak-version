@@ -19,13 +19,15 @@ ON forum_comments FOR SELECT
 TO anon, authenticated
 USING (true);
 
--- 2. Forum Posts: Restrict discussion creation to ADMINS only
-DROP POLICY IF EXISTS "Authenticated users can create posts" ON forum_posts;
+-- Allow admins to create any post, and users to share thoughts
 DROP POLICY IF EXISTS "Admins can create posts" ON forum_posts;
-CREATE POLICY "Admins can create posts"
+CREATE POLICY "Create posts policy"
 ON forum_posts FOR INSERT
 TO authenticated
-WITH CHECK (public.is_admin_check());
+WITH CHECK (
+    public.is_admin_check()
+    OR category = 'Member Thoughts'
+);
 
 -- 3. Forum Posts: Admins can update any post, authors can update own
 DROP POLICY IF EXISTS "Authors can update their own posts" ON forum_posts;

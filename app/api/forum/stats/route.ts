@@ -20,10 +20,11 @@ export async function GET() {
     .from("forum_comments")
     .select("*", { count: "exact", head: true });
 
-  // 3. Get total likes
+  // 3. Get total likes (for Solutions metric)
   const { count: totalLikes } = await supabase
     .from("forum_likes")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .eq("vote_type", "like");
 
   // 4. Get active users in forum (who posted or commented)
   // This is a bit more complex, but for MVP we can just do a rough estimate or skip
@@ -39,6 +40,7 @@ export async function GET() {
         { name: 'Suggestions', count: await getCountForCategory(supabase, 'Suggestions') },
         { name: 'Lost & Found', count: await getCountForCategory(supabase, 'Lost & Found') },
         { name: 'Announcements', count: await getCountForCategory(supabase, 'Announcements') },
+        { name: 'Member Thoughts', count: await getCountForCategory(supabase, 'Member Thoughts') },
     ]
   });
 }

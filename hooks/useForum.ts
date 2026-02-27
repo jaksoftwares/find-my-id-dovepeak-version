@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface ForumPost {
   id: string;
+  author_id: string;
   author: {
     full_name: string;
     role: 'student' | 'admin';
@@ -12,7 +13,7 @@ export interface ForumPost {
   content: string;
   category: 'General' | 'Suggestions' | 'Lost & Found' | 'Announcements';
   likes_count: number;
-  comments_count: number; // We need to ensure the DB view/query returns this
+  comments_count: number;
   created_at: string;
 }
 
@@ -122,5 +123,19 @@ export function useForum() {
       }
   }
 
-  return { posts, loading, createPost, fetchPosts, likePost };
+  const deletePost = async (postId: string) => {
+    try {
+      const res = await fetch(`/api/forum/${postId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete post");
+      
+      setPosts(posts.filter(p => p.id !== postId));
+      toast.success("Post deleted successfully");
+      return true;
+    } catch (error) {
+      toast.error("Failed to delete post");
+      return false;
+    }
+  };
+
+  return { posts, loading, createPost, fetchPosts, likePost, deletePost };
 }

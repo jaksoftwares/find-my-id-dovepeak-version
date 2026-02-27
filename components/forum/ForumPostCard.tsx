@@ -2,29 +2,53 @@ import { ForumPost } from "@/hooks/useForum";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ThumbsUp, Share2, MoreHorizontal, Send } from "lucide-react";
+import { MessageSquare, ThumbsUp, Share2, MoreHorizontal, Send, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { usePostComments } from "@/hooks/usePostComments";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
+import { toast } from "sonner";
 
 interface ForumPostCardProps {
   post: ForumPost;
   onLike?: () => void;
+  onDelete?: () => void;
 }
 
-export function ForumPostCard({ post, onLike }: ForumPostCardProps) {
+export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const { comments, loading, fetchComments, addComment } = usePostComments(post.id);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const isOwner = user?.id === post.author_id;
 
   const toggleComments = () => {
     if (!showComments) {
       fetchComments();
     }
     setShowComments(!showComments);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+    if (onDelete) {
+        onDelete();
+        return;
+    }
+    
+    try {
+      const res = await fetch(`/api/forum/${post.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete post");
+      toast.success("Post deleted");
+      window.location.reload(); 
+    } catch (error) {
+      toast.error("Failed to delete post");
+    }
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -61,9 +85,11 @@ export function ForumPostCard({ post, onLike }: ForumPostCardProps) {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        {(isAdmin || isOwner) && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={handleDelete}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </CardHeader>
       
       <CardContent className="pb-4">

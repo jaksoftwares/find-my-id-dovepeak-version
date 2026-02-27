@@ -16,7 +16,8 @@ import {
   Bell,
   HandHeart,
   FileText,
-  AlertCircle
+  AlertCircle,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
@@ -31,6 +32,7 @@ const adminNavigation = [
   { name: 'Claims', href: '/admin/claims', icon: HandHeart },
   { name: 'Lost Requests', href: '/admin/requests', icon: FileText },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
+  { name: 'Community Forum', href: '/admin/forum', icon: MessageSquare },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

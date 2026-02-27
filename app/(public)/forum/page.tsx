@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { ForumPostCard } from "@/components/forum/ForumPostCard";
 
 export default function ForumPage() {
-  const { posts, loading, createPost, likePost, fetchPosts } = useForum();
+  const { posts, loading, createPost, likePost, fetchPosts, deletePost } = useForum();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
 
@@ -100,9 +100,14 @@ export default function ForumPage() {
               {loading ? (
                 <div className="text-center py-12">Loading discussions...</div>
               ) : posts.length > 0 ? (
-                posts.map((post) => (
-                   <ForumPostCard key={post.id} post={post} onLike={() => likePost(post.id)} />
-                ))
+                   posts.map((post) => (
+                    <ForumPostCard 
+                      key={post.id} 
+                      post={post} 
+                      onLike={() => likePost(post.id)} 
+                      onDelete={() => deletePost(post.id)}
+                    />
+                 ))
               ) : (
                 <div className="text-center py-12 bg-white rounded-xl border border-dashed border-zinc-200">
                    <p className="text-muted-foreground">No discussions found in this category.</p>

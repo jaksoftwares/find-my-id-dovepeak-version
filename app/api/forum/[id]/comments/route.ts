@@ -76,11 +76,5 @@ export async function POST(
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
   
-  // 5. Update comments count (manual increment for now)
-  const { data: post } = await supabase.from("forum_posts").select("comments_count").eq("id", postId).single();
-  if (post) {
-      await supabase.from("forum_posts").update({ comments_count: (post.comments_count || 0) + 1 }).eq("id", postId);
-  }
-
   return NextResponse.json(comment, { status: 201 });
 }

@@ -19,7 +19,10 @@ export interface ForumPost {
   created_at: string;
 }
 
+import { useAuth } from '@/app/context/AuthContext';
+
 export function useForum() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -109,6 +112,11 @@ export function useForum() {
   };
   
   const likePost = async (postId: string, type: 'like' | 'dislike' = 'like') => {
+      if (!user) {
+          toast.error("Please sign in to like or dislike discussions");
+          return;
+      }
+
       // Optimistic Update
       const oldPosts = [...posts];
       setPosts(prev => prev.map(p => {
@@ -121,16 +129,16 @@ export function useForum() {
           if (p.user_vote === type) {
               // Toggling off
               newUserVote = null;
-              if (type === 'like') newLikes--;
-              else newDislikes--;
+              if (type === 'like') newLikes = Math.max(0, newLikes - 1);
+              else newDislikes = Math.max(0, newDislikes - 1);
           } else {
               // New vote or switching
               if (type === 'like') {
                   newLikes++;
-                  if (p.user_vote === 'dislike') newDislikes--;
+                  if (p.user_vote === 'dislike') newDislikes = Math.max(0, newDislikes - 1);
               } else {
                   newDislikes++;
-                  if (p.user_vote === 'like') newLikes--;
+                  if (p.user_vote === 'like') newLikes = Math.max(0, newLikes - 1);
               }
           }
 
@@ -143,15 +151,14 @@ export function useForum() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ type })
           });
-          if (!res.ok) throw new Error("Failed to vote on post");
           
-          // No need to refetch if optimistic set was successful, 
-          // but we can refetch to be safe or sync with server state
-          // fetchPosts(); 
-          
-      } catch (error) {
+          if (!res.ok) {
+              const errorData = await res.json();
+              throw new Error(errorData.error || "Failed to vote");
+          }
+      } catch (error: any) {
           setPosts(oldPosts); // Rollback
-          toast.error("Action failed. Please login.");
+          toast.error(error.message || "Action failed");
       }
   }
 

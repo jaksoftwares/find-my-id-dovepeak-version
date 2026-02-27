@@ -16,7 +16,10 @@ export interface ForumComment {
   created_at: string;
 }
 
+import { useAuth } from '@/app/context/AuthContext';
+
 export function usePostComments(postId: string) {
+  const { user } = useAuth();
   const [comments, setComments] = useState<ForumComment[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
@@ -52,8 +55,14 @@ export function usePostComments(postId: string) {
         throw new Error(errorData.error || "Failed to add comment");
       }
 
-      const newComment = await res.json();
-      setComments([...comments, newComment]);
+      const newCommentData = await res.json();
+      const mappedComment: ForumComment = {
+        ...newCommentData,
+        likes_count: 0,
+        dislikes_count: 0,
+        user_vote: null
+      };
+      setComments([...comments, mappedComment]);
       toast.success("Comment added!");
       return true;
     } catch (error: any) {
@@ -64,6 +73,11 @@ export function usePostComments(postId: string) {
   };
 
   const voteComment = async (commentId: string, type: 'like' | 'dislike') => {
+    if (!user) {
+        toast.error("Please sign in to vote on comments");
+        return;
+    }
+
     // Optimistic Update
     const oldComments = [...comments];
     setComments(prev => prev.map(c => {
@@ -75,15 +89,15 @@ export function usePostComments(postId: string) {
 
         if (c.user_vote === type) {
             newUserVote = null;
-            if (type === 'like') newLikes--;
-            else newDislikes--;
+            if (type === 'like') newLikes = Math.max(0, newLikes - 1);
+            else newDislikes = Math.max(0, newDislikes - 1);
         } else {
             if (type === 'like') {
                 newLikes++;
-                if (c.user_vote === 'dislike') newDislikes--;
+                if (c.user_vote === 'dislike') newDislikes = Math.max(0, newDislikes - 1);
             } else {
                 newDislikes++;
-                if (c.user_vote === 'like') newLikes--;
+                if (c.user_vote === 'like') newLikes = Math.max(0, newLikes - 1);
             }
         }
 
@@ -96,11 +110,15 @@ export function usePostComments(postId: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type }),
       });
-      if (!res.ok) throw new Error("Failed to vote on comment");
       
-    } catch (error) {
+      if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Failed to vote");
+      }
+      
+    } catch (error: any) {
       setComments(oldComments); // Rollback
-      toast.error("Action failed. Please login.");
+      toast.error(error.message || "Action failed");
     }
   };
 

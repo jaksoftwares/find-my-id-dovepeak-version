@@ -20,7 +20,7 @@ export async function PATCH(
 
     const { error } = await supabase
       .from("notifications")
-      .update({ read: true })
+      .update({ is_read: true })
       .eq("id", id)
       .eq("user_id", user.id);
 

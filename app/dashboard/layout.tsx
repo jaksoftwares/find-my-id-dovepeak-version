@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -201,12 +202,7 @@ export default function DashboardLayout({
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/dashboard/notifications">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full"></span>
-                </Button>
-              </Link>
+              <NotificationBell />
               <Link href="/dashboard/profile">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <User className="h-4 w-4" />

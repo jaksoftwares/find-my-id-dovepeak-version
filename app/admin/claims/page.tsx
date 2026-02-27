@@ -14,11 +14,11 @@ import {
   AlertCircle, 
   HandHeart,
   Eye,
-  CheckCircle,
-  XCircle,
-  Calendar,
   User,
-  FileSearch
+  FileSearch,
+  MessageSquare,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 
@@ -90,6 +90,9 @@ export default function AdminClaimsPage() {
     admin_notes: '',
   });
 
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
       router.push('/dashboard');
@@ -140,6 +143,42 @@ export default function AdminClaimsPage() {
       admin_notes: claim.admin_notes || '',
     });
     setShowProcessModal(true);
+  };
+
+  const openNotificationModal = (claim: Claim) => {
+    setSelectedClaim(claim);
+    setNotificationMessage('');
+    setShowNotificationModal(true);
+  };
+
+  const handleSendNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClaim || !notificationMessage) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await authFetch(`/api/admin/claims/${selectedClaim.id}/notify`, {
+        method: 'POST',
+        body: JSON.stringify({ message: notificationMessage }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setShowNotificationModal(false);
+        setNotificationMessage('');
+        setSelectedClaim(null);
+        // Maybe show a success toast here
+      } else {
+        setError(data.message || 'Failed to send notification');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleProcessClaim = async (e: React.FormEvent) => {
@@ -365,9 +404,11 @@ export default function AdminClaimsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openProcessModal(claim)}
+                            onClick={() => openNotificationModal(claim)}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="Send Message"
                           >
-                            <Calendar className="h-4 w-4" />
+                            <MessageSquare className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
@@ -508,6 +549,58 @@ export default function AdminClaimsPage() {
                       </>
                     ) : (
                       'Process Claim'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Notification Modal */}
+      {showNotificationModal && selectedClaim && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Send Message to User</CardTitle>
+              <CardDescription>
+                Send a custom notification (email and in-app) to {selectedClaim.profiles?.full_name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSendNotification} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Message</label>
+                  <Textarea
+                    placeholder="e.g., Your ID is ready for collection at the security office. Please bring your original student ID for verification..."
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                    rows={5}
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowNotificationModal(false);
+                      setSelectedClaim(null);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="flex-1" disabled={isSubmitting || !notificationMessage}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Notification'
                     )}
                   </Button>
                 </div>

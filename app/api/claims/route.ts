@@ -130,8 +130,68 @@ export async function POST(request: Request) {
       );
     }
 
+    // Trigger notifications (async)
+    triggerClaimNotifications(user, session.profile, item_id);
+
     return NextResponse.json({ success: true, message: "Claim submitted successfully", data: claim });
   } catch (error) {
     return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
+  }
+}
+
+// Helper to trigger notifications after response
+async function triggerClaimNotifications(user: any, claimantProfile: any, itemId: string) {
+  try {
+    const supabase = await createClient();
+    
+    // Get item details
+    const { data: item } = await supabase
+      .from("ids_found")
+      .select("full_name")
+      .eq("id", itemId)
+      .single();
+
+    if (!item) return;
+
+    const title = "New ID Claim";
+    const message = `${claimantProfile.full_name} has claimed the ID for ${item.full_name}.`;
+
+    // 1. In-app notifications for admins
+    const { notifyAdmins } = await import("@/lib/notifications");
+    await notifyAdmins(title, message);
+
+    // 2. Email notifications for admins
+    const { sendEmail, emailTemplates } = await import("@/lib/email");
+    
+    // Get admins with emails
+    const { data: admins } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .eq("role", "admin");
+
+    if (admins && admins.length > 0) {
+      // Get admin emails from auth.admin.listUsers() - Note: this requires service role in some contexts, 
+      // but if we are in a route handler with enough privileges it might work or we can fetch from profiles if emails are there.
+      // Profiles has email based on setup.db
+      const { data: adminProfiles } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("role", "admin");
+
+      if (adminProfiles) {
+        for (const admin of adminProfiles) {
+          if (admin.email) {
+            const template = emailTemplates.claimSubmittedAdmin(admin.full_name, claimantProfile.full_name, item.full_name);
+            await sendEmail({
+              to: admin.email,
+              subject: template.subject,
+              htmlBody: template.html
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error in triggerClaimNotifications:", err);
   }
 }

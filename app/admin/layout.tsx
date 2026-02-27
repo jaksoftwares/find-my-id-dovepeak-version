@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
 import { RoleProtectedRoute } from '@/app/components/auth';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 
 const adminNavigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -213,10 +214,7 @@ export default function AdminLayout({
                 </h1>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full"></span>
-                </Button>
+                <NotificationBell isAdmin={true} />
                 <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
                   <span className="font-medium">{user?.full_name}</span>
                   <span className="text-gray-400">|</span>

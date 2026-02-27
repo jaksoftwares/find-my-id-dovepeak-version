@@ -5,12 +5,12 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSessionUser();
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from("ids_found")
@@ -50,13 +50,13 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
     const { session } = auth;
-    const { id } = params;
+    const { id } = await params;
 
     const body = await request.json();
     const validation = updateIdSchema.safeParse(body);
@@ -105,13 +105,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
     const { session } = auth;
-    const { id } = params;
+    const { id } = await params;
     const supabase = await createClient();
 
     // Soft delete implementation: set status to 'archived'

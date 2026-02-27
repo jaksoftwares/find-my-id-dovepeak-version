@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSessionUser();
@@ -15,7 +15,7 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const supabase = await createClient();
 
@@ -31,11 +31,18 @@ export async function PUT(
       // If claim is approved, update the ID status to claimed
       if (body.status === 'approved') {
         // Get the claim to find the id_found
-        const { data: claim } = await supabase
+        const { data: claim, error: fetchError } = await supabase
           .from("claims")
           .select("id_found")
           .eq("id", id)
-          .single();
+          .maybeSingle();
+
+        if (fetchError) {
+          throw new Error(`Error fetching claim: ${fetchError.message}`);
+        }
+        if (!claim) {
+          throw new Error(`Claim not found (ID: ${id})`);
+        }
 
         if (claim) {
           await supabase
@@ -48,11 +55,18 @@ export async function PUT(
       // If claim is completed, update the ID status to returned
       if (body.status === 'completed') {
         // Get the claim to find the id_found
-        const { data: claim } = await supabase
+        const { data: claim, error: fetchError } = await supabase
           .from("claims")
           .select("id_found")
           .eq("id", id)
-          .single();
+          .maybeSingle();
+
+        if (fetchError) {
+          throw new Error(`Error fetching claim for completion: ${fetchError.message}`);
+        }
+        if (!claim) {
+          throw new Error(`Claim not found for completion (ID: ${id})`);
+        }
 
         if (claim) {
           await supabase
@@ -72,12 +86,19 @@ export async function PUT(
       .update(updateData)
       .eq("id", id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json(
-        { success: false, message: error.message },
+        { success: false, message: `Update error: ${error.message}` },
         { status: 500 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { success: false, message: "Claim not found or you don't have permission to update it" },
+        { status: 404 }
       );
     }
 
@@ -105,7 +126,7 @@ async function triggerUserClaimNotification(claimId: string, status?: string, no
     const supabase = await createClient();
     
     // Get claim, item, and claimant details
-    const { data: claim } = await supabase
+    const { data: claim, error: fetchError } = await supabase
       .from("claims")
       .select(`
         claimant,
@@ -118,9 +139,22 @@ async function triggerUserClaimNotification(claimId: string, status?: string, no
         )
       `)
       .eq("id", claimId)
-      .single();
+      .maybeSingle();
 
-    if (!claim || !claim.profiles) return;
+    if (fetchError) {
+      console.error("Error fetching notification context:", fetchError);
+      return;
+    }
+
+    if (!claim) {
+      console.error(`Claim not found for notification (ID: ${claimId}). Possible RLS issue on joins.`);
+      return;
+    }
+
+    if (!claim.profiles) {
+      console.error(`Profile not found for claimant (ID: ${claim.claimant}).`);
+      return;
+    }
 
     const claimant = claim.profiles as any;
     const item = claim.id_found as any;

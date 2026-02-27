@@ -4,13 +4,13 @@ import { NextResponse } from "next/server";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
     const { session } = auth;
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { action } = body; // "approve" or "reject"
     

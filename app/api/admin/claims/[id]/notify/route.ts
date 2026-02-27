@@ -6,7 +6,7 @@ import { sendEmail, emailTemplates } from "@/lib/email";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getSessionUser();
@@ -17,7 +17,7 @@ export async function POST(
       );
     }
 
-    const { id: claimId } = params;
+    const { id: claimId } = await params;
     const body = await request.json();
     const { message } = body;
 
@@ -31,7 +31,7 @@ export async function POST(
     const supabase = await createClient();
 
     // Get claim and claimant details
-    const { data: claim } = await supabase
+    const { data: claim, error: fetchError } = await supabase
       .from("claims")
       .select(`
         claimant,
@@ -41,11 +41,18 @@ export async function POST(
         )
       `)
       .eq("id", claimId)
-      .single();
+      .maybeSingle();
+
+    if (fetchError) {
+      return NextResponse.json(
+        { success: false, message: `Error fetching claim: ${fetchError.message}` },
+        { status: 500 }
+      );
+    }
 
     if (!claim || !claim.profiles) {
       return NextResponse.json(
-        { success: false, message: "Claim or claimant not found" },
+        { success: false, message: "Claim or claimant profile not found. This may be due to database constraints or RLS." },
         { status: 404 }
       );
     }

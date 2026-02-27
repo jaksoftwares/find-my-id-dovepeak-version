@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 // POST /api/forum/[id]/like - Toggle like on a post
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
-  const postId = params.id;
+  const { id: postId } = await params;
 
   // 1. Check Auth
   const { data: { user }, error: authError } = await supabase.auth.getUser();

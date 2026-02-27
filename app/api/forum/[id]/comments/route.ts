@@ -6,10 +6,10 @@ import { forumCommentSchema } from "@/lib/validations/forum";
 // GET /api/forum/[id]/comments - List comments for a post
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
-  const postId = params.id;
+  const { id: postId } = await params;
 
   const { data: comments, error } = await supabase
     .from("forum_comments")
@@ -31,10 +31,10 @@ export async function GET(
 // POST /api/forum/[id]/comments - Add a comment
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
-  const postId = params.id;
+  const { id: postId } = await params;
 
   // 1. Check Auth
   const { data: { user }, error: authError } = await supabase.auth.getUser();

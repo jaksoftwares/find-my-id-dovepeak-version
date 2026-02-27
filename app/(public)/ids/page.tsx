@@ -23,8 +23,9 @@ const ID_CATEGORIES = [
   { value: "driving_license", label: "Driving License" },
   { value: "other", label: "Other" },
 ];
+import { Suspense } from "react";
 
-export default function BrowseIdsPage() {
+function BrowseIdsContent() {
   const searchParams = useSearchParams();
   const { ids, loading, error, search, meta, setPage } = useIds();
   const { user, isAuthenticated } = useAuth();
@@ -360,5 +361,17 @@ export default function BrowseIdsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BrowseIdsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <BrowseIdsContent />
+    </Suspense>
   );
 }

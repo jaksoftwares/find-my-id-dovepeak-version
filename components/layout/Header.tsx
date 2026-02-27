@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/context/AuthContext";
 import { User, LogOut, Loader2, ChevronDown, LayoutDashboard, Settings } from "lucide-react";
@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from "react";
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated, isLoading, logout, isAdmin } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -52,20 +53,40 @@ export function Header() {
         
         {/* Navigation - Centered */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-          <Link href="/" className="hover:text-primary transition-colors data-[active=true]:text-primary" aria-current="page">
+          <Link 
+            href="/" 
+            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/' ? 'text-primary' : ''}`}
+          >
             Home
+            {pathname === '/' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
-          <Link href="/about" className="hover:text-primary transition-colors">
+          <Link 
+            href="/about" 
+            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/about' ? 'text-primary' : ''}`}
+          >
             About Us
+            {pathname === '/about' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
-          <Link href="/ids" className="hover:text-primary transition-colors">
+          <Link 
+            href="/ids" 
+            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/ids' ? 'text-primary' : ''}`}
+          >
             Browse IDs
+            {pathname === '/ids' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
-          <Link href="/contact" className="hover:text-primary transition-colors">
+          <Link 
+            href="/contact" 
+            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/contact' ? 'text-primary' : ''}`}
+          >
             Contact
+            {pathname === '/contact' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
-          <Link href="/forum" className="hover:text-primary transition-colors">
+          <Link 
+            href="/forum" 
+            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/forum' ? 'text-primary' : ''}`}
+          >
             Community
+            {pathname === '/forum' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
         </nav>
         

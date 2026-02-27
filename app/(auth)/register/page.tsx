@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/app/context/AuthContext';
+import { VerifyEmailModal } from '@/components/auth/VerifyEmailModal';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   
   const [formData, setFormData] = useState({
     full_name: '',
@@ -29,7 +32,7 @@ export default function RegisterPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      router.push('/dashboard');
+      router.push('/');
     }
   }, [isAuthenticated, authLoading, router]);
 
@@ -97,8 +100,8 @@ export default function RegisterPage() {
       });
 
       if (result.success) {
-        // Redirect to login with success message
-        router.push('/login?success=registered');
+        setRegisteredEmail(formData.email.trim().toLowerCase());
+        setShowVerifyModal(true);
       } else {
         setError(result.message || 'Registration failed. Please try again.');
       }
@@ -328,6 +331,15 @@ export default function RegisterPage() {
           <Link href="/privacy" className="underline hover:text-primary">Privacy Policy</Link>
         </p>
       </div>
+
+      <VerifyEmailModal 
+        isOpen={showVerifyModal} 
+        onClose={() => {
+            setShowVerifyModal(false);
+            router.push('/login');
+        }}
+        email={registeredEmail}
+      />
     </div>
   );
 }

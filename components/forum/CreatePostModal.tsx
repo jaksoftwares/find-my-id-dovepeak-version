@@ -44,40 +44,9 @@ export function CreatePostModal({ onCreate }: { onCreate: (post: any) => void })
     setCategory("General");
   };
 
-  // If user is not authenticated, show a login prompt
-  if (!isAuthenticated) {
-    return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="gap-2 rounded-full shadow-lg">
-            <PlusCircle className="h-4 w-4" /> New Discussion
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[400px] bg-white text-foreground border-zinc-200">
-          <DialogHeader>
-            <DialogTitle>Join the Community</DialogTitle>
-            <DialogDescription>
-              You need to be logged in to start a discussion.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground mb-4">
-              Create an account or log in to participate in the community forum.
-            </p>
-            <div className="flex gap-3">
-              <Link href="/login" className="flex-1">
-                <Button variant="outline" className="w-full gap-2">
-                  <LogIn className="h-4 w-4" /> Log In
-                </Button>
-              </Link>
-              <Link href="/register" className="flex-1">
-                <Button className="w-full">Sign Up</Button>
-              </Link>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
+  // visibility is controlled by the parent {isAdmin && ...}
+  if (!isAuthenticated || user?.role !== 'admin') {
+      return null;
   }
 
   return (

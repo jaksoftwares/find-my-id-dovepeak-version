@@ -12,17 +12,19 @@ import { useAuth } from '@/app/context/AuthContext';
 import { login as authLogin } from '@/app/lib/authService';
 import { createBrowserClient } from '@supabase/ssr';
 
-// Create Supabase client
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 import { Suspense } from 'react';
+import { VerifyEmailModal } from '@/components/auth/VerifyEmailModal';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get('redirect');
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
   const redirect = (redirectParam === '/admin' || !redirectParam) ? '/dashboard' : redirectParam;
   
   const { login, isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
@@ -50,15 +52,10 @@ function LoginForm() {
     }
   }, [searchParams]);
 
-  // Check if already authenticated - redirect based on role
+  // Check if already authenticated - redirect to home
   useEffect(() => {
     if (!authLoading && isAuthenticated && authUser) {
-      // Redirect based on user role
-      if (authUser.role === 'admin') {
-        window.location.replace('/admin');
-      } else {
-        window.location.replace('/dashboard');
-      }
+      window.location.replace('/');
     }
   }, [authLoading, isAuthenticated, authUser]);
 
@@ -88,14 +85,22 @@ function LoginForm() {
         console.log('Login success, user role:', userRole, 'Full user data:', result.data?.user);
         
         if (userRole === 'admin') {
-          window.location.replace('/admin');
+          window.location.replace('/admin'); // Admins can still go to admin panel if they want, but USER said "main website page"
+          // Let's stick to '/' for everyone as requested for the main experience
+          window.location.replace('/');
           return;
         }
         
-        // Default redirect for non-admin users (students and other roles)
-        window.location.replace('/dashboard');
+        // Default redirect for all users to the main landing page
+        window.location.replace('/');
       } else {
-        setError(result.message || 'Invalid email or password');
+        // Check if error is about email confirmation
+        if (result.message?.toLowerCase().includes('email not confirmed')) {
+            setLoginEmail(formData.email);
+            setShowVerifyModal(true);
+        } else {
+            setError(result.message || 'Invalid email or password');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
@@ -253,6 +258,12 @@ function LoginForm() {
           <Link href="/privacy" className="underline hover:text-primary">Privacy Policy</Link>
         </p>
       </div>
+      
+      <VerifyEmailModal 
+        isOpen={showVerifyModal} 
+        onClose={() => setShowVerifyModal(false)}
+        email={loginEmail}
+      />
     </div>
   );
 }

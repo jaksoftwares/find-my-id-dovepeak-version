@@ -5,6 +5,11 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const supabase = await createClient();
 
+  // 0. Get total members
+  const { count: totalMembers } = await supabase
+    .from("profiles")
+    .select("*", { count: "exact", head: true });
+
   // 1. Get total posts
   const { count: totalPosts } = await supabase
     .from("forum_posts")
@@ -25,6 +30,7 @@ export async function GET() {
   // Let's just return counts for now.
 
   return NextResponse.json({
+    totalMembers: totalMembers || 0,
     totalPosts: totalPosts || 0,
     totalComments: totalComments || 0,
     totalLikes: totalLikes || 0,

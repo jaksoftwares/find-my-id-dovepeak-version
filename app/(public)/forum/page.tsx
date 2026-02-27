@@ -4,8 +4,7 @@
 import { useForum } from "@/hooks/useForum";
 import { CreatePostModal } from "@/components/forum/CreatePostModal";
 import { MessageSquare, ThumbsUp, Users, Search } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { ForumPostCard } from "@/components/forum/ForumPostCard";
@@ -14,6 +13,20 @@ export default function ForumPage() {
   const { posts, loading, createPost, likePost, fetchPosts, deletePost } = useForum();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [forumStats, setForumStats] = useState({ members: "1.2k", discussions: "450", solutions: "89" });
+
+  useEffect(() => {
+    fetch("/api/forum/stats")
+      .then(res => res.json())
+      .then(data => {
+        setForumStats({
+          members: data.totalMembers > 1000 ? (data.totalMembers / 1000).toFixed(1) + 'k' : data.totalMembers.toString(),
+          discussions: data.totalPosts.toString(),
+          solutions: data.totalLikes.toString()
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
       const delayDebounceFn = setTimeout(() => {
@@ -75,21 +88,21 @@ export default function ForumPage() {
               <Card className="bg-primary/5 border-primary/20 shadow-none">
                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                     <Users className="h-6 w-6 text-primary mb-2" />
-                    <span className="text-2xl font-bold text-foreground">1.2k</span>
+                    <span className="text-2xl font-bold text-foreground">{forumStats.members}</span>
                     <span className="text-xs text-muted-foreground">Members</span>
                  </CardContent>
               </Card>
               <Card className="bg-secondary/10 border-secondary/20 shadow-none">
                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                     <MessageSquare className="h-6 w-6 text-secondary-foreground mb-2" />
-                    <span className="text-2xl font-bold text-foreground">450</span>
+                    <span className="text-2xl font-bold text-foreground">{forumStats.discussions}</span>
                     <span className="text-xs text-muted-foreground">Discussions</span>
                  </CardContent>
               </Card>
               <Card className="bg-green-50 border-green-200 shadow-none">
                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                     <ThumbsUp className="h-6 w-6 text-green-600 mb-2" />
-                    <span className="text-2xl font-bold text-foreground">89</span>
+                    <span className="text-2xl font-bold text-foreground">{forumStats.solutions}</span>
                     <span className="text-xs text-muted-foreground">Solutions</span>
                  </CardContent>
               </Card>

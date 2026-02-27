@@ -5,6 +5,7 @@ import { useForum } from "@/hooks/useForum";
 import { CreatePostModal } from "@/components/forum/CreatePostModal";
 import { MessageSquare, ThumbsUp, Users, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { ForumPostCard } from "@/components/forum/ForumPostCard";
@@ -12,10 +13,12 @@ import { useAuth } from "@/app/context/AuthContext";
 
 export default function ForumPage() {
   const { posts, loading, createPost, likePost, fetchPosts, deletePost } = useForum();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [forumStats, setForumStats] = useState<{ members: string; discussions: string; solutions: string } | null>(null);
+  const [quickThought, setQuickThought] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
 
   useEffect(() => {
     fetch("/api/forum/stats")
@@ -87,11 +90,57 @@ export default function ForumPage() {
                  </div>
                  {isAdmin && <CreatePostModal onCreate={createPost} />}
               </div>
-           </div>
+            </div>
+
+            {/* Quick Thought / New Discussion for Admins */}
+            {isAdmin && (
+              <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm">
+                <div className="flex gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold">
+                    {user?.full_name?.charAt(0) || 'A'}
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <textarea 
+                        className="w-full bg-zinc-50 border-none rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary/30 min-h-[50px] resize-none"
+                        placeholder="Share a quick thought or announcement with the community..."
+                        value={quickThought}
+                        onChange={(e) => setQuickThought(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-2">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs"
+                            onClick={() => setQuickThought("")}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            size="sm" 
+                            className="text-xs font-semibold px-6"
+                            disabled={!quickThought.trim() || isPosting}
+                            onClick={async () => {
+                                setIsPosting(true);
+                                await createPost({ 
+                                    title: quickThought.slice(0, 50) + (quickThought.length > 50 ? '...' : ''), 
+                                    content: quickThought, 
+                                    category: 'General' 
+                                });
+                                setQuickThought("");
+                                setIsPosting(false);
+                            }}
+                        >
+                            Post Thought
+                        </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
            {/* Stats Cards (Optional for vibe) */}
            <div className="grid grid-cols-3 gap-4">
-              {forumStats ? (
+              {forumStats && (
                 <>
                   <Card className="bg-primary/5 border-primary/20 shadow-none">
                      <CardContent className="p-4 flex flex-col items-center justify-center text-center">
@@ -115,7 +164,8 @@ export default function ForumPage() {
                      </CardContent>
                   </Card>
                 </>
-              ) : (
+              )}
+              {!forumStats && (
                 [1, 2, 3].map((i) => (
                   <div key={i} className="h-24 bg-zinc-100/50 animate-pulse rounded-xl border border-zinc-200/50" />
                 ))
@@ -131,7 +181,7 @@ export default function ForumPage() {
                     <ForumPostCard 
                       key={post.id} 
                       post={post} 
-                      onLike={() => likePost(post.id)} 
+                      onLike={(type) => likePost(post.id, type)} 
                       onDelete={() => deletePost(post.id)}
                     />
                  ))

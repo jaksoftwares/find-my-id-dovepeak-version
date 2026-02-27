@@ -10,6 +10,8 @@ export interface ForumComment {
     role: 'student' | 'admin';
   };
   content: string;
+  likes_count: number;
+  dislikes_count: number;
   created_at: string;
 }
 
@@ -19,8 +21,6 @@ export function usePostComments(postId: string) {
   const [fetched, setFetched] = useState(false);
 
   const fetchComments = async () => {
-    if (fetched && comments.length > 0) return; // Don't refetch if already have data? Or maybe force refresh?
-    
     setLoading(true);
     try {
       const res = await fetch(`/api/forum/${postId}/comments`);
@@ -52,10 +52,6 @@ export function usePostComments(postId: string) {
       }
 
       const newComment = await res.json();
-      
-      // We might need to map the author if the API returns it differently, 
-      // but based on route.ts it returns author:profiles(...) which is correct.
-      
       setComments([...comments, newComment]);
       toast.success("Comment added!");
       return true;
@@ -66,5 +62,20 @@ export function usePostComments(postId: string) {
     }
   };
 
-  return { comments, loading, fetchComments, addComment };
+  const voteComment = async (commentId: string, type: 'like' | 'dislike') => {
+    try {
+      const res = await fetch(`/api/forum/comments/${commentId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      if (!res.ok) throw new Error("Failed to vote on comment");
+      
+      fetchComments(); // Refresh counts
+    } catch (error) {
+      toast.error("Action failed. Please login.");
+    }
+  };
+
+  return { comments, loading, fetchComments, addComment, voteComment };
 }

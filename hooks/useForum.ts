@@ -13,6 +13,7 @@ export interface ForumPost {
   content: string;
   category: 'General' | 'Suggestions' | 'Lost & Found' | 'Announcements';
   likes_count: number;
+  dislikes_count: number;
   comments_count: number;
   created_at: string;
 }
@@ -46,6 +47,7 @@ export function useForum() {
             ...post.author
         },
         likes: post.likes_count,
+        dislikes: post.dislikes_count,
         comments: post.comments_count,
         createdAt: post.created_at
       }));
@@ -99,24 +101,18 @@ export function useForum() {
     }
   };
   
-  const likePost = async (postId: string) => {
-      // Optimistic UI update could go here
+  const likePost = async (postId: string, type: 'like' | 'dislike' = 'like') => {
       try {
-          const res = await fetch(`/api/forum/${postId}/like`, { method: "POST" });
-          if (!res.ok) throw new Error("Failed to like post");
+          const res = await fetch(`/api/forum/${postId}/like`, { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type })
+          });
+          if (!res.ok) throw new Error("Failed to vote on post");
           
-          const { liked } = await res.json();
-          
-          setPosts(posts.map(p => {
-              if (p.id === postId) {
-                  return {
-                      ...p,
-                      likes: liked ? (p.likes_count || 0) + 1 : Math.max(0, (p.likes_count || 0) - 1),
-                      likes_count: liked ? (p.likes_count || 0) + 1 : Math.max(0, (p.likes_count || 0) - 1)
-                  };
-              }
-              return p;
-          }));
+          // Refetch posts to get updated counts and state (alternatively update optimistically)
+          // For now, let's just trigger a refetch of the list or update the specific post
+          fetchPosts(); 
           
       } catch (error) {
           toast.error("Action failed. Please login.");

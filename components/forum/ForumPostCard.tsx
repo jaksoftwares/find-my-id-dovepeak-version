@@ -2,7 +2,7 @@ import { ForumPost } from "@/hooks/useForum";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ThumbsUp, Share2, MoreHorizontal, Send, Trash2 } from "lucide-react";
+import { MessageSquare, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, Send, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { usePostComments } from "@/hooks/usePostComments";
@@ -13,13 +13,13 @@ import { toast } from "sonner";
 
 interface ForumPostCardProps {
   post: ForumPost;
-  onLike?: () => void;
+  onLike?: (type: 'like' | 'dislike') => void;
   onDelete?: () => void;
 }
 
 export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
   const [showComments, setShowComments] = useState(false);
-  const { comments, loading, fetchComments, addComment } = usePostComments(post.id);
+  const { comments, loading, fetchComments, addComment, voteComment } = usePostComments(post.id);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -105,11 +105,29 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
           </CardDescription>
         </div>
         
-        <div className="flex items-center gap-4 mt-6 border-t pt-4">
-          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-primary" onClick={onLike}>
-            <ThumbsUp className="h-4 w-4" />
-            <span className="text-xs">{post.likes_count}</span>
-          </Button>
+        <div className="flex items-center gap-2 mt-6 border-t pt-4">
+          <div className="flex items-center bg-zinc-100 rounded-full p-1 h-9">
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-auto gap-2 text-muted-foreground hover:text-primary rounded-full px-3" 
+                onClick={() => onLike?.('like')}
+            >
+                <ThumbsUp className="h-4 w-4" />
+                <span className="text-xs font-semibold">{post.likes_count}</span>
+            </Button>
+            <div className="w-[1px] h-4 bg-zinc-200" />
+            <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-auto gap-2 text-muted-foreground hover:text-destructive rounded-full px-3" 
+                onClick={() => onLike?.('dislike')}
+            >
+                <ThumbsDown className="h-4 w-4" />
+                <span className="text-xs font-semibold">{post.dislikes_count}</span>
+            </Button>
+          </div>
+
           <Button 
             variant="ghost" 
             size="sm" 
@@ -148,6 +166,23 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
                         </span>
                       </div>
                       <p className="text-zinc-600 dark:text-zinc-300 mt-0.5">{comment.content}</p>
+                      
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <button 
+                            onClick={() => voteComment(comment.id, 'like')}
+                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            <ThumbsUp className="h-3 w-3" />
+                            <span>{comment.likes_count}</span>
+                        </button>
+                        <button 
+                            onClick={() => voteComment(comment.id, 'dislike')}
+                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                            <ThumbsDown className="h-3 w-3" />
+                            <span>{comment.dislikes_count}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

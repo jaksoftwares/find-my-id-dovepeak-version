@@ -32,6 +32,7 @@ interface Notification {
   message: string;
   type: string;
   is_read: boolean;
+  is_broadcast: boolean;
   created_at: string;
   link?: string;
   profiles?: {
@@ -74,6 +75,14 @@ export default function AdminNotificationsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // User selection states
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [isBroadcast, setIsBroadcast] = useState(true);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -125,7 +134,42 @@ export default function AdminNotificationsPage() {
       type: 'info',
       target_user_id: '',
     });
+    setSelectedUsers([]);
+    setIsBroadcast(true);
     setShowCreateModal(true);
+    loadUsers(''); // Initial load
+  };
+
+  const loadUsers = async (query: string) => {
+    setIsSearchingUsers(true);
+    try {
+      const url = query 
+        ? `/api/admin/users?search=${encodeURIComponent(query)}&limit=10`
+        : `/api/admin/users?limit=10`;
+      
+      const response = await authFetch(url);
+      const data = await response.json();
+      if (data.success) {
+        setUsersList(data.data || []);
+      }
+    } catch (err) {
+      console.error('Error loading users:', err);
+    } finally {
+      setIsSearchingUsers(false);
+    }
+  };
+
+  const toggleUserSelection = (selectedUser: any) => {
+    if (selectedUsers.some(u => u.id === selectedUser.id)) {
+      setSelectedUsers(selectedUsers.filter(u => u.id !== selectedUser.id));
+    } else {
+      setSelectedUsers([...selectedUsers, selectedUser]);
+    }
+    setUserSearch('');
+  };
+
+  const removeUser = (userId: string) => {
+    setSelectedUsers(selectedUsers.filter(u => u.id !== userId));
   };
 
   const openViewModal = (notification: Notification) => {
@@ -138,10 +182,16 @@ export default function AdminNotificationsPage() {
     setIsSubmitting(true);
     setError(null);
 
+    // Prepare target IDs from selectedUsers list if not broadcast
+    const target_ids = isBroadcast ? '' : selectedUsers.map(u => u.id).join(', ');
+
     try {
       const response = await authFetch('/api/admin/notifications', {
         method: 'POST',
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          target_user_id: target_ids
+        }),
       });
 
       const data = await response.json();
@@ -159,31 +209,6 @@ export default function AdminNotificationsPage() {
     }
   };
 
-  const handleSendBroadcast = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await authFetch('/api/admin/notifications/broadcast', {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setShowCreateModal(false);
-        fetchNotifications();
-      } else {
-        setError(data.message || 'Failed to send broadcast');
-      }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDeleteNotification = async (notificationId: string) => {
     setIsSubmitting(true);
@@ -307,7 +332,9 @@ export default function AdminNotificationsPage() {
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">{notification.title}</h3>
                           <Badge variant="outline">{notification.type}</Badge>
-                          {notification.is_read && (
+                          {notification.is_broadcast ? (
+                            <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-200">Broadcast</Badge>
+                          ) : notification.is_read && (
                             <Badge variant="secondary">Read</Badge>
                           )}
                         </div>
@@ -315,8 +342,12 @@ export default function AdminNotificationsPage() {
                           {notification.message}
                         </p>
                         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                          {notification.profiles && (
-                            <span>To: {notification.profiles.full_name}</span>
+                          {notification.is_broadcast ? (
+                            <span className="font-medium text-purple-600">To: All Users (Broadcast)</span>
+                          ) : notification.profiles ? (
+                            <span className="font-medium text-blue-600">To: {notification.profiles.full_name || 'Member'}</span>
+                          ) : (
+                            <span className="italic text-gray-400">To: Member</span>
                           )}
                           <span>{new Date(notification.created_at).toLocaleString()}</span>
                         </div>
@@ -352,64 +383,152 @@ export default function AdminNotificationsPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle>Send Notification</CardTitle>
-              <CardDescription>Send a notification to users</CardDescription>
+              <CardTitle>Create Notification</CardTitle>
+              <CardDescription>Alert users via system notifications</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateNotification} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Notification Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
-                    required
-                  >
-                    <option value="info">Info</option>
-                    <option value="success">Success</option>
-                    <option value="warning">Warning</option>
-                    <option value="error">Error</option>
-                    <option value="claim">Claim Update</option>
-                    <option value="request">Request Update</option>
-                    <option value="system">System</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Notification Type</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                      required
+                    >
+                      <option value="info">Info</option>
+                      <option value="success">Success</option>
+                      <option value="warning">Warning</option>
+                      <option value="error">Error</option>
+                      <option value="claim">Claim Update</option>
+                      <option value="request">Request Update</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Recipient Mode</label>
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                      <button
+                        type="button"
+                        className={`flex-1 py-1 text-xs rounded-md transition-all ${isBroadcast ? 'bg-white shadow-sm font-bold' : ''}`}
+                        onClick={() => {
+                          setIsBroadcast(true);
+                          setFormData({...formData, target_user_id: ''});
+                        }}
+                      >
+                        Broadcast
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-1 py-1 text-xs rounded-md transition-all ${!isBroadcast ? 'bg-white shadow-sm font-bold' : ''}`}
+                        onClick={() => setIsBroadcast(false)}
+                      >
+                        Specific Users
+                      </button>
+                    </div>
+                  </div>
                 </div>
+
+                {!isBroadcast && (
+                  <div className="space-y-3 border-t pt-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-gray-700">Select Recipients</label>
+                      <span className="text-xs text-muted-foreground">{selectedUsers.length} selected</span>
+                    </div>
+                    
+                    {/* Selected Chips */}
+                    {selectedUsers.length > 0 && (
+                      <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1">
+                        {selectedUsers.map(u => (
+                          <Badge key={u.id} variant="secondary" className="pl-2 pr-1 py-1 gap-1 border-blue-200 bg-blue-50 text-blue-700">
+                            {u.full_name || 'User'}
+                            <button 
+                              type="button" 
+                              onClick={() => removeUser(u.id)}
+                              className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                            >
+                              <XCircle className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="relative">
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Search or select from list..."
+                          value={userSearch}
+                          onFocus={() => setShowUserDropdown(true)}
+                          onChange={(e) => {
+                            setUserSearch(e.target.value);
+                            loadUsers(e.target.value);
+                          }}
+                        />
+                        {isSearchingUsers && <Loader2 className="h-4 w-4 animate-spin self-center" />}
+                      </div>
+                      
+                      {showUserDropdown && usersList.length > 0 && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-10" 
+                            onClick={() => setShowUserDropdown(false)} 
+                          />
+                          <div className="absolute z-20 w-full mt-1 bg-white border rounded-md shadow-xl max-h-56 overflow-y-auto ring-1 ring-black ring-opacity-5">
+                            <div className="p-2 text-xs font-semibold text-gray-500 bg-gray-50 border-b sticky top-0">
+                              Users List (Scroll or Search)
+                            </div>
+                            {usersList.map((u) => {
+                              const isSelected = selectedUsers.some(su => su.id === u.id);
+                              return (
+                                <button
+                                  key={u.id}
+                                  type="button"
+                                  className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 text-sm flex justify-between items-center transition-colors border-b last:border-0 ${isSelected ? 'bg-blue-50' : ''}`}
+                                  onClick={() => toggleUserSelection(u)}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium text-gray-900">{u.full_name || 'Unnamed Member'}</span>
+                                    <span className="text-xs text-gray-400">{u.role}</span>
+                                  </div>
+                                  {isSelected && <CheckCircle2 className="h-4 w-4 text-blue-600" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Title</label>
                   <Input
                     type="text"
-                    placeholder="Enter notification title"
+                    placeholder="e.g. Identity Document Found"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Message</label>
+                  <label className="text-sm font-medium">Message Content</label>
                   <Textarea
-                    placeholder="Enter notification message"
+                    placeholder="Enter the full notification message details..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     rows={4}
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Target User ID (optional)</label>
-                  <Input
-                    type="text"
-                    placeholder="Leave empty for broadcast to all"
-                    value={formData.target_user_id}
-                    onChange={(e) => setFormData({ ...formData, target_user_id: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Leave empty to send as broadcast to all users
-                  </p>
-                </div>
-                <div className="flex gap-2">
+
+                <div className="flex gap-3 pt-2">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     className="flex-1"
                     onClick={() => setShowCreateModal(false)}
                     disabled={isSubmitting}
@@ -420,12 +539,12 @@ export default function AdminNotificationsPage() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
+                        Processing...
                       </>
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
-                        Send
+                        Send Now
                       </>
                     )}
                   </Button>
@@ -462,8 +581,8 @@ export default function AdminNotificationsPage() {
               </div>
               {selectedNotification.profiles && (
                 <div>
-                  <label className="text-sm font-medium">Sent To</label>
-                  <p>{selectedNotification.profiles.full_name} ({selectedNotification.profiles.email})</p>
+                  <label className="text-sm font-medium">Recipient</label>
+                  <p>{selectedNotification.profiles.full_name || 'Member'}</p>
                 </div>
               )}
               <div>

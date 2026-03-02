@@ -75,6 +75,13 @@ export function Header() {
             {pathname === '/ids' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
           <Link 
+            href="/report-lost" 
+            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/report-lost' ? 'text-primary' : ''}`}
+          >
+            Report Lost
+            {pathname === '/report-lost' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
+          </Link>
+          <Link 
             href="/contact" 
             className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/contact' ? 'text-primary' : ''}`}
           >

@@ -15,7 +15,8 @@ import {
   X,
   Loader2,
   Bell,
-  FileText
+  FileText,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
@@ -23,8 +24,9 @@ import { NotificationBell } from '@/components/shared/NotificationBell';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'My IDs', href: '/dashboard/ids', icon: FileSearch },
+  { name: 'All Found IDs', href: '/dashboard/ids', icon: FileSearch },
   { name: 'Report Lost', href: '/dashboard/requests', icon: FilePlus },
+  { name: 'Submit Found', href: '/dashboard/found', icon: Upload },
   { name: 'Claims', href: '/dashboard/claims', icon: HandHeart },
   { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
   { name: 'Profile', href: '/dashboard/profile', icon: User },

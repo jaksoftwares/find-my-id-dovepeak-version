@@ -14,14 +14,12 @@ import { ErrorDisplay } from "@/components/ui/error-display";
 
 // Manually defining schema here to handle File input nuances in browser
 const foundIdSchema = z.object({
-  nameOnId: z.string().min(2, "Name on ID is required"),
-  idType: z.enum(["NATIONAL_ID", "STUDENT_ID", "KCSE_CERTIFICATE", "DRIVING_LICENSE", "OTHER"]),
-  serialNumber: z.string().min(1, "Serial/Registration number is required"),
-  locationFound: z.string().min(3, "Location is required"),
-  dateFound: z.string(),
-  finderName: z.string().min(2, "Your name is required"),
-  finderContact: z.string().min(10, "Your contact is required"),
-  // image: z.instanceof(FileList).optional(), // Handle manually
+  full_name: z.string().min(2, "Name on ID is required"),
+  id_type: z.enum(["national_id", "student_id", "atm_card", "nhif", "driving_license", "passport", "other"]),
+  registration_number: z.string().min(1, "ID / Serial / Registration number is required"),
+  location_found: z.string().min(3, "Location is required"),
+  date_found: z.string().optional(),
+  contact_info: z.string().min(10, "Your contact information is required"),
 });
 
 type FormData = z.infer<typeof foundIdSchema>;
@@ -39,6 +37,9 @@ export function SubmitFoundForm() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(foundIdSchema),
+    defaultValues: {
+      id_type: 'student_id',
+    }
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,25 +53,26 @@ export function SubmitFoundForm() {
     setError(null);
 
     const formData = new FormData();
-    formData.append("nameOnId", data.nameOnId);
-    formData.append("idType", data.idType);
-    formData.append("serialNumber", data.serialNumber);
-    formData.append("locationFound", data.locationFound);
-    formData.append("dateFound", data.dateFound);
-    formData.append("finderName", data.finderName);
-    formData.append("finderContact", data.finderContact);
+    formData.append("full_name", data.full_name);
+    formData.append("id_type", data.id_type);
+    formData.append("registration_number", data.registration_number);
+    formData.append("location_found", data.location_found);
+    formData.append("contact_info", data.contact_info);
+    
     if (selectedFile) {
       formData.append("image", selectedFile);
     }
 
     try {
-      const response = await fetch("/api/submissions", {
+      const response = await fetch("/api/found-id-reports", {
         method: "POST",
-        body: formData, // Fetch automatically sets Content-Type to multipart/form-data
+        body: formData,
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to submit ID. Please try again.");
+        throw new Error(result.message || "Failed to submit ID. Please try again.");
       }
 
       setIsSuccess(true);
@@ -85,109 +87,127 @@ export function SubmitFoundForm() {
 
   if (isSuccess) {
     return (
-      <div className="text-center p-8 bg-green-50 rounded-lg border border-green-200">
-        <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
-        <h3 className="text-2xl font-bold text-green-700 mb-2">Thank You!</h3>
-        <p className="text-green-600 mb-6">
-          The found ID has been submitted successfully. We will verify it and list it shortly.
+      <div className="text-center p-12 bg-white rounded-2xl border border-green-100 shadow-xl shadow-green-500/5">
+        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="h-10 w-10 text-green-500" />
+        </div>
+        <h3 className="text-2xl font-bold text-zinc-900 mb-3">Thank You!</h3>
+        <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
+          The found ID has been submitted successfully. We will verify it and list it shortly to help find its owner.
         </p>
-        <Button onClick={() => setIsSuccess(false)} variant="outline">
-          Submit Another ID
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button onClick={() => setIsSuccess(false)} className="rounded-full px-8">
+            Submit Another ID
+          </Button>
+          <Button variant="outline" asChild className="rounded-full px-8">
+            <a href="/">Back to Home</a>
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white p-8 rounded-xl shadow-sm border border-zinc-200">
-      <div className="space-y-2">
-        <Label htmlFor="nameOnId">Name on ID</Label>
-        <Input id="nameOnId" placeholder="Name as it appears on the ID" {...register("nameOnId")} />
-        {errors.nameOnId && <p className="text-red-500 text-sm">{errors.nameOnId.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-zinc-200">
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-zinc-100 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Upload className="h-4 w-4 text-primary" />
+          </div>
+          <h3 className="font-bold text-zinc-900">Found ID Details</h3>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="full_name" className="text-zinc-700 font-semibold">Name on ID</Label>
+          <Input id="full_name" placeholder="Full name as written on the ID" className="h-11" {...register("full_name")} />
+          {errors.full_name && <p className="text-red-500 text-xs font-medium">{errors.full_name.message}</p>}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="id_type" className="text-zinc-700 font-semibold">ID Type</Label>
+            <select 
+              id="id_type" 
+              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              {...register("id_type")}
+            >
+              <option value="national_id">National ID</option>
+              <option value="student_id">Student ID</option>
+              <option value="passport">Passport</option>
+              <option value="driving_license">Driving License</option>
+              <option value="atm_card">ATM Card</option>
+              <option value="nhif">NHIF</option>
+              <option value="other">Other</option>
+            </select>
+            {errors.id_type && <p className="text-red-500 text-xs font-medium">{errors.id_type.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="registration_number" className="text-zinc-700 font-semibold">ID / Serial / Reg Number</Label>
+            <Input id="registration_number" placeholder="Very important for matching" className="h-11 font-mono" {...register("registration_number")} />
+            {errors.registration_number && <p className="text-red-500 text-xs font-medium">{errors.registration_number.message}</p>}
+          </div>
+        </div>
+
+        <div className="space-y-2 pt-2">
+           <Label htmlFor="location_found" className="text-zinc-700 font-semibold">Location Found</Label>
+           <Input id="location_found" placeholder="e.g. Near Mess, Jomo Kenyatta Library, Gate A" className="h-11" {...register("location_found")} />
+           {errors.location_found && <p className="text-red-500 text-xs font-medium">{errors.location_found.message}</p>}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="idType">ID Type</Label>
-          <select 
-             id="idType" 
-             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-             {...register("idType")}
-          >
-            <option value="">Select ID Type</option>
-            <option value="NATIONAL_ID">National ID</option>
-            <option value="STUDENT_ID">Student ID</option>
-            <option value="KCSE_CERTIFICATE">KCSE Certificate</option>
-            <option value="DRIVING_LICENSE">Driving License</option>
-            <option value="OTHER">Other</option>
-          </select>
-          {errors.idType && <p className="text-red-500 text-sm">{errors.idType.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="serialNumber">Serial / Registration Number</Label>
-          <Input id="serialNumber" placeholder="Unique number on the ID" {...register("serialNumber")} />
-          {errors.serialNumber && <p className="text-red-500 text-sm">{errors.serialNumber.message}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-           <Label htmlFor="locationFound">Location Found</Label>
-           <Input id="locationFound" placeholder="e.g. Near Library, Gate A" {...register("locationFound")} />
-           {errors.locationFound && <p className="text-red-500 text-sm">{errors.locationFound.message}</p>}
-        </div>
-        <div className="space-y-2">
-           <Label htmlFor="dateFound">Date Found</Label>
-           <Input id="dateFound" type="date" {...register("dateFound")} />
-           {errors.dateFound && <p className="text-red-500 text-sm">{errors.dateFound.message}</p>}
-        </div>
-      </div>
-
-      <div className="bg-zinc-50 p-4 rounded-lg border border-dashed border-zinc-300">
-         <Label htmlFor="image" className="block mb-2">Upload Image of ID (Optional but recommended)</Label>
+      <div className="bg-zinc-50 p-6 rounded-2xl border border-dashed border-zinc-200">
+         <Label htmlFor="image" className="block mb-4 font-bold text-zinc-900">Upload Image of ID (Recommended)</Label>
          <div className="flex items-center gap-4">
-            <Input 
-              id="image" 
-              type="file" 
-              accept="image/*" 
-              onChange={handleFileChange}
-              className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
-            />
-            {selectedFile && <CheckCircle className="h-5 w-5 text-green-500" />}
+            <div className="relative group flex-1">
+              <Input 
+                id="image" 
+                type="file" 
+                accept="image/*" 
+                onChange={handleFileChange}
+                className="cursor-pointer file:hidden bg-white border-zinc-200 h-11 flex items-center pt-2"
+              />
+              <div className="absolute right-3 top-3 pointer-events-none">
+                <Upload className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+            </div>
+            {selectedFile && (
+              <div className="bg-green-100 p-2 rounded-full">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+            )}
          </div>
-         <p className="text-xs text-zinc-500 mt-2">
-           We will blur sensitive details before publishing.
+         <p className="text-xs text-muted-foreground mt-3 italic">
+           * We will verify the ID before listing. Sensitive digits may be obscured for privacy.
          </p>
       </div>
 
-      <div className="border-t pt-6">
-         <h4 className="font-semibold mb-4">Your Details (Private)</h4>
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-               <Label htmlFor="finderName">Your Name</Label>
-               <Input id="finderName" placeholder="Your Full Name" {...register("finderName")} />
-               {errors.finderName && <p className="text-red-500 text-sm">{errors.finderName.message}</p>}
-            </div>
-            <div className="space-y-2">
-               <Label htmlFor="finderContact">Your Contact</Label>
-               <Input id="finderContact" placeholder="Phone Number" {...register("finderContact")} />
-               {errors.finderContact && <p className="text-red-500 text-sm">{errors.finderContact.message}</p>}
-            </div>
+      <div className="border-t border-zinc-100 pt-6">
+         <h3 className="font-bold text-zinc-900 mb-4 flex items-center gap-2">
+           <div className="w-1.5 h-6 bg-secondary rounded-full" />
+           Your Contact Information (Private)
+         </h3>
+         <div className="space-y-2">
+            <Label htmlFor="contact_info" className="text-zinc-700 font-semibold">Phone Number or Email</Label>
+            <Input id="contact_info" placeholder="How can the admin reach you if needed?" className="h-11" {...register("contact_info")} />
+            {errors.contact_info && <p className="text-red-500 text-xs font-medium">{errors.contact_info.message}</p>}
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
+              This will only be visible to administrators for verification purposes.
+            </p>
          </div>
       </div>
 
-      {error && <ErrorDisplay message={error} variant="inline" className="mb-6" />}
+      {error && <ErrorDisplay message={error} variant="inline" className="mb-0" />}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full h-12 text-base font-bold rounded-xl shadow-lg shadow-primary/20" disabled={isSubmitting}>
         {isSubmitting ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Submitting...
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Submitting ID...
           </>
         ) : (
           <>
-             <Upload className="mr-2 h-4 w-4" /> Submit Found ID
+             <Upload className="mr-2 h-5 w-5" /> Submit Found ID
           </>
         )}
       </Button>

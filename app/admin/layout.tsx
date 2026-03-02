@@ -17,7 +17,8 @@ import {
   HandHeart,
   FileText,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
@@ -29,6 +30,7 @@ const adminNavigation = [
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'IDs Management', href: '/admin/ids', icon: FileSearch },
+  { name: 'Found Reports', href: '/admin/found-reports', icon: Upload },
   { name: 'Claims', href: '/admin/claims', icon: HandHeart },
   { name: 'Lost Requests', href: '/admin/requests', icon: FileText },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },

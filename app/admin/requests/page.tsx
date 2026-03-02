@@ -29,10 +29,14 @@ interface LostRequest {
   full_name: string;
   registration_number?: string;
   description?: string;
+  image_url?: string;
   contact_phone?: string;
+  contact_email?: string;
   status: string;
   created_at: string;
   updated_at?: string;
+  admin_notes?: string;
+  matched_at?: string;
   profiles?: {
     full_name: string;
     email: string;
@@ -43,14 +47,18 @@ interface LostRequest {
 const idTypeLabels: Record<string, string> = {
   national_id: 'National ID',
   student_id: 'Student ID',
-  drivers_license: "Driver's License",
+  driving_license: "Driving License",
   passport: 'Passport',
+  atm_card: 'ATM Card',
+  nhif: 'NHIF',
   other: 'Other',
 };
 
 const statusColors: Record<string, string> = {
   submitted: 'bg-yellow-100 text-yellow-700',
+  under_review: 'bg-orange-100 text-orange-700',
   matched: 'bg-blue-100 text-blue-700',
+  match_found: 'bg-green-100 text-green-700',
   closed: 'bg-gray-100 text-gray-700',
 };
 
@@ -98,6 +106,9 @@ export default function AdminRequestsPage() {
       if (filterStatus !== 'all') {
         params.append('status', filterStatus);
       }
+      if (filterType !== 'all') {
+        params.append('id_type', filterType);
+      }
 
       const response = await authFetch(`/api/admin/requests?${params.toString()}`);
       const data = await response.json();
@@ -138,7 +149,10 @@ export default function AdminRequestsPage() {
     try {
       const response = await authFetch(`/api/admin/requests/${selectedRequest.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ status: formData.status }),
+        body: JSON.stringify({ 
+          status: formData.status,
+          notes: formData.notes
+        }),
       });
 
       const data = await response.json();
@@ -239,8 +253,10 @@ export default function AdminRequestsPage() {
               <option value="all">All Types</option>
               <option value="national_id">National ID</option>
               <option value="student_id">Student ID</option>
-              <option value="drivers_license">Driver's License</option>
+              <option value="driving_license">Driving License</option>
               <option value="passport">Passport</option>
+              <option value="atm_card">ATM Card</option>
+              <option value="nhif">NHIF</option>
               <option value="other">Other</option>
             </select>
           </div>
@@ -298,7 +314,10 @@ export default function AdminRequestsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-muted-foreground text-sm">
-                        {request.contact_phone || request.profiles?.phone_number || '-'}
+                        <div className="flex flex-col">
+                          <span>{request.contact_phone || request.profiles?.phone_number || '-'}</span>
+                          <span>{request.contact_email || request.profiles?.email || '-'}</span>
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <Badge className={statusColors[request.status]}>
@@ -379,10 +398,26 @@ export default function AdminRequestsPage() {
                 </div>
               </div>
 
-              {selectedRequest.contact_phone && (
+              {(selectedRequest.contact_phone || selectedRequest.contact_email) && (
                 <div>
-                  <label className="text-sm font-medium">Contact Phone</label>
-                  <p>{selectedRequest.contact_phone}</p>
+                  <label className="text-sm font-medium">Secondary/Direct Contact Info</label>
+                  <div className="text-sm bg-blue-50 p-2 rounded border border-blue-100 mt-1">
+                    {selectedRequest.contact_phone && <p><strong>Phone:</strong> {selectedRequest.contact_phone}</p>}
+                    {selectedRequest.contact_email && <p><strong>Email:</strong> {selectedRequest.contact_email}</p>}
+                  </div>
+                </div>
+              )}
+
+              {selectedRequest.image_url && (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Provided Image/Reference</label>
+                  <div className="aspect-video relative bg-zinc-100 rounded-lg overflow-hidden border shadow-inner">
+                    <img 
+                      src={selectedRequest.image_url} 
+                      alt="Lost ID Reference" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -390,6 +425,13 @@ export default function AdminRequestsPage() {
                 <div>
                   <label className="text-sm font-medium">Description</label>
                   <p>{selectedRequest.description}</p>
+                </div>
+              )}
+
+              {selectedRequest.admin_notes && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <label className="text-sm font-bold text-yellow-800">Admin Internal Notes</label>
+                  <p className="text-sm mt-1">{selectedRequest.admin_notes}</p>
                 </div>
               )}
 
@@ -443,7 +485,16 @@ export default function AdminRequestsPage() {
                     <option value="closed">Closed</option>
                   </select>
                 </div>
-                <div className="flex gap-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Update Notes (Sent to user & stored for reference)</label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-md min-h-[100px]"
+                    placeholder="e.g. Your ID was found at Gate A. You can collect it at the Central Office."
+                  />
+                </div>
+                <div className="flex gap-2 pt-4">
                   <Button
                     type="button"
                     variant="outline"

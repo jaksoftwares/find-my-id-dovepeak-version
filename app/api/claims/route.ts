@@ -160,34 +160,34 @@ async function triggerClaimNotifications(user: any, claimantProfile: any, itemId
     const { notifyAdmins } = await import("@/lib/notifications");
     await notifyAdmins(title, message);
 
-    // 2. Email notifications for admins
+    // 2. Email notifications
     const { sendEmail, emailTemplates } = await import("@/lib/email");
     
-    // Get admins with emails
-    const { data: admins } = await supabase
+    // 2a. Email to User (claimant)
+    if (user.email) {
+      const userTemplate = emailTemplates.claimSubmittedUser(claimantProfile.full_name, item.full_name);
+      await sendEmail({
+        to: user.email,
+        subject: userTemplate.subject,
+        htmlBody: userTemplate.html
+      });
+    }
+
+    // 2b. Email to Admins
+    const { data: adminProfiles } = await supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("full_name, email")
       .eq("role", "admin");
 
-    if (admins && admins.length > 0) {
-      // Get admin emails from auth.admin.listUsers() - Note: this requires service role in some contexts, 
-      // but if we are in a route handler with enough privileges it might work or we can fetch from profiles if emails are there.
-      // Profiles has email based on setup.db
-      const { data: adminProfiles } = await supabase
-        .from("profiles")
-        .select("full_name, email")
-        .eq("role", "admin");
-
-      if (adminProfiles) {
-        for (const admin of adminProfiles) {
-          if (admin.email) {
-            const template = emailTemplates.claimSubmittedAdmin(admin.full_name, claimantProfile.full_name, item.full_name);
-            await sendEmail({
-              to: admin.email,
-              subject: template.subject,
-              htmlBody: template.html
-            });
-          }
+    if (adminProfiles) {
+      for (const admin of adminProfiles) {
+        if (admin.email) {
+          const template = emailTemplates.claimSubmittedAdmin(admin.full_name, claimantProfile.full_name, item.full_name);
+          await sendEmail({
+            to: admin.email,
+            subject: template.subject,
+            htmlBody: template.html
+          });
         }
       }
     }

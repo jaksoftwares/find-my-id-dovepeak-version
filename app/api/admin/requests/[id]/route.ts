@@ -25,6 +25,13 @@ export async function PUT(
 
     if (body.status) {
       updateData.status = body.status;
+      if (body.status === 'matched') {
+        updateData.matched_at = new Date().toISOString();
+      }
+    }
+
+    if (body.notes !== undefined) {
+      updateData.admin_notes = body.notes;
     }
 
     const { data, error } = await supabase
@@ -35,10 +42,31 @@ export async function PUT(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    }
+
+    // Send Status Update Email
+    try {
+      const formattedIdName = `${data.id_type.replace('_', ' ')}: ${data.registration_number || data.id_number || 'ID'}`;
+      const toEmail = data.contact_email;
+      
+      if (toEmail) {
+        const { sendEmail, emailTemplates } = await import("@/lib/email");
+        const template = emailTemplates.lostReportUpdate(
+          data.full_name,
+          formattedIdName,
+          data.status,
+          body.notes // Optional notes passed in admin update
+        );
+        
+        await sendEmail({
+          to: toEmail,
+          subject: template.subject,
+          htmlBody: template.html,
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send status update email:", emailError);
     }
 
     return NextResponse.json({

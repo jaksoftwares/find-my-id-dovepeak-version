@@ -14,7 +14,7 @@ export const uploadToCloudinary = async (fileBuffer: Buffer, folder: string = 'j
       {
         folder: folder,
         resource_type: 'image',
-        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif', 'heic'],
         transformation: [{ width: 1000, crop: 'limit' }], // Optimize size
       },
       (error, result) => {

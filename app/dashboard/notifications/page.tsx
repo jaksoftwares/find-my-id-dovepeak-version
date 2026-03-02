@@ -26,6 +26,7 @@ interface Notification {
   message: string;
   type: string;
   is_read: boolean;
+  is_broadcast: boolean;
   created_at: string;
   link?: string;
 }
@@ -109,15 +110,14 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const unreadNotifications = notifications.filter((n) => !n.is_read);
-      for (const notification of unreadNotifications) {
-        await authFetch(`/api/notifications/${notification.id}/read`, {
-          method: 'PATCH',
-        });
+      const response = await authFetch(`/api/notifications/read-all`, {
+        method: 'POST',
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       }
-      setNotifications(
-        notifications.map((n) => ({ ...n, is_read: true }))
-      );
     } catch (err) {
       console.error('Error marking all notifications as read:', err);
     }

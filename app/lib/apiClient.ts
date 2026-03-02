@@ -26,14 +26,18 @@ export async function authFetch(
     console.error('Error getting session:', error);
   }
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
+  let headers: Record<string, string> = {
+    ...((options.headers as Record<string, string>) || {}),
   };
+  
+  // Only add Content-Type: application/json if it's not FormData and not already set
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // Add authorization header if session exists
   if (session?.access_token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${session.access_token}`;
+    headers['Authorization'] = `Bearer ${session.access_token}`;
   }
 
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;

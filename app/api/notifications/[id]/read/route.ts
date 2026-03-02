@@ -18,17 +18,40 @@ export async function PATCH(
     const { user } = session;
     const supabase = await createClient();
 
-    const { error } = await supabase
+    // 1. Fetch notification info
+    const { data: notification, error: fetchError } = await supabase
       .from("notifications")
-      .update({ is_read: true })
+      .select("id, is_broadcast, user_id")
       .eq("id", id)
-      .eq("user_id", user.id);
+      .single();
 
-    if (error) {
-        return NextResponse.json(
-          { success: false, message: error.message },
-          { status: 500 }
-        );
+    if (fetchError || !notification) {
+      return NextResponse.json({ success: false, message: "Notification not found" }, { status: 404 });
+    }
+
+    if (notification.is_broadcast) {
+      // For broadcasts, insert into notification_reads table
+      const { error: readError } = await supabase
+        .from("notification_reads")
+        .upsert({ user_id: user.id, notification_id: id }, { onConflict: 'user_id,notification_id' });
+      
+      if (readError) {
+        return NextResponse.json({ success: false, message: readError.message }, { status: 500 });
+      }
+    } else {
+      // For personal notifications, verify ownership
+      if (notification.user_id !== user.id) {
+        return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
+      }
+
+      const { error: updateError } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("id", id);
+
+      if (updateError) {
+        return NextResponse.json({ success: false, message: updateError.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true, message: "Notification marked as read" });

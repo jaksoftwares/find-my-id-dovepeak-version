@@ -43,8 +43,10 @@ interface FoundId {
 const idTypeLabels: Record<string, string> = {
   national_id: 'National ID',
   student_id: 'Student ID',
-  drivers_license: "Driver's License",
+  driving_license: "Driving License",
   passport: 'Passport',
+  atm_card: 'ATM Card',
+  nhif: 'NHIF',
   other: 'Other',
 };
 
@@ -308,8 +310,10 @@ export default function AdminIDsPage() {
                 <option value="all">All Types</option>
                 <option value="national_id">National ID</option>
                 <option value="student_id">Student ID</option>
-                <option value="drivers_license">Driver's License</option>
+                <option value="driving_license">Driving License</option>
                 <option value="passport">Passport</option>
+                <option value="atm_card">ATM Card</option>
+                <option value="nhif">NHIF</option>
                 <option value="other">Other</option>
               </select>
               <Button type="submit" variant="secondary">

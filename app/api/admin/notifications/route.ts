@@ -107,17 +107,22 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    // If target_user_id is provided, send to specific user
-    if (target_user_id) {
+    // If target_user_id is provided, send to specific user(s)
+    if (target_user_id && target_user_id.trim() !== "") {
+      const userIds = target_user_id.split(',').map((id: string) => id.trim()).filter(Boolean);
+      
+      const inserts = userIds.map((id: string) => ({
+        user_id: id,
+        title,
+        message,
+        type: type || 'info',
+        is_read: false,
+        is_broadcast: false
+      }));
+
       const { error } = await supabase
         .from("notifications")
-        .insert({
-          user_id: target_user_id,
-          title,
-          message,
-          type: type || 'info',
-          is_read: false,
-        });
+        .insert(inserts);
 
       if (error) {
         return NextResponse.json(
@@ -128,41 +133,21 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: "Notification sent successfully",
+        message: `Notification sent to ${userIds.length} user(s) successfully`,
       });
     }
 
-    // Otherwise, broadcast to all users
-    // Get all users
-    const { data: users, error: usersError } = await supabase
-      .from("profiles")
-      .select("id");
-
-    if (usersError) {
-      return NextResponse.json(
-        { success: false, message: usersError.message },
-        { status: 500 }
-      );
-    }
-
-    if (!users || users.length === 0) {
-      return NextResponse.json(
-        { success: true, message: "No users to send notification to" },
-      );
-    }
-
-    // Insert notifications for all users
-    const notifications = users.map((user) => ({
-      user_id: user.id,
-      title,
-      message,
-      type: type || 'info',
-      is_read: false,
-    }));
-
+    // Otherwise, broadcast to all users (efficiently - single record)
     const { error } = await supabase
       .from("notifications")
-      .insert(notifications);
+      .insert({
+        user_id: null,
+        title,
+        message,
+        type: type || 'info',
+        is_read: false,
+        is_broadcast: true
+      });
 
     if (error) {
       return NextResponse.json(
@@ -173,7 +158,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Notification sent to ${notifications.length} users`,
+      message: `Broadcast notification created successfully`,
     });
   } catch (error) {
     console.error("Error in POST /api/admin/notifications:", error);

@@ -72,3 +72,53 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
+    const formData = await request.formData();
+    const file = formData.get("image") as File;
+
+    if (!file) {
+      return NextResponse.json({ success: false, message: "Image is required" }, { status: 400 });
+    }
+
+    const { uploadToCloudinary } = await import("@/lib/cloudinary");
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const imageUrl = await uploadToCloudinary(buffer, "ids");
+
+    const supabase = await createClient();
+    
+    // Extract other fields
+    const data: Record<string, any> = {};
+    formData.forEach((value, key) => {
+      if (key !== 'image') data[key] = value;
+    });
+
+    const { data: newId, error } = await supabase
+      .from("ids_found")
+      .insert({
+        ...data,
+        image_url: imageUrl,
+        approved_by: auth.session.user.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating ID:", error);
+      return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "ID record created successfully",
+      data: newId,
+    });
+  } catch (error) {
+    console.error("Error in POST /api/admin/ids:", error);
+    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
+  }
+}

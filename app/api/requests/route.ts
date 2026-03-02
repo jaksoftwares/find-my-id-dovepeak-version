@@ -45,16 +45,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSessionUser();
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const supabase = await createClient();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    
+    const formData = await request.formData();
+    
+    // Extract all fields from FormData
+    const payload: Record<string, any> = {};
+    formData.forEach((value, key) => {
+      if (key !== 'image') payload[key] = value;
+    });
 
-    const body = await request.json();
-    const validation = createRequestSchema.safeParse(body);
+    const validation = createRequestSchema.safeParse(payload);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -63,12 +65,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
+    let imageUrl = null;
+    const file = formData.get("image") as File;
+    
+    if (file && file.size > 0) {
+      const { uploadToCloudinary } = await import("@/lib/cloudinary");
+      const buffer = Buffer.from(await file.arrayBuffer());
+      imageUrl = await uploadToCloudinary(buffer, "requests");
+    }
+
     const { data: requestData, error } = await supabase
       .from("lost_requests")
       .insert({
         ...validation.data,
-        user_id: session.user.id,
+        user_id: authUser?.id || null,
+        image_url: imageUrl,
         status: "submitted",
       })
       .select()
@@ -78,23 +89,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
     
-    // Attempt to match with existing found IDs
-    // Optional feature: auto-match logic
-    /*
-    const { data: matches } = await supabase
-      .from("ids_found")
-      .select("*")
-      .eq("registration_number", validation.data.registration_number)
-      .eq("status", "pending") // Or verified
-      .limit(1);
+    // Send email notifications
+    try {
+      const { sendEmail, emailTemplates } = await import("@/lib/email");
+      
+      // 1. Notify the User
+      const userEmail = validation.data.contact_email;
+      if (userEmail) {
+        const userTemplate = emailTemplates.lostReportSubmitted(
+          validation.data.full_name,
+          `${validation.data.id_type.replace('_', ' ')}: ${validation.data.registration_number}`
+        );
+        await sendEmail({
+          to: userEmail,
+          subject: userTemplate.subject,
+          htmlBody: userTemplate.html,
+        });
+      }
 
-    if (matches && matches.length > 0) {
-      // Notify admin or user about match
+      // 2. Notify Admins
+      const adminTemplate = emailTemplates.lostReportAdmin(
+        "Admin",
+        validation.data.contact_email || "Anonymous User",
+        `${validation.data.id_type.replace('_', ' ')}: ${validation.data.registration_number}`
+      );
+      // Sending to a generic admin email or fetching from profiles
+      const { data: admins } = await supabase.from("profiles").select("email").eq("role", "admin");
+      if (admins && admins.length > 0) {
+        for (const admin of admins) {
+          if (admin.email) {
+            await sendEmail({
+              to: admin.email,
+              subject: adminTemplate.subject,
+              htmlBody: adminTemplate.html,
+            });
+          }
+        }
+      }
+    } catch (emailError) {
+      console.error("Queueing email notification failed:", emailError);
+      // Don't fail the request if email fails
     }
-    */
-
-    return NextResponse.json({ success: true, message: "Request submitted", data: requestData });
+    
+    return NextResponse.json({ success: true, message: "Request submitted successfully", data: requestData });
   } catch (error) {
+    console.error("Error in POST /api/requests:", error);
     return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }

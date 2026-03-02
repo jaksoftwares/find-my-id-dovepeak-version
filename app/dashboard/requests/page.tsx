@@ -17,7 +17,10 @@ import {
   FileSearch,
   Clock,
   X,
-  Calendar
+  Calendar,
+  CreditCard,
+  MapPin,
+  Upload
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 
@@ -28,7 +31,11 @@ interface LostRequest {
   registration_number?: string;
   description?: string;
   contact_phone?: string;
+  contact_email?: string;
+  date_lost?: string;
+  last_seen_location?: string;
   status: string;
+  image_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -36,15 +43,18 @@ interface LostRequest {
 const idTypeLabels: Record<string, string> = {
   national_id: 'National ID',
   student_id: 'Student ID',
-  drivers_license: "Driver's License",
+  driving_license: "Driver's License",
   passport: 'Passport',
+  atm_card: 'ATM Card',
+  nhif: 'NHIF',
   other: 'Other',
 };
 
 const statusLabels: Record<string, { label: string; variant: string }> = {
   submitted: { label: 'Submitted', variant: 'secondary' },
-  matched: { label: 'Matched', variant: 'warning' },
-  closed: { label: 'Closed', variant: 'default' },
+  under_review: { label: 'Under Review', variant: 'warning' },
+  match_found: { label: 'Match Found', variant: 'success' },
+  closed: { label: 'Closed', variant: 'outline' },
 };
 
 export default function RequestsPage() {
@@ -63,11 +73,22 @@ export default function RequestsPage() {
     registration_number: '',
     description: '',
     contact_phone: '',
+    contact_email: '',
+    date_lost: '',
+    last_seen_location: '',
   });
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login');
+    }
+    if (user && formData.full_name === '') {
+      setFormData(prev => ({ 
+        ...prev, 
+        full_name: user.full_name || '',
+        contact_email: user.email || '',
+        contact_phone: user.phone_number || '',
+      }));
     }
   }, [authLoading, user, router]);
 
@@ -76,6 +97,8 @@ export default function RequestsPage() {
       fetchRequests();
     }
   }, [user]);
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fetchRequests = async () => {
     setIsLoading(true);
@@ -96,6 +119,12 @@ export default function RequestsPage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -103,9 +132,18 @@ export default function RequestsPage() {
     setSuccess(null);
 
     try {
+      const formDataToSend = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) formDataToSend.append(key, value);
+      });
+      
+      if (selectedFile) {
+        formDataToSend.append('image', selectedFile);
+      }
+
       const response = await authFetch('/api/requests', {
         method: 'POST',
-        body: JSON.stringify(formData),
+        body: formDataToSend, // authFetch handles headers if not JSON
       });
 
       const data = await response.json();
@@ -114,11 +152,15 @@ export default function RequestsPage() {
         setSuccess('Lost ID report submitted successfully!');
         setFormData({
           id_type: 'student_id',
-          full_name: '',
+          full_name: user?.full_name || '',
           registration_number: '',
           description: '',
-          contact_phone: '',
+          contact_phone: user?.phone_number || '',
+          contact_email: user?.email || '',
+          date_lost: '',
+          last_seen_location: '',
         });
+        setSelectedFile(null);
         setShowForm(false);
         fetchRequests();
       } else {
@@ -147,11 +189,11 @@ export default function RequestsPage() {
           <h1 className="text-2xl font-bold">Lost ID Reports</h1>
           <p className="text-muted-foreground">Submit and track your lost ID reports</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)}>
+        <Button onClick={() => setShowForm(!showForm)} variant={showForm ? "outline" : "default"}>
           {showForm ? (
             <>
               <X className="h-4 w-4 mr-2" />
-              Cancel
+              Cancel Report
             </>
           ) : (
             <>
@@ -187,30 +229,28 @@ export default function RequestsPage() {
 
       {/* New Request Form */}
       {showForm && (
-        <Card>
-          <CardHeader>
+        <Card className="border-primary/20 shadow-lg">
+          <CardHeader className="bg-primary/5 border-b">
             <CardTitle>Report a Lost ID</CardTitle>
             <CardDescription>
-              Fill in the details about your lost identification card
+              We'll notify you as soon as a match for your {idTypeLabels[formData.id_type]} is found.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="id_type">ID Type</Label>
+                  <Label htmlFor="id_type">Document Type</Label>
                   <select
                     id="id_type"
                     value={formData.id_type}
                     onChange={(e) => setFormData({ ...formData, id_type: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full h-10 px-3 py-2 border rounded-md bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     required
                   >
-                    <option value="national_id">National ID</option>
-                    <option value="student_id">Student ID</option>
-                    <option value="drivers_license">Driver's License</option>
-                    <option value="passport">Passport</option>
-                    <option value="other">Other</option>
+                    {Object.entries(idTypeLabels).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -227,52 +267,105 @@ export default function RequestsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="registration_number">Registration Number</Label>
+                  <Label htmlFor="registration_number">ID / Serial / registration Number</Label>
                   <Input
                     id="registration_number"
                     type="text"
-                    placeholder="Enter registration number"
+                    placeholder="Enter unique ID number"
                     value={formData.registration_number}
                     onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
+                    className="font-mono"
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="contact_phone">Contact Phone</Label>
+                  <Label htmlFor="contact_phone">Contact Phone Number</Label>
                   <Input
                     id="contact_phone"
                     type="tel"
                     placeholder="Enter contact number"
                     value={formData.contact_phone}
                     onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="date_lost">Approximate Date Lost</Label>
+                  <Input
+                    id="date_lost"
+                    type="date"
+                    value={formData.date_lost}
+                    onChange={(e) => setFormData({ ...formData, date_lost: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="last_seen_location">Location Where it was Lost</Label>
+                  <Input
+                    id="last_seen_location"
+                    type="text"
+                    placeholder="e.g. Near Mess, Library, Gate A"
+                    value={formData.last_seen_location}
+                    onChange={(e) => setFormData({ ...formData, last_seen_location: e.target.value })}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Additional Details</Label>
+                <Label htmlFor="description">Additional Details / Marks</Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe any additional details about your lost ID (where you lost it, when, etc.)"
+                  placeholder="Describe any unique features, stickers, or holders..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={4}
+                  rows={3}
                 />
               </div>
 
-              <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <FileSearch className="mr-2 h-4 w-4" />
-                    Submit Report
-                  </>
-                )}
-              </Button>
+              <div className="space-y-2 pt-2 border-t mt-4">
+                <Label htmlFor="image" className="block text-sm font-semibold mb-2">Reference Image (Optional)</Label>
+                <div className="flex items-center gap-4">
+                   <div className="relative group flex-1">
+                     <Input 
+                       id="image" 
+                       type="file" 
+                       accept="image/*" 
+                       onChange={handleFileChange}
+                       className="cursor-pointer file:hidden bg-white border-zinc-200 h-10 flex items-center pt-2"
+                     />
+                     <div className="absolute right-3 top-2.5 pointer-events-none">
+                       <Upload className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                     </div>
+                   </div>
+                   {selectedFile && (
+                     <div className="bg-green-100 p-2 rounded-full">
+                       <CheckCircle2 className="h-5 w-5 text-green-600" />
+                     </div>
+                   )}
+                </div>
+                <p className="text-[11px] text-muted-foreground italic">
+                  * If you have an old photo or scan of the document, upload it to help us find it faster.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                 <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
+                   {isSubmitting ? (
+                     <>
+                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                       Submitting...
+                     </>
+                   ) : (
+                     <>
+                       <FileSearch className="mr-2 h-4 w-4" />
+                       Submit Report
+                     </>
+                   )}
+                 </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -281,8 +374,8 @@ export default function RequestsPage() {
       {/* Requests List */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Reports</CardTitle>
-          <CardDescription>Track status of your lost ID reports</CardDescription>
+          <CardTitle>Recent Reports</CardTitle>
+          <CardDescription>View status of your submitted reports</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -306,28 +399,43 @@ export default function RequestsPage() {
               {requests.map((request) => (
                 <div
                   key={request.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg gap-4"
+                  className="flex flex-col md:flex-row md:items-center justify-between p-5 border rounded-xl gap-4 hover:border-primary/30 transition-colors bg-white shadow-sm"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{request.full_name}</h3>
-                      <Badge variant={statusLabels[request.status]?.variant as any || 'secondary'}>
-                        {statusLabels[request.status]?.label || request.status}
-                      </Badge>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center shrink-0">
+                        <CreditCard className="h-5 w-5 text-zinc-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-zinc-900 leading-none mb-1">{request.full_name}</h3>
+                        <p className="text-sm font-medium text-primary">
+                          {idTypeLabels[request.id_type] || request.id_type}
+                          {request.registration_number && ` • ${request.registration_number}`}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {idTypeLabels[request.id_type] || request.id_type}
-                      {request.registration_number && ` • ${request.registration_number}`}
-                    </p>
-                    {request.description && (
-                      <p className="text-sm text-muted-foreground">
-                        {request.description}
-                      </p>
-                    )}
+                    
+                    <div className="flex flex-wrap gap-4 mt-2">
+                      {request.last_seen_location && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>{request.last_seen_location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>{new Date(request.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(request.created_at).toLocaleDateString()}</span>
+
+                  <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-0">
+                    <Badge 
+                      variant={(statusLabels[request.status]?.variant as any) || 'secondary'}
+                      className="capitalize px-3 py-1 rounded-full text-xs font-semibold"
+                    >
+                      {statusLabels[request.status]?.label || request.status.replace('_', ' ')}
+                    </Badge>
                   </div>
                 </div>
               ))}

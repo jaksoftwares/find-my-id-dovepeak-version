@@ -8,6 +8,7 @@ export const lostIdSchema = z.object({
   idType: z.enum(["NATIONAL_ID", "STUDENT_ID", "KCSE_CERTIFICATE", "DRIVING_LICENSE", "OTHER"]),
   serialNumber: z.string().min(1, { message: "Serial/Registration number is required." }),
   description: z.string().optional(),
+  locationLost: z.string().optional(),
   dateLost: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Please enter a valid date.",
   }),

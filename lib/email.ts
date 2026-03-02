@@ -103,39 +103,55 @@ export const emailTemplates = {
     `,
   }),
   foundReportSubmittedAdmin: (adminName: string, idName: string, finderContact: string) => ({
-    subject: `New Public Found ID Submission - ${idName}`,
+    subject: `URGENT: New Public Found ID for Approval - ${idName}`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
-        <h2 style="color: #8b5cf6;">New Found ID Reported</h2>
-        <p>A user has reported finding an identification document that needs to be officially listed.</p>
-        <div style="background-color: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 15px; margin: 20px 0;">
-          <p style="margin: 0;"><strong>Document:</strong> ${idName}</p>
-          <p style="margin: 5px 0 0 0;"><strong>Finder Contact:</strong> ${finderContact}</p>
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #8b5cf6; padding: 25px; text-align: center; color: white;">
+          <h2 style="margin: 0;">New Verification Required</h2>
         </div>
-        <p>Please review the submission, verify the image proof, and approve it to make it visible on the public browsing page.</p>
-        <div style="margin-top: 30px;">
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/found-reports" style="background-color: #8b5cf6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Review Found Report</a>
+        <div style="padding: 30px;">
+          <p>Hello ${adminName},</p>
+          <p>A new identification document has been submitted by a member of the public. This report is currently <strong>Pending Approval</strong> and is not yet visible to other users.</p>
+          
+          <div style="background-color: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 20px; margin: 25px 0;">
+            <p style="margin: 0 0 10px 0; border-bottom: 1px solid #ddd6fe; padding-bottom: 10px;"><strong>SUBMISSION DETAILS</strong></p>
+            <p style="margin: 5px 0;"><strong>ID Detail:</strong> ${idName}</p>
+            <p style="margin: 5px 0;"><strong>Finder Contact:</strong> ${finderContact}</p>
+          </div>
+          
+          <p>Please review the uploaded image and contact details. Once verified, approve it to make it searchable by the owner.</p>
+          
+          <div style="margin-top: 35px; text-align: center;">
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/found-reports" style="background-color: #8b5cf6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Review & Approve Now</a>
+          </div>
         </div>
-        <br/>
-        <p>Regards,<br/>JKUATfindmyid System</p>
+        <div style="background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+          JKUATfindmyid System Notification
+        </div>
       </div>
     `,
   }),
   foundReportSubmittedUser: (userName: string, idName: string) => ({
-    subject: `Thank you for reporting a found ID - ${idName}`,
+    subject: `Submission Received: Thank you for finding ${idName}`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
-        <h2 style="color: #8b5cf6;">You're a Hero!</h2>
-        <p>Hello ${userName || 'there'},</p>
-        <p>Thank you for taking the time to report finding <strong>${idName}</strong>. Your honesty helps a fellow student or citizen regain their identity.</p>
-        <div style="background-color: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 15px; margin: 20px 0;">
-           <p style="margin: 0;">Our administrators are currently reviewing your report. Once verified, it will be listed on our platform where the owner can find it.</p>
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #10b981; padding: 25px; text-align: center; color: white;">
+          <h2 style="margin: 0;">Submission Successful!</h2>
         </div>
-        <p><strong>Next Steps:</strong></p>
-        <p>Please keep the document safe. If you indicated a holding location, our admins might reach out to confirm it.</p>
-        <p>Thank you for making our community better.</p>
-        <br/>
-        <p>Best Regards,<br/><strong>The JKUATfindmyid Team</strong></p>
+        <div style="padding: 30px;">
+          <p>Hello ${userName || 'there'},</p>
+          <p>Thank you for your honesty and for taking the time to report finding <strong>${idName}</strong>. You are making our community a safer and better place.</p>
+          
+          <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0;">
+             <p style="margin: 0; color: #065f46; font-weight: 600;">Status: Pending System Review</p>
+             <p style="margin: 10px 0 0 0; color: #047857; font-size: 14px;">Our administration team is currently verifying the document details. Once approved, it will be listed so the owner can find it.</p>
+          </div>
+          
+          <p><strong>What should you do now?</strong></p>
+          <p>Please keep the document safe until further instructions. If the owner reaches out through the system or if we need more info, we will contact you via the details you provided.</p>
+          
+          <p style="margin-top: 30px;">Warm regards,<br/><strong>The JKUATfindmyid Team</strong></p>
+        </div>
       </div>
     `,
   }),
@@ -159,45 +175,63 @@ export const emailTemplates = {
     `,
   }),
   lostReportSubmitted: (userName: string, idName: string) => ({
-    subject: `Lost ID Report Filed - ${idName}`,
+    subject: `Acknowledgment: We've Received Your Lost ID Report - ${idName}`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #333;">
-        <h2 style="color: #4f46e5;">Hello ${userName},</h2>
-        <p>Your lost identification report for <strong>${idName}</strong> has been successfully filed on JKUATfindmyid.</p>
-        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; margin: 25px 0;">
-          <p style="margin: 0;"><strong>Status:</strong> <span style="color: #4f46e5; font-weight: bold;">Submitted & Reviewing</span></p>
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #374151; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #4f46e5; padding: 25px; text-align: center; color: white;">
+          <h2 style="margin: 0;">Report Filed Successfully</h2>
         </div>
-        <p>Our team is currently reviewing your report. We will cross-reference it with our database of found documents and notify you immediately once a match is identified or your report is verified.</p>
-        <p><strong>What's next?</strong></p>
-        <ul>
-          <li>We will notify you by email and SMS once your report status changes.</li>
-          <li>You can keep your report active by updating any details on your dashboard.</li>
-        </ul>
-        <div style="margin-top: 30px; text-align: center;">
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/requests" style="background-color: #4f46e5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Report Status</a>
+        <div style="padding: 30px;">
+          <p>Hello ${userName},</p>
+          <p>This is to confirm that we have received your lost identification report for <strong>${idName}</strong>.</p>
+          
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 10px; border: 1px solid #e5e7eb; margin: 25px 0;">
+            <p style="margin: 0; color: #4f46e5; font-weight: 700;">STATUS: RECEIVED & MONITORING</p>
+          </div>
+          
+          <p><strong>What Happens Next?</strong></p>
+          <p>Our system is now actively monitoring for any document that matches your description. <strong>We will notify you immediately by email and SMS once a match is found</strong> or if your report requires further verification.</p>
+          
+          <p>In the meantime, you can track the status of your report on your dashboard.</p>
+          
+          <div style="margin-top: 35px; text-align: center;">
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/requests" style="background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Check Real-time Status</a>
+          </div>
+          
+          <p style="margin-top: 40px; font-size: 14px; color: #6b7280; text-align: center;">
+            Thank you for using JKUATfindmyid. We hope you recover your document soon.<br/>
+            <strong>The JKUATfindmyid Team</strong>
+          </p>
         </div>
-        <br/>
-        <p style="font-size: 14px; color: #666;">If you have already found your ID, please mark the request as 'Resolved' in your dashboard to help us prioritize other users.</p>
-        <p>Regards,<br/><strong>The JKUATfindmyid Team</strong></p>
       </div>
     `,
   }),
-  lostReportAdmin: (adminName: string, userName: string, idName: string) => ({
-    subject: `New Lost ID Report - ${idName}`,
+  lostReportAdmin: (adminName: string, userEmail: string, idDetails: string) => ({
+    subject: `ACTION REQUIRED: New Lost ID Submission - ${idDetails}`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #333;">
-        <h2 style="color: #4f46e5;">Hello Admin,</h2>
-        <p>A new <strong>Lost ID Report</strong> has been submitted by <strong>${userName}</strong>.</p>
-        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; margin: 20px 0;">
-          <p style="margin: 0;"><strong>Document:</strong> ${idName}</p>
-          <p style="margin: 0;"><strong>User email:</strong> ${userName}</p>
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #1f2937; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #1e293b; padding: 25px; text-align: center; color: white;">
+          <h2 style="margin: 0;">New Lost ID Entry</h2>
         </div>
-        <p>Please review the details and initiate matching if not already auto-matched by the system.</p>
-        <div style="margin-top: 30px;">
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/requests" style="background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Manage Requests</a>
+        <div style="padding: 30px;">
+          <p>Hello Admin,</p>
+          <p>A new <strong>Lost ID Report</strong> has been submitted. Please review the details below to ensure data accuracy and facilitate matching.</p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <p style="margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 600;">SUBMISSION DETAILS</p>
+            <p style="margin: 5px 0;"><strong>Document:</strong> ${idDetails}</p>
+            <p style="margin: 5px 0;"><strong>Reported By:</strong> ${userEmail}</p>
+          </div>
+          
+          <p>Please log in to the admin panel to manage this request and oversee any potential auto-matches generated by the system.</p>
+          
+          <div style="margin-top: 35px; text-align: center;">
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/requests" style="background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Open Admin Panel</a>
+          </div>
         </div>
-        <br/>
-        <p>Regards,<br/><strong>JKUATfindmyid System</strong></p>
+        <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+          Automated System Notification | JKUATfindmyid
+        </div>
       </div>
     `,
   }),

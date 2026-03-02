@@ -78,8 +78,15 @@ export function Header() {
             href="/report-lost" 
             className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/report-lost' ? 'text-primary' : ''}`}
           >
-            Report Lost
+            Report Your Lost
             {pathname === '/report-lost' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
+          </Link>
+          <Link 
+            href="/found" 
+            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/found' ? 'text-primary' : ''}`}
+          >
+            Submit Found
+            {pathname === '/found' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
           <Link 
             href="/contact" 

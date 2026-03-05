@@ -41,6 +41,17 @@ export function Footer() {
                  <li><Link href="/about" className="hover:text-primary transition-colors">About FindMyID</Link></li>
                  <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Center</Link></li>
                  <li><Link href="/faq" className="hover:text-primary transition-colors">FAQs</Link></li>
+                 <li><Link href="/donations" className="hover:text-primary transition-colors">Donation</Link></li>
+                  <li>
+                    <a 
+                      href="https://www.dovepeakdigital.com/" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="hover:text-primary transition-colors"
+                    >
+                      The Startup
+                    </a>
+                  </li>
                  <li><Link href="/disclaimer" className="hover:text-primary transition-colors">Legal Disclaimer</Link></li>
                  <li><Link href="/terms" className="hover:text-primary transition-colors">Terms and Conditions</Link></li>
               </ul>
@@ -52,7 +63,7 @@ export function Footer() {
               <p className="text-muted-foreground text-sm mb-4">Help us keep the community informed. Join our forum!</p>
               <div className="flex gap-2">
                  <Link href="/forum" className="w-full">
-                   <Button size="sm" className="rounded-md w-full">Go to Forum</Button>
+                    <Button size="sm" className="rounded-md w-full">Go to Forum</Button>
                  </Link>
               </div>
            </div>

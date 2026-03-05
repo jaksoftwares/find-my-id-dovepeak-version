@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/app/context/AuthContext";
-import { User, LogOut, Loader2, ChevronDown, LayoutDashboard, Settings } from "lucide-react";
+import { User, LogOut, Loader2, ChevronDown, LayoutDashboard, Settings, Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 export function Header() {
@@ -13,7 +13,9 @@ export function Header() {
   const { user, isAuthenticated, isLoading, logout, isAdmin } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLButtonElement>(null);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -29,10 +31,24 @@ export function Header() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'Story', href: '/about' },
+    { name: 'Find ID', href: '/ids' },
+    { name: 'Lost', href: '/report-lost' },
+    { name: 'Found', href: '/found' },
+    { name: 'Contact', href: '/contact' },
+    { name: 'Forum', href: '/forum' },
+    { name: 'Donations', href: '/donations' },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-gray-100">
@@ -52,151 +68,131 @@ export function Header() {
         </Link>
         
         {/* Navigation - Centered */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-          <Link 
-            href="/" 
-            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/' ? 'text-primary' : ''}`}
-          >
-            Home
-            {pathname === '/' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
-          </Link>
-          <Link 
-            href="/about" 
-            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/about' ? 'text-primary' : ''}`}
-          >
-            Story
-            {pathname === '/about' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
-          </Link>
-          <Link 
-            href="/ids" 
-            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/ids' ? 'text-primary' : ''}`}
-          >
-            Find ID
-            {pathname === '/ids' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
-          </Link>
-          <Link 
-            href="/report-lost" 
-            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/report-lost' ? 'text-primary' : ''}`}
-          >
-            Lost
-            {pathname === '/report-lost' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
-          </Link>
-          <Link 
-            href="/found" 
-            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/found' ? 'text-primary' : ''}`}
-          >
-            Found
-            {pathname === '/found' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
-          </Link>
-          <Link 
-            href="/contact" 
-            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/contact' ? 'text-primary' : ''}`}
-          >
-            Contact
-            {pathname === '/contact' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
-          </Link>
-          <Link 
-            href="/forum" 
-            className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/forum' ? 'text-primary' : ''}`}
-          >
-            Forum
-            {pathname === '/forum' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
-          </Link>
+        <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+          {navLinks.map((link) => (
+            <Link 
+              key={link.href}
+              href={link.href} 
+              className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === link.href ? 'text-primary' : ''}`}
+            >
+              {link.name}
+              {pathname === link.href && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
+            </Link>
+          ))}
         </nav>
         
         {/* CTA - Right */}
-        <div className="flex items-center gap-4">
-          {isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : isAuthenticated ? (
-            <div className="relative" ref={dropdownRef}>
-              {/* User Dropdown Button */}
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
-              >
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-4 w-4 text-primary" />
-                </div>
-                <span className="text-sm font-medium hidden sm:inline">
-                  {user?.full_name?.split(' ')[0] || 'User'}
-                </span>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
+        <div className="flex items-center gap-2">
+          {/* Mobile Menu Trigger */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-full lg:hidden text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+            ref={mobileMenuRef}
+          >
+            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
 
-              {/* Dropdown Menu */}
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{user?.full_name || 'User'}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-                    {user?.role && (
-                      <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-full capitalize">
-                        {user.role}
-                      </span>
-                    )}
+          <div className="flex items-center gap-4">
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            ) : isAuthenticated ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
+                >
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary" />
                   </div>
-                  
-                  <Link 
-                    href="/dashboard" 
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
-                  </Link>
-                  
-                  <Link 
-                    href="/dashboard/profile" 
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <User className="h-4 w-4" />
-                    My Profile
-                  </Link>
+                  <span className="text-sm font-medium hidden sm:inline">
+                    {user?.full_name?.split(' ')[0] || 'User'}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                  {isAdmin && (
-                    <Link 
-                      href="/admin" 
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      <Settings className="h-4 w-4" />
-                      Admin Panel
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900">{user?.full_name || 'User'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    </div>
+                    
+                    <Link href="/dashboard" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setIsDropdownOpen(false)}>
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
                     </Link>
-                  )}
-                  
-                  <div className="border-t border-gray-100 mt-2 pt-2">
-                    <button
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
-                    >
-                      {isLoggingOut ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <LogOut className="h-4 w-4" />
-                      )}
-                      Logout
-                    </button>
+                    
+                    <Link href="/dashboard/profile" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setIsDropdownOpen(false)}>
+                      <User className="h-4 w-4" />
+                      My Profile
+                    </Link>
+
+                    {isAdmin && (
+                      <Link href="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setIsDropdownOpen(false)}>
+                        <Settings className="h-4 w-4" />
+                        Admin Panel
+                      </Link>
+                    )}
+                    
+                    <div className="border-t border-gray-100 mt-2 pt-2">
+                      <button 
+                        onClick={handleLogout} 
+                        disabled={isLoggingOut}
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full"
+                      >
+                        {isLoggingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+                        Logout
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors hidden sm:block">
-                Log In
-              </Link>
-              <Link href="/report-lost">
-                <Button className="rounded-full px-6 font-semibold shadow-md hover:shadow-lg transition-all">
-                  Report Lost ID
-                </Button>
-              </Link>
-            </>
-          )}
+                )}
+              </div>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors hidden sm:block">
+                  Log In
+                </Link>
+                <Link href="/report-lost">
+                  <Button className="rounded-full px-4 sm:px-6 font-semibold shadow-md hover:shadow-lg transition-all text-xs sm:text-sm">
+                    Report Lost
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-xl z-40 animate-in fade-in slide-in-from-top-4">
+          <nav className="flex flex-col p-6 gap-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-lg font-semibold px-4 py-2 rounded-lg transition-colors ${
+                  pathname === link.href 
+                    ? "bg-primary/10 text-primary" 
+                    : "text-muted-foreground hover:bg-zinc-50 hover:text-primary"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            {!isAuthenticated && (
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-lg font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:bg-zinc-50 hover:text-primary sm:hidden"
+              >
+                Log In
+              </Link>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

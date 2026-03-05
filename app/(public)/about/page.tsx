@@ -135,9 +135,9 @@ export default function AboutPage() {
                     <p>
                       I am a final-year Computer Science student. I believe technology should solve simple, every day problems that affect people in our community.
                     </p>
-                    <p>
-                      This project is my way of giving back. Beyond FindMyID, I'm passionate about building digital solutions that solve real challenges in our communities.
-                    </p>
+                     <p>
+                       This project is my way of giving back. Beyond FindMyID, I'm passionate about building digital solutions at <a href="https://www.dovepeakdigital.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Dovepeak Digital Solutions</a> that solve real challenges in our communities.
+                     </p>
                  </div>
               </div>
            </div>

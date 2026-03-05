@@ -2,6 +2,7 @@
 "use client";
 
 import { useForum } from "@/hooks/useForum";
+import Link from "next/link";
 import { CreatePostModal } from "@/components/forum/CreatePostModal";
 import { MessageSquare, ThumbsUp, Users, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,23 +51,42 @@ export default function ForumPage() {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Sidebar */}
         <aside className="w-full md:w-64 space-y-6">
-           <div className="bg-white p-6 rounded-xl border border-zinc-200 sticky top-24">
-              <h3 className="font-bold text-lg mb-4 text-foreground">Categories</h3>
-              <nav className="flex flex-col space-y-2">
-                 {["All", "General", "Suggestions", "Lost & Found", "Announcements", "Member Thoughts"].map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setFilter(cat)}
-                      className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        filter === cat 
-                          ? "bg-primary/10 text-primary font-medium" 
-                          : "text-muted-foreground hover:bg-zinc-50 hover:text-foreground"
-                      }`}
+           <div className="bg-white p-6 rounded-xl border border-zinc-200 sticky top-24 space-y-6">
+              <div>
+                 <h3 className="font-bold text-lg mb-4 text-foreground">Categories</h3>
+                 <nav className="flex flex-col space-y-2">
+                    {["All", "General", "Suggestions", "Lost & Found", "Announcements", "Member Thoughts"].map((cat) => (
+                       <button
+                         key={cat}
+                         onClick={() => setFilter(cat)}
+                         className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                           filter === cat 
+                             ? "bg-primary/10 text-primary font-medium" 
+                             : "text-muted-foreground hover:bg-zinc-50 hover:text-foreground"
+                         }`}
+                       >
+                         {cat}
+                       </button>
+                    ))}
+                 </nav>
+              </div>
+
+              <div className="pt-6 border-t border-zinc-100">
+                 <div className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
+                    <h4 className="font-bold text-sm text-foreground mb-1">Support the Project</h4>
+                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                       Your contributions help us maintain and improve FindMyID for all students.
+                    </p>
+                    <Link 
+                      href="/donations" 
+                      className="block"
                     >
-                      {cat}
-                    </button>
-                 ))}
-              </nav>
+                       <Button variant="outline" size="sm" className="w-full text-xs h-8">
+                          Make a Donation
+                       </Button>
+                    </Link>
+                 </div>
+              </div>
            </div>
         </aside>
 

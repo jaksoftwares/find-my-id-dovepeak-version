@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Search, ArrowRight, ShieldCheck, MapPin, Smile, MessageSquare, Heart, HelpCircle, CheckCircle2, User, ExternalLink, Loader2 } from "lucide-react";
+import { Search, ArrowRight, ShieldCheck, MapPin, Smile, MessageSquare, HelpCircle, CheckCircle2, User, ExternalLink, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 

@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -47,85 +48,47 @@ function HomeContent() {
     <div className="flex flex-col min-h-screen bg-white bg-gradient-to-b from-white to-zinc-50/30 overflow-hidden selection:bg-primary/20 selection:text-primary">
       
       {/* Hero Section */}
-      <section className="relative px-4 pt-20 pb-32 md:pt-32 md:pb-48 text-center overflow-hidden">
+      <section className="relative px-4 pt-16 pb-24 md:pt-24 md:pb-32 text-center overflow-hidden min-h-[75vh] flex flex-col justify-center border-b border-zinc-100">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 bg-zinc-100">
+          <Image 
+            src="/JKUAT.jpg" 
+            alt="JKUAT Campus" 
+            fill
+            priority
+            className="object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-zinc-50/20 via-zinc-50/60 to-zinc-50"></div>
+        </div>
+
         {/* Subtle Mesh Background */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(184,156,255,0.1),rgba(255,255,255,0))] pointer-events-none"></div>
-        {/* Decorative Background Elements */}
-        {/* Purple Star/Sparkle (Top Left-ish) */}
-        <motion.div 
-           initial={{ opacity: 0, scale: 0 }}
-           animate={{ opacity: 1, scale: 1 }}
-           transition={{ duration: 1, delay: 0.2 }}
-           className="absolute top-20 left-[10%] md:left-[20%] text-secondary opacity-80"
-        >
-           <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 md:w-16 md:h-16">
-              <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-           </svg>
-        </motion.div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(184,156,255,0.05),rgba(244,244,245,0))] pointer-events-none z-0"></div>
         
-        {/* Striped Box (Top Right-ish) */}
-        <motion.div 
-           initial={{ opacity: 0, x: 20 }}
-           animate={{ opacity: 1, x: 0 }}
-           transition={{ duration: 1, delay: 0.4 }}
-           className="absolute top-24 right-[5%] md:right-[15%] opacity-60 pointer-events-none"
-        >
-            <div className="w-16 h-16 md:w-24 md:h-24 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] bg-contain">
-               {/* Using SVG mainly for the specific diagonal lines look */}
-               <svg viewBox="0 0 100 100" className="w-full h-full stroke-primary stroke-2 fill-none">
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <line key={i} x1={i * 10} y1="0" x2="0" y2={i * 10} transform="translate(10,10)" /> 
-                  ))}
-                   {/* Simplified visual representation of the striped box */}
-                   <rect width="10" height="40" x="10" y="0" fill="#E96B35" transform="rotate(45)" opacity="0.2"/>
-                   <rect width="10" height="40" x="30" y="0" fill="#B89CFF" transform="rotate(45)" opacity="0.2"/>
-               </svg>
-            </div>
-        </motion.div>
-
-        {/* Wavy Lines (Bottom Left-ish) */}
-        <motion.div 
-           className="absolute bottom-10 left-[15%] text-secondary opacity-50 hidden md:block"
-           animate={{ y: [0, 10, 0] }}
-           transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-        >
-           <svg width="40" height="80" viewBox="0 0 40 80" fill="none" stroke="currentColor" strokeWidth="2">
-               <path d="M10 0 C 30 10, 30 30, 10 40 C 30 50, 30 70, 10 80" />
-               <path d="M25 0 C 45 10, 45 30, 25 40 C 45 50, 45 70, 25 80" />
-           </svg>
-        </motion.div>
-
-
         <div className="container mx-auto max-w-4xl relative z-10">
           <motion.p 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm font-semibold tracking-widest text-muted-foreground uppercase mb-4"
+            className="text-sm font-semibold tracking-widest text-[#E96B35] uppercase mb-4"
           >
-            We transform lost into found
+            Search find your lost ID card
           </motion.p>
           
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-6 leading-tight"
+            className="text-4xl md:text-6xl font-bold tracking-tight text-[#0B3D91] mb-6 leading-tight"
           >
-            Recover Your Lost ID <br className="hidden md:block"/>
-            <span className="relative inline-block">
-              Easily and For Free
-              {/* Underline decoration */}
-              <span className="absolute bottom-2 left-0 w-full h-3 bg-secondary/30 -z-10 rounded-sm"></span>
-            </span>
+            Find your lost ID card
           </motion.h1>
           
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
+            className="text-lg md:text-xl text-zinc-600 mb-10 max-w-xl mx-auto leading-relaxed font-medium"
           >
-            A simple community platform for JKUAT students to recover lost identification cards. Search our database of found IDs and reconnect with your property.
+            Helping the JKUAT community recover lost identification cards quickly and easily.
           </motion.p>
           
           <motion.div 
@@ -135,13 +98,13 @@ function HomeContent() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
              <Link href="/ids">
-               <Button className="rounded-full h-12 px-8 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
-                 Search Found IDs
+               <Button className="rounded-full h-12 px-10 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-bold">
+                 Search
                </Button>
              </Link>
              <Link href="/report-lost">
-               <Button variant="outline" className="rounded-full h-12 px-8 text-base border-2 hover:bg-primary/5">
-                 I Lost My ID
+               <Button variant="outline" className="rounded-full h-12 px-10 text-base bg-white border-zinc-200 hover:border-primary hover:text-primary transition-all font-bold">
+                 Report Lost
                </Button>
              </Link>
           </motion.div>
@@ -205,14 +168,7 @@ function HomeContent() {
       <section className="py-24 bg-zinc-50/50 border-t border-zinc-100">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12 max-w-5xl mx-auto">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="relative shrink-0"
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            >
+            <div className="relative shrink-0">
               <div className="w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden bg-zinc-100 border border-zinc-200">
                  <img 
                     src="/joseph-kirika.jpg" 
@@ -220,14 +176,9 @@ function HomeContent() {
                     className="w-full h-full object-cover"
                  />
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex-1 text-center lg:text-left"
-            >
+            <div className="flex-1 text-center lg:text-left">
               <h2 className="text-3xl font-bold text-foreground mb-4">Hi, I'm Joseph Kirika</h2>
               <p className="text-lg text-zinc-600 mb-6 leading-relaxed italic">
                 "Imagine walking across campus and realizing your ID is gone. I've been there twice, and that's why I built FindMyID—a volunteer project to help us recover lost cards easily through technology."
@@ -237,7 +188,7 @@ function HomeContent() {
                   Read my full story
                 </Button>
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -255,34 +206,31 @@ function HomeContent() {
             <div className="grid md:grid-cols-3 gap-10">
                {[
                  { 
-                   icon: <ShieldCheck className="h-8 w-8 text-primary" />, 
                    title: "Volunteer Effort", 
                    desc: "Our team and community volunteers collect found ID details and post them here to help you." 
                  },
                  { 
-                   icon: <MapPin className="h-8 w-8 text-secondary" />, 
                    title: "Official Collection Points", 
                    desc: "Once identified and approved, you will be emailed details on where to pick your ID from official school spots." 
                  },
                  { 
-                   icon: <Smile className="h-8 w-8 text-primary" />, 
                    title: "Completely Free", 
                    desc: "This is a non-profit community service. There are no charges to search for or recover your ID card." 
                  }
                ].map((feature, i) => (
                  <motion.div 
                    key={i} 
-                   initial={{ opacity: 0, y: 20 }}
+                   initial={{ opacity: 0, y: 10 }}
                    whileInView={{ opacity: 1, y: 0 }}
                    viewport={{ once: true }}
                    transition={{ delay: i * 0.1 }}
-                   className="bg-white p-8 rounded-xl shadow-sm border border-zinc-100 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group"
+                   className="bg-white p-8 rounded-xl border border-zinc-100 hover:border-primary/20 transition-all duration-300 group"
                  >
-                    <div className="w-16 h-16 rounded-2xl bg-zinc-50 flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors">
-                       {feature.icon}
+                    <div className="text-3xl font-bold text-zinc-100 mb-6 group-hover:text-primary/20 transition-colors">
+                       0{i + 1}
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-foreground">{feature.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
+                    <h3 className="text-xl font-bold mb-3 text-zinc-900">{feature.title}</h3>
+                    <p className="text-zinc-600 leading-relaxed">{feature.desc}</p>
                  </motion.div>
                ))}
             </div>

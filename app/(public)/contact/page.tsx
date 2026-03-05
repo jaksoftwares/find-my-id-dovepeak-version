@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageSquare, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase/client";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -19,16 +20,27 @@ export default function ContactPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setSubmitted(true);
-    setLoading(false);
+    try {
+      const { error: submitError } = await supabase
+        .from("contact_messages")
+        .insert([formData]);
+
+      if (submitError) throw submitError;
+      
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error("Form submission error:", err);
+      setError(err.message || "Failed to send message. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const contactInfo = [
@@ -36,21 +48,21 @@ export default function ContactPage() {
       icon: <Mail className="h-5 w-5" />,
       title: "Email Us",
       description: "Send us a message anytime",
-      value: "hello@findmyid.com",
+      value: "amuyunzu.joseph@students.jkuat.ac.ke",
       color: "bg-orange-100 text-orange-600"
     },
     {
       icon: <Phone className="h-5 w-5" />,
       title: "Call Us",
-      description: "Mon-Fri from 8am to 5pm",
-      value: "+254 700 000 000",
+      description: "Direct community support",
+      value: "+254 714703374",
       color: "bg-purple-100 text-purple-600"
     },
     {
       icon: <MapPin className="h-5 w-5" />,
       title: "Recovery Points",
-      description: "Visit us during working hours",
-      value: "Main Gate / Library Security",
+      description: "Official pickup locations",
+      value: "Main Gate / Hall 6 / Library",
       color: "bg-orange-100 text-orange-600"
     },
     {
@@ -196,6 +208,12 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {error && (
+                    <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-medium">
+                      {error}
+                    </div>
+                  )}
+
                   <Button 
                     type="submit" 
                     className="w-full bg-primary hover:bg-primary/90 rounded-full h-12 text-base font-bold"
@@ -235,7 +253,7 @@ export default function ContactPage() {
                     </div>
                     <h3 className="font-bold text-foreground mb-1">{item.title}</h3>
                     <p className="text-sm text-muted-foreground mb-1">{item.description}</p>
-                    <p className="font-medium text-primary">{item.value}</p>
+                    <p className="font-medium text-primary break-all">{item.value}</p>
                   </CardContent>
                 </Card>
               ))}

@@ -33,6 +33,7 @@ const adminNavigation = [
   { name: 'Found Reports', href: '/admin/found-reports', icon: Upload },
   { name: 'Claims', href: '/admin/claims', icon: HandHeart },
   { name: 'Lost Requests', href: '/admin/requests', icon: FileText },
+  { name: 'Contact Messages', href: '/admin/messages', icon: MessageSquare },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: 'Community Forum', href: '/admin/forum', icon: MessageSquare },
   { name: 'Settings', href: '/admin/settings', icon: Settings },

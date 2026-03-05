@@ -93,7 +93,7 @@ export function SubmitFoundForm() {
         </div>
         <h3 className="text-2xl font-bold text-zinc-900 mb-3">Thank You!</h3>
         <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
-          The found ID has been submitted successfully. We will verify it and list it shortly to help find its owner.
+          The details have been submitted. We'll verify the card and post it on the platform so the owner can find it.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button onClick={() => setIsSuccess(false)} className="rounded-full px-8">
@@ -114,7 +114,7 @@ export function SubmitFoundForm() {
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Upload className="h-4 w-4 text-primary" />
           </div>
-          <h3 className="font-bold text-zinc-900">Found ID Details</h3>
+          <h3 className="font-bold text-zinc-900">Found Card Details</h3>
         </div>
         
         <div className="space-y-2">

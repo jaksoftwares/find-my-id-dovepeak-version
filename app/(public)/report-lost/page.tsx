@@ -7,33 +7,33 @@ import { ClipboardList, Search, BellRing, ShieldCheck, Info, FileQuestion } from
 const steps = [
   {
     icon: <ClipboardList className="h-6 w-6 text-primary" />,
-    title: "1. Submit Report",
-    description: "Provide details about your lost item, including unique identifiers.",
+    title: "1. Report it",
+    description: "Provide details about your card so we can help identify it.",
   },
   {
     icon: <Search className="h-6 w-6 text-secondary" />,
-    title: "2. Automatic Matching",
-    description: "Our system constantly scans newly found items against your report.",
+    title: "2. We Match it",
+    description: "Our team checks newly found cards against your report.",
   },
   {
     icon: <BellRing className="h-6 w-6 text-primary" />,
-    title: "3. Get Notified",
-    description: "Receive an instant email and SMS alert as soon as your ID is found.",
+    title: "3. Get Email",
+    description: "Receive an email once your ID is recovered and approved.",
   },
 ];
 
 const faqs = [
   {
     question: "What items can I report?",
-    answer: "You can report any official identification document including National IDs, Student IDs, Passports, Driving Licenses, and ATM cards.",
+    answer: "You can report official IDs like Student IDs, National IDs, Passports, and ATM cards.",
   },
   {
-    question: "Is there a fee for reporting?",
-    answer: "No, reporting a lost ID is completely free for all JKUAT students and staff members.",
+    question: "Is there a fee?",
+    answer: "No, this is a completely free service for the community.",
   },
   {
-    question: "How long does it take?",
-    answer: "If your ID has already been found and verified, you might get a match immediately. Otherwise, we'll notify you the moment it's turned in.",
+    question: "How do I get it back?",
+    answer: "Once a match is approved, we will email you the exact pickup location on campus.",
   },
 ];
 
@@ -51,20 +51,20 @@ export default function ReportLostPage() {
             <div className="md:max-w-2xl">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-4">
                 <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
-                Secure Document Recovery
+                Community Support
               </span>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4">
                 Lost Your ID? <br className="hidden md:block"/>
                 <span className="text-primary">We're Here to Help.</span>
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Report your lost identification document today. JKUATfindmyid bridges the gap between those who've lost their IDs and those who've found them.
+                Report your lost identification card. FindMyID helps students recover lost IDs through a community effort.
               </p>
             </div>
             
             <div className="hidden md:grid grid-cols-1 gap-4 w-full max-w-sm mt-8 md:mt-0">
                {steps.map((step, i) => (
-                 <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-zinc-50 border border-zinc-100 shadow-sm">
+                 <div key={i} className="flex items-start gap-4 p-4 rounded-3xl bg-zinc-50 border border-zinc-100 shadow-sm">
                    <div className="mt-1">{step.icon}</div>
                    <div>
                      <h3 className="font-bold text-sm text-foreground">{step.title}</h3>
@@ -91,10 +91,10 @@ export default function ReportLostPage() {
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center">
                 <ClipboardList className="mr-2 h-6 w-6 text-primary" />
-                Fill the Lost ID Report
+                Lost ID Report
               </h2>
               <p className="text-muted-foreground">
-                Please provide as much detail as possible to increase the chances of a successful match.
+                Please provide details to help us identify your card when it is found.
               </p>
             </div>
             
@@ -108,7 +108,7 @@ export default function ReportLostPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white p-8 rounded-2xl shadow-sm border border-zinc-200"
+              className="bg-white p-8 rounded-[2rem] shadow-sm border border-zinc-200"
             >
               <h3 className="text-xl font-bold text-foreground mb-6 flex items-center">
                 <Info className="mr-2 h-5 w-5 text-secondary" />
@@ -120,7 +120,7 @@ export default function ReportLostPage() {
                     <span className="text-xs font-bold text-primary">1</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Ensure your <strong>Registration/Serial number</strong> is 100% accurate. This is our primary matching criteria.
+                    Double check your <strong>ID or Registration number</strong>. It is the main way we find matches.
                   </p>
                 </li>
                 <li className="flex items-start gap-3">
@@ -128,7 +128,7 @@ export default function ReportLostPage() {
                     <span className="text-xs font-bold text-primary">2</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Describe any <strong>distinguishing marks</strong> (e.g., specific ID holder, stickers, or slight damage) in the description.
+                    Describe any <strong>unique details</strong> (stickers, case color, or slight marks) in the description.
                   </p>
                 </li>
                 <li className="flex items-start gap-3">
@@ -136,7 +136,7 @@ export default function ReportLostPage() {
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Check your email and dashboard regularly for status updates.
+                    Check your email and dashboard for updates on your report.
                   </p>
                 </li>
               </ul>
@@ -147,11 +147,11 @@ export default function ReportLostPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-primary/5 p-8 rounded-2xl border border-primary/10"
+              className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10"
             >
               <h3 className="text-xl font-bold text-foreground mb-6 flex items-center">
                 <FileQuestion className="mr-2 h-5 w-5 text-primary" />
-                Frequently Asked
+                Common Questions
               </h3>
               <div className="space-y-6">
                 {faqs.map((faq, i) => (

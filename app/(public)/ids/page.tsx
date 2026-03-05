@@ -122,9 +122,9 @@ function BrowseIdsContent() {
     <div className="container mx-auto py-12 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Browse Found IDs</h1>
+          <h1 className="text-3xl font-bold text-foreground">Find Your Lost ID</h1>
           <p className="text-muted-foreground mt-1">
-            Search for your lost ID among the items found by the community.
+            Search our recovered items database to see if your identification card has been found.
           </p>
         </div>
       </div>

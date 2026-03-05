@@ -66,9 +66,18 @@ export async function PUT(
     };
 
     if (body.status) updateData.status = body.status;
+    if (body.full_name) updateData.full_name = body.full_name;
+    if (body.id_type) updateData.id_type = body.id_type;
+    if (body.registration_number !== undefined) updateData.registration_number = body.registration_number;
+    if (body.serial_number !== undefined) updateData.serial_number = body.serial_number;
+    if (body.faculty !== undefined) updateData.faculty = body.faculty;
+    if (body.year_of_study !== undefined) updateData.year_of_study = body.year_of_study;
+    if (body.location_found !== undefined) updateData.location_found = body.location_found;
     if (body.holding_location !== undefined) updateData.holding_location = body.holding_location;
     if (body.description !== undefined) updateData.description = body.description;
     if (body.visibility !== undefined) updateData.visibility = body.visibility;
+    if (body.image_url) updateData.image_url = body.image_url;
+    if (body.date_found) updateData.date_found = body.date_found;
 
     const { data, error } = await supabase
       .from("ids_found")

@@ -23,8 +23,21 @@ import {
   MessageCircle,
   TrendingUp,
   Users as UsersIcon,
-  Filter
+  Filter,
+  Pencil,
+  Plus,
+  Loader2
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -57,12 +70,23 @@ interface ForumComment {
 }
 
 export default function AdminCommunityPage() {
-  const { posts, loading: postsLoading, fetchPosts } = useForum();
+  const { posts, loading: postsLoading, fetchPosts, createPost, updatePost } = useForum();
   const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState<CommunityStats | null>(null);
   const [comments, setComments] = useState<ForumComment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Create/Edit State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingPost, setEditingPost] = useState<ForumPost | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    content: "",
+    category: "General" as any
+  });
 
   useEffect(() => {
     fetchStats();
@@ -118,9 +142,47 @@ export default function AdminCommunityPage() {
     }
   };
 
+  const openCreateModal = () => {
+    setFormData({ title: "", content: "", category: "General" });
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (post: ForumPost) => {
+    setEditingPost(post);
+    setFormData({
+      title: post.title,
+      content: post.content,
+      category: post.category
+    });
+    setShowEditModal(true);
+  };
+
+  const handleCreateDiscussion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const success = await createPost(formData);
+    if (success) {
+      setShowCreateModal(false);
+      fetchStats();
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleUpdateDiscussion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost) return;
+    setIsSubmitting(true);
+    const success = await updatePost(editingPost.id, formData);
+    if (success) {
+      setShowEditModal(false);
+      setEditingPost(null);
+    }
+    setIsSubmitting(false);
+  };
+
   const filteredPosts = posts.filter(post => 
     post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.author.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    (post.author.full_name || post.author.name)?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -223,8 +285,8 @@ export default function AdminCommunityPage() {
 
         <TabsContent value="posts">
           <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden shadow-sm">
-            <div className="p-4 border-b bg-zinc-50/30">
-              <div className="relative max-w-sm">
+            <div className="p-4 border-b bg-zinc-50/30 flex items-center justify-between gap-4">
+              <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input 
                   placeholder="Search posts or authors..." 
@@ -233,6 +295,10 @@ export default function AdminCommunityPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+              <Button onClick={openCreateModal} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Discussion
+              </Button>
             </div>
             <Table>
               <TableHeader>
@@ -258,24 +324,27 @@ export default function AdminCommunityPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="h-6 w-6 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600">
-                            {post.author.full_name?.charAt(0) || '?'}
+                            {(post.author.full_name || post.author.name)?.charAt(0) || '?'}
                           </div>
-                          <span className="text-sm font-medium">{post.author.full_name}</span>
+                          <span className="text-sm font-medium">{post.author.full_name || post.author.name}</span>
                         </div>
                       </TableCell>
                       <TableCell><Badge variant="outline">{post.category}</Badge></TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-0.5"><ThumbsUp className="h-3 w-3" /> {post.likes_count || 0}</span>
-                          <span className="flex items-center gap-0.5"><MessageSquare className="h-3 w-3" /> {post.comments_count || 0}</span>
+                          <span className="flex items-center gap-0.5"><ThumbsUp className="h-3 w-3" /> {post.likes || 0}</span>
+                          <span className="flex items-center gap-0.5"><MessageSquare className="h-3 w-3" /> {post.comments || 0}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{format(new Date(post.created_at), 'MMM dd')}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{format(new Date(post.createdAt), 'MMM dd')}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" asChild>
                              <a href="/forum" target="_blank"><Eye className="h-4 w-4" /></a>
                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-600" onClick={() => openEditModal(post)}>
+                                <Pencil className="h-4 w-4" />
+                            </Button>
                            <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button>
@@ -357,6 +426,114 @@ export default function AdminCommunityPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Create Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>New Discussion</DialogTitle>
+            <DialogDescription>Create a new post in the community forum as an administrator.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateDiscussion} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input 
+                id="title" 
+                placeholder="What's on your mind?" 
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <select
+                id="category"
+                className="w-full px-3 py-2 border rounded-md text-sm"
+                value={formData.category}
+                onChange={(e) => setFormData({...formData, category: e.target.value})}
+              >
+                <option value="General">General</option>
+                <option value="Suggestions">Suggestions</option>
+                <option value="Lost & Found">Lost & Found</option>
+                <option value="Announcements">Announcements</option>
+                <option value="Member Thoughts">Member Thoughts</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="content">Content</Label>
+              <Textarea 
+                id="content" 
+                placeholder="Share more details..." 
+                className="min-h-[150px]"
+                value={formData.content}
+                onChange={(e) => setFormData({...formData, content: e.target.value})}
+                required
+              />
+            </div>
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Post
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Discussion</DialogTitle>
+            <DialogDescription>Modify the content or category of this discussion.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateDiscussion} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input 
+                id="edit-title" 
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">Category</Label>
+              <select
+                id="edit-category"
+                className="w-full px-3 py-2 border rounded-md text-sm"
+                value={formData.category}
+                onChange={(e) => setFormData({...formData, category: e.target.value})}
+              >
+                <option value="General">General</option>
+                <option value="Suggestions">Suggestions</option>
+                <option value="Lost & Found">Lost & Found</option>
+                <option value="Announcements">Announcements</option>
+                <option value="Member Thoughts">Member Thoughts</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-content">Content</Label>
+              <Textarea 
+                id="edit-content" 
+                className="min-h-[150px]"
+                value={formData.content}
+                onChange={(e) => setFormData({...formData, content: e.target.value})}
+                required
+              />
+            </div>
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

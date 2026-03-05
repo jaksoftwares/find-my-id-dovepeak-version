@@ -5,16 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, FileSearch, HandHeart, BarChart3, TrendingUp, TrendingDown, Loader2, Calendar } from 'lucide-react';
+import { Users, FileSearch, HandHeart, BarChart3, Loader2, Calendar } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 
 interface AnalyticsData {
   totalIds: number;
-  verifiedIds: number;
-  recoveredIds: number;
-  lostRequests: number;
+  thisMonthIds: number;
+  lastMonthIds: number;
+  totalLost: number;
+  thisMonthLost: number;
+  lastMonthLost: number;
+  totalUsers: number;
+  thisMonthUsers: number;
+  lastMonthUsers: number;
   recoveryRate: number;
-  thisMonthFound: number;
+  lastMonthRecoveryRate: number;
 }
 
 interface RecentUser {
@@ -121,7 +126,7 @@ export default function AdminDashboardPage() {
       setRecentActivity(activities.slice(0, 5));
 
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      // Silently fail or handle gracefully
     } finally {
       setIsLoading(false);
     }
@@ -138,18 +143,26 @@ export default function AdminDashboardPage() {
   const stats = [
     {
       title: 'Total Users',
-      value: recentUsers.length > 0 ? '...' : '0',
-      change: '+0%',
-      changeType: 'increase',
+      value: analytics?.totalUsers?.toString() || '0',
+      change: analytics ? (
+        analytics.lastMonthUsers > 0 
+          ? `${analytics.thisMonthUsers >= analytics.lastMonthUsers ? '+' : ''}${(((analytics.thisMonthUsers - analytics.lastMonthUsers) / analytics.lastMonthUsers) * 100).toFixed(0)}%`
+          : analytics.thisMonthUsers > 0 ? '+100%' : '+0%'
+      ) : '+0%',
+      changeType: analytics && analytics.thisMonthUsers >= analytics.lastMonthUsers ? 'increase' : 'decrease',
       description: 'Registered users',
       icon: Users,
       color: 'bg-blue-100 text-blue-600',
     },
     {
       title: 'Lost Requests',
-      value: analytics?.lostRequests?.toString() || '0',
-      change: '+0%',
-      changeType: 'increase',
+      value: analytics?.totalLost?.toString() || '0',
+      change: analytics ? (
+        analytics.lastMonthLost > 0 
+          ? `${analytics.thisMonthLost >= analytics.lastMonthLost ? '+' : ''}${(((analytics.thisMonthLost - analytics.lastMonthLost) / analytics.lastMonthLost) * 100).toFixed(0)}%`
+          : analytics.thisMonthLost > 0 ? '+100%' : '+0%'
+      ) : '+0%',
+      changeType: analytics && analytics.thisMonthLost >= analytics.lastMonthLost ? 'increase' : 'decrease',
       description: 'Lost IDs reported',
       icon: FileSearch,
       color: 'bg-orange-100 text-orange-600',
@@ -157,8 +170,12 @@ export default function AdminDashboardPage() {
     {
       title: 'IDs Found',
       value: analytics?.totalIds?.toString() || '0',
-      change: '+0%',
-      changeType: 'increase',
+      change: analytics ? (
+        analytics.lastMonthIds > 0 
+          ? `${analytics.thisMonthIds >= analytics.lastMonthIds ? '+' : ''}${(((analytics.thisMonthIds - analytics.lastMonthIds) / analytics.lastMonthIds) * 100).toFixed(0)}%`
+          : analytics.thisMonthIds > 0 ? '+100%' : '+0%'
+      ) : '+0%',
+      changeType: analytics && analytics.thisMonthIds >= analytics.lastMonthIds ? 'increase' : 'decrease',
       description: 'Found and submitted',
       icon: HandHeart,
       color: 'bg-green-100 text-green-600',
@@ -166,8 +183,8 @@ export default function AdminDashboardPage() {
     {
       title: 'Recovery Rate',
       value: `${analytics?.recoveryRate || 0}%`,
-      change: '+0%',
-      changeType: 'increase',
+      change: `${(analytics?.recoveryRate || 0) >= (analytics?.lastMonthRecoveryRate || 0) ? '+' : ''}${((analytics?.recoveryRate || 0) - (analytics?.lastMonthRecoveryRate || 0)).toFixed(0)}%`,
+      changeType: (analytics?.recoveryRate || 0) >= (analytics?.lastMonthRecoveryRate || 0) ? 'increase' : 'decrease',
       description: 'IDs returned to owners',
       icon: BarChart3,
       color: 'bg-purple-100 text-purple-600',
@@ -191,12 +208,12 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">
-          Admin Dashboard
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-6 text-white mb-6">
+        <h1 className="text-2xl font-bold mb-1">
+          Welcome back, {user?.full_name || 'Admin'}
         </h1>
-        <p className="text-gray-300">
-          Welcome back, {user?.full_name || 'Admin'}. Here's an overview of your platform.
+        <p className="text-gray-300 text-sm">
+          Here's what's happening on your platform today.
         </p>
       </div>
 
@@ -209,21 +226,6 @@ export default function AdminDashboardPage() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
                   <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {stat.changeType === 'increase' ? (
-                      <TrendingUp className="h-3 w-3 text-green-600" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 text-red-600" />
-                    )}
-                    <span className={`text-xs font-medium ${
-                      stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {stat.change}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      vs last month
-                    </span>
-                  </div>
                 </div>
                 <div className={`p-3 rounded-lg ${stat.color}`}>
                   <stat.icon className="h-6 w-6" />

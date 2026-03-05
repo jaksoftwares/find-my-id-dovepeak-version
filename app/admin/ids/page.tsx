@@ -30,12 +30,16 @@ interface FoundId {
   id_type: string;
   full_name: string;
   registration_number: string;
-  sighting_location?: string;
+  serial_number?: string;
+  faculty?: string;
+  year_of_study?: string;
+  location_found?: string;
   holding_location?: string;
   description?: string;
   image_url?: string;
   status: string;
   visibility: boolean;
+  date_found?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -43,7 +47,7 @@ interface FoundId {
 const idTypeLabels: Record<string, string> = {
   national_id: 'National ID',
   student_id: 'Student ID',
-  driving_license: "Driving License",
+  driving_license: 'Driving License',
   passport: 'Passport',
   atm_card: 'ATM Card',
   nhif: 'NHIF',
@@ -80,8 +84,16 @@ export default function AdminIDsPage() {
   // Form states
   const [formData, setFormData] = useState({
     status: '',
+    full_name: '',
+    id_type: '',
+    registration_number: '',
+    serial_number: '',
+    faculty: '',
+    year_of_study: '',
+    location_found: '',
     holding_location: '',
     description: '',
+    date_found: '',
     visibility: true,
   });
 
@@ -109,6 +121,9 @@ export default function AdminIDsPage() {
       }
       if (filterType !== 'all') {
         params.append('id_type', filterType);
+      }
+      if (searchQuery) {
+        params.append('search', searchQuery);
       }
 
       const response = await authFetch(`/api/admin/ids?${params.toString()}`);
@@ -143,8 +158,16 @@ export default function AdminIDsPage() {
     setSelectedId(id);
     setFormData({
       status: id.status,
+      full_name: id.full_name || '',
+      id_type: id.id_type || '',
+      registration_number: id.registration_number || '',
+      serial_number: id.serial_number || '',
+      faculty: id.faculty || '',
+      year_of_study: id.year_of_study || '',
+      location_found: id.location_found || '',
       holding_location: id.holding_location || '',
       description: id.description || '',
+      date_found: id.date_found || '',
       visibility: id.visibility,
     });
     setShowEditModal(true);
@@ -277,7 +300,7 @@ export default function AdminIDsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search by name or registration number..."
+                placeholder="Search by name, reg number or serial number..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -495,10 +518,34 @@ export default function AdminIDsPage() {
                     {selectedId.status}
                   </Badge>
                 </div>
-                {selectedId.sighting_location && (
+                {selectedId.location_found && (
                   <div>
-                    <label className="text-sm font-medium">Sighting Location</label>
-                    <p>{selectedId.sighting_location}</p>
+                    <label className="text-sm font-medium">Location Found</label>
+                    <p>{selectedId.location_found}</p>
+                  </div>
+                )}
+                {selectedId.serial_number && (
+                  <div>
+                    <label className="text-sm font-medium">Serial Number</label>
+                    <p className="font-mono">{selectedId.serial_number}</p>
+                  </div>
+                )}
+                {selectedId.faculty && (
+                  <div>
+                    <label className="text-sm font-medium">Faculty</label>
+                    <p>{selectedId.faculty}</p>
+                  </div>
+                )}
+                {selectedId.year_of_study && (
+                  <div>
+                    <label className="text-sm font-medium">Year of Study</label>
+                    <p>{selectedId.year_of_study}</p>
+                  </div>
+                )}
+                {selectedId.date_found && (
+                  <div>
+                    <label className="text-sm font-medium">Date Found</label>
+                    <p>{new Date(selectedId.date_found).toLocaleDateString()}</p>
                   </div>
                 )}
                 {selectedId.holding_location && (
@@ -546,26 +593,112 @@ export default function AdminIDsPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleUpdateID} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
-                    required
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="verified">Verified</option>
-                    <option value="claimed">Claimed</option>
-                    <option value="returned">Returned</option>
-                    <option value="archived">Archived</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Full Name</label>
+                    <Input
+                      type="text"
+                      placeholder="Enter full name"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">ID Type</label>
+                    <select
+                      value={formData.id_type}
+                      onChange={(e) => setFormData({ ...formData, id_type: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                      required
+                    >
+                      {Object.entries(idTypeLabels).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Registration Number</label>
+                    <Input
+                      type="text"
+                      placeholder="Enter reg number"
+                      value={formData.registration_number}
+                      onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Serial Number</label>
+                    <Input
+                      type="text"
+                      placeholder="Serial number"
+                      value={formData.serial_number}
+                      onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                      required
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="verified">Verified</option>
+                      <option value="claimed">Claimed</option>
+                      <option value="returned">Returned</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Faculty</label>
+                    <Input
+                      type="text"
+                      placeholder="Faculty (optional)"
+                      value={formData.faculty}
+                      onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Year of Study</label>
+                    <select
+                      value={formData.year_of_study}
+                      onChange={(e) => setFormData({ ...formData, year_of_study: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-md"
+                    >
+                      <option value="">N/A</option>
+                      <option value="1">Year 1</option>
+                      <option value="2">Year 2</option>
+                      <option value="3">Year 3</option>
+                      <option value="4">Year 4</option>
+                      <option value="5">Year 5</option>
+                      <option value="6">Year 6</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Location Found</label>
+                    <Input
+                      type="text"
+                      placeholder="Where it was found"
+                      value={formData.location_found}
+                      onChange={(e) => setFormData({ ...formData, location_found: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Date Found</label>
+                    <Input
+                      type="date"
+                      value={formData.date_found}
+                      onChange={(e) => setFormData({ ...formData, date_found: e.target.value })}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Holding Location</label>
                   <Input
                     type="text"
-                    placeholder="Enter holding location"
+                    placeholder="Where it is now"
                     value={formData.holding_location}
                     onChange={(e) => setFormData({ ...formData, holding_location: e.target.value })}
                   />

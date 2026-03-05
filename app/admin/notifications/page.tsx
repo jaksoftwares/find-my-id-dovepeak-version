@@ -73,6 +73,7 @@ export default function AdminNotificationsPage() {
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -177,6 +178,11 @@ export default function AdminNotificationsPage() {
     setShowViewModal(true);
   };
 
+  const openDeleteModal = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setShowDeleteModal(true);
+  };
+
   const handleCreateNotification = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -210,18 +216,22 @@ export default function AdminNotificationsPage() {
   };
 
 
-  const handleDeleteNotification = async (notificationId: string) => {
+  const handleDeleteNotification = async () => {
+    if (!selectedNotification) return;
+    
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const response = await authFetch(`/api/admin/notifications/${notificationId}`, {
+      const response = await authFetch(`/api/admin/notifications/${selectedNotification.id}`, {
         method: 'DELETE',
       });
 
       const data = await response.json();
 
       if (data.success) {
+        setShowDeleteModal(false);
+        setSelectedNotification(null);
         fetchNotifications();
       } else {
         setError(data.message || 'Failed to delete notification');
@@ -364,7 +374,7 @@ export default function AdminNotificationsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteNotification(notification.id)}
+                        onClick={() => openDeleteModal(notification)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -598,6 +608,58 @@ export default function AdminNotificationsPage() {
               >
                 Close
               </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedNotification && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md border-red-100 shadow-2xl">
+            <CardHeader className="bg-red-50/50 border-b">
+              <CardTitle className="text-red-700 font-bold flex items-center gap-2">
+                <Trash2 className="h-5 w-5" />
+                Delete Notification
+              </CardTitle>
+              <CardDescription className="text-red-600/70">
+                This action is permanent and cannot be reversed.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="p-4 bg-muted/30 rounded-lg mb-6 border border-zinc-100">
+                <p className="text-xs font-bold text-zinc-500 uppercase mb-1">Preview</p>
+                <p className="font-semibold text-zinc-900">{selectedNotification.title}</p>
+                <p className="text-xs text-zinc-500 mt-1 truncate">{selectedNotification.message}</p>
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setSelectedNotification(null);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Keep It
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1 font-bold shadow-lg shadow-red-200"
+                  onClick={handleDeleteNotification}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Permanently'
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

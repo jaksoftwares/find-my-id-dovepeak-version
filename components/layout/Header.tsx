@@ -47,7 +47,7 @@ export function Header() {
              <div className="absolute -top-1 -right-1 h-3 w-3 bg-secondary rounded-full"></div>
            </div>
           <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
-            JKUAT<span className="text-primary">findmyid</span>
+            FindMy<span className="text-primary">ID</span>
           </span>
         </Link>
         
@@ -64,28 +64,28 @@ export function Header() {
             href="/about" 
             className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/about' ? 'text-primary' : ''}`}
           >
-            About Us
+            Story
             {pathname === '/about' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
           <Link 
             href="/ids" 
             className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/ids' ? 'text-primary' : ''}`}
           >
-            Browse IDs
+            Find ID
             {pathname === '/ids' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
           <Link 
             href="/report-lost" 
             className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/report-lost' ? 'text-primary' : ''}`}
           >
-            Report Your Lost
+            Lost
             {pathname === '/report-lost' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
           <Link 
             href="/found" 
             className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/found' ? 'text-primary' : ''}`}
           >
-            Submit Found
+            Found
             {pathname === '/found' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
           <Link 
@@ -99,7 +99,7 @@ export function Header() {
             href="/forum" 
             className={`hover:text-primary transition-colors flex flex-col items-center ${pathname === '/forum' ? 'text-primary' : ''}`}
           >
-            Community
+            Forum
             {pathname === '/forum' && <span className="h-1 w-1 rounded-full bg-primary mt-0.5" />}
           </Link>
         </nav>

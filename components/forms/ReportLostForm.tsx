@@ -84,9 +84,9 @@ export function ReportLostForm() {
         <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="h-10 w-10 text-green-500" />
         </div>
-        <h3 className="text-2xl font-bold text-zinc-900 mb-3">Report Successfully Filed!</h3>
+        <h3 className="text-2xl font-bold text-zinc-900 mb-3">Report Submitted!</h3>
         <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
-          We've logged your lost ID report. Our system is now actively looking for matches. You'll be notified immediately via email/SMS if it's found.
+          Your report has been received. We'll check it against any found IDs and email you as soon as there's a match.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button onClick={() => setIsSuccess(false)} className="rounded-full px-8">
@@ -112,7 +112,7 @@ export function ReportLostForm() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="full_name" className="text-zinc-700">Owner's Full Name</Label>
+            <Label htmlFor="full_name" className="text-zinc-700">Name on ID</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-zinc-400" />
               <Input id="full_name" placeholder="As it appears on the ID" className="pl-10" {...register("full_name")} />

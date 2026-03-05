@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageSquare } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageSquare, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ContactPage() {
@@ -34,29 +34,29 @@ export default function ContactPage() {
   const contactInfo = [
     {
       icon: <Mail className="h-5 w-5" />,
-      title: "Email Support",
-      description: "Send us an email anytime",
-      value: "support@jkuatfindmyid.com",
+      title: "Email Us",
+      description: "Send us a message anytime",
+      value: "hello@findmyid.com",
       color: "bg-orange-100 text-orange-600"
     },
     {
       icon: <Phone className="h-5 w-5" />,
-      title: "Phone Call",
+      title: "Call Us",
       description: "Mon-Fri from 8am to 5pm",
       value: "+254 700 000 000",
       color: "bg-purple-100 text-purple-600"
     },
     {
       icon: <MapPin className="h-5 w-5" />,
-      title: "Physical Location",
+      title: "Recovery Points",
       description: "Visit us during working hours",
-      value: "Main Security Office, JKUAT Campus",
+      value: "Main Gate / Library Security",
       color: "bg-orange-100 text-orange-600"
     },
     {
       icon: <Clock className="h-5 w-5" />,
-      title: "Office Hours",
-      description: "When we're available",
+      title: "Available Hours",
+      description: "When we're around",
       value: "Monday - Friday: 8:00 AM - 5:00 PM",
       color: "bg-purple-100 text-purple-600"
     }
@@ -65,21 +65,21 @@ export default function ContactPage() {
   const faqItems = [
     {
       question: "How do I report a lost ID?",
-      answer: "Click on 'Report Lost Item' in the navigation and fill out the form with details about your lost ID."
+      answer: "Click on 'Lost' in the navigation and fill out the form with details about your card."
     },
     {
-      question: "How long does verification take?",
-      answer: "Our team typically verifies submitted IDs within 24-48 hours."
+      question: "How do I get my ID back?",
+      answer: "Once your ID is identified on the platform and your claim is approved, we'll email you details on where to pick it up from official school spots."
     },
     {
-      question: "Where do I pick up my found ID?",
-      answer: "Verified IDs can be collected from the Main Security Office during working hours."
+      question: "Is this service free?",
+      answer: "Yes, FindMyID is a completely free community service. We don't charge anything to help you recover your ID."
     }
   ];
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white py-12 px-4">
+      <div className="min-h-screen bg-zinc-50 py-12 px-4">
         <div className="container mx-auto max-w-2xl">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
@@ -89,13 +89,14 @@ export default function ContactPage() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="h-10 w-10 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Message Sent Successfully!</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Message Received!</h2>
             <p className="text-muted-foreground mb-6">
-              Thank you for reaching out. We'll get back to you within 24 hours.
+              Thanks for reaching out. We'll get back to you as soon as we can.
             </p>
             <Button 
               onClick={() => setSubmitted(false)}
               variant="outline"
+              className="rounded-full"
             >
               Send Another Message
             </Button>
@@ -106,7 +107,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white py-12 px-4">
+    <div className="min-h-screen bg-zinc-50 py-12 px-4">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12">
@@ -119,7 +120,7 @@ export default function ContactPage() {
               Get in <span className="text-primary">Touch</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Have questions, suggestions, or need assistance? We're here to help. 
+              Have questions or suggestions? We're here to help the community. 
               Reach out through any of the channels below.
             </p>
           </motion.div>
@@ -132,14 +133,14 @@ export default function ContactPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Card className="border-0 shadow-xl">
+            <Card className="border-zinc-200 shadow-sm rounded-3xl overflow-hidden">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <MessageSquare className="h-5 w-5 text-primary" />
                   Send us a Message
                 </CardTitle>
                 <CardDescription>
-                  Fill out the form below and we'll respond as soon as possible.
+                  Drop us a line and we'll respond as soon as possible.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -149,11 +150,11 @@ export default function ContactPage() {
                       <Label htmlFor="name">Your Name</Label>
                       <Input 
                         id="name"
-                        placeholder="John Doe"
+                        placeholder="Your name"
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                         required
-                        className="border-zinc-200 focus:border-primary focus:ring-primary"
+                        className="rounded-xl border-zinc-200 focus:border-primary focus:ring-primary"
                       />
                     </div>
                     <div className="space-y-2">
@@ -161,11 +162,11 @@ export default function ContactPage() {
                       <Input 
                         id="email"
                         type="email"
-                        placeholder="john@example.com"
+                        placeholder="yourname@example.com"
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         required
-                        className="border-zinc-200 focus:border-primary focus:ring-primary"
+                        className="rounded-xl border-zinc-200 focus:border-primary focus:ring-primary"
                       />
                     </div>
                   </div>
@@ -174,11 +175,11 @@ export default function ContactPage() {
                     <Label htmlFor="subject">Subject</Label>
                     <Input 
                       id="subject"
-                      placeholder="How can we help you?"
+                      placeholder="What is this about?"
                       value={formData.subject}
                       onChange={(e) => setFormData({...formData, subject: e.target.value})}
                       required
-                      className="border-zinc-200 focus:border-primary focus:ring-primary"
+                      className="rounded-xl border-zinc-200 focus:border-primary focus:ring-primary"
                     />
                   </div>
                   
@@ -186,23 +187,23 @@ export default function ContactPage() {
                     <Label htmlFor="message">Message</Label>
                     <Textarea 
                       id="message"
-                      placeholder="Describe your issue or question in detail..."
+                      placeholder="Write your message here..."
                       rows={5}
                       value={formData.message}
                       onChange={(e) => setFormData({...formData, message: e.target.value})}
                       required
-                      className="border-zinc-200 focus:border-primary focus:ring-primary resize-none"
+                      className="rounded-xl border-zinc-200 focus:border-primary focus:ring-primary resize-none"
                     />
                   </div>
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90"
+                    className="w-full bg-primary hover:bg-primary/90 rounded-full h-12 text-base font-bold"
                     disabled={loading}
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
-                        <span className="animate-spin">⏳</span>
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Sending...
                       </span>
                     ) : (
@@ -227,12 +228,12 @@ export default function ContactPage() {
             {/* Contact Info Cards */}
             <div className="grid sm:grid-cols-2 gap-4">
               {contactInfo.map((item, index) => (
-                <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-shadow">
+                <Card key={index} className="border-zinc-100 shadow-sm hover:shadow-md transition-shadow rounded-2xl">
                   <CardContent className="pt-6">
-                    <div className={`w-12 h-12 rounded-lg ${item.color} flex items-center justify-center mb-4`}>
+                    <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center mb-4`}>
                       {item.icon}
                     </div>
-                    <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
+                    <h3 className="font-bold text-foreground mb-1">{item.title}</h3>
                     <p className="text-sm text-muted-foreground mb-1">{item.description}</p>
                     <p className="font-medium text-primary">{item.value}</p>
                   </CardContent>
@@ -241,14 +242,14 @@ export default function ContactPage() {
             </div>
 
             {/* FAQ Section */}
-            <Card className="border-0 shadow-md">
+            <Card className="border-zinc-100 shadow-sm rounded-2xl">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Frequently Asked Questions</CardTitle>
+                <CardTitle className="text-lg">Common Questions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {faqItems.map((item, index) => (
-                  <div key={index} className="border-b border-zinc-100 last:border-0 pb-4 last:pb-0">
-                    <h4 className="font-medium text-foreground mb-2">{item.question}</h4>
+                  <div key={index} className="border-b border-zinc-50 last:border-0 pb-4 last:pb-0">
+                    <h4 className="font-bold text-foreground mb-2">{item.question}</h4>
                     <p className="text-sm text-muted-foreground">{item.answer}</p>
                   </div>
                 ))}

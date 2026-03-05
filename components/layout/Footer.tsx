@@ -14,11 +14,11 @@ export function Footer() {
                     <span className="text-primary font-bold">J</span>
                  </div>
                  <span className="text-xl font-bold tracking-tight text-foreground">
-                    JKUAT<span className="text-primary">findmyid</span>
+                    FindMy<span className="text-primary">ID</span>
                  </span>
               </Link>
               <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
-                 Connecting the community through trust and technology. The fastest way to recover your lost identification documents.
+                 A community-driven platform for JKUAT students to recover lost identification cards quickly and easily.
               </p>
            </div>
            
@@ -26,11 +26,11 @@ export function Footer() {
            <div>
               <h4 className="font-bold text-foreground mb-6">Quick Links</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                 <li><Link href="/ids" className="hover:text-primary transition-colors">Browse IDs</Link></li>
-                 <li><Link href="/report-lost" className="hover:text-primary transition-colors">Report Lost Item</Link></li>
-                 <li><Link href="/submit-found" className="hover:text-primary transition-colors">Submit Found Item</Link></li>
+                 <li><Link href="/ids" className="hover:text-primary transition-colors">Search Found IDs</Link></li>
+                 <li><Link href="/report-lost" className="hover:text-primary transition-colors">I Lost My ID</Link></li>
+                 <li><Link href="/submit-found" className="hover:text-primary transition-colors">I Found an ID</Link></li>
                  <li><Link href="/forum" className="hover:text-primary transition-colors">Community Forum</Link></li>
-                 <li><Link href="/dashboard" className="hover:text-primary transition-colors">Student Dashboard</Link></li>
+                 <li><Link href="/dashboard" className="hover:text-primary transition-colors">User Dashboard</Link></li>
               </ul>
            </div>
            
@@ -38,34 +38,32 @@ export function Footer() {
            <div>
               <h4 className="font-bold text-foreground mb-6">Support</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                 <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+                 <li><Link href="/about" className="hover:text-primary transition-colors">About FindMyID</Link></li>
                  <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Center</Link></li>
                  <li><Link href="/faq" className="hover:text-primary transition-colors">FAQs</Link></li>
-                 <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+                 <li><Link href="/disclaimer" className="hover:text-primary transition-colors">Legal Disclaimer</Link></li>
+                 <li><Link href="/terms" className="hover:text-primary transition-colors">Terms and Conditions</Link></li>
               </ul>
            </div>
            
            {/* Newsletter / CTA */}
            <div>
               <h4 className="font-bold text-foreground mb-6">Stay Updated</h4>
-              <p className="text-muted-foreground text-sm mb-4">Subscribe to get notifications about new features.</p>
+              <p className="text-muted-foreground text-sm mb-4">Help us keep the community informed. Join our forum!</p>
               <div className="flex gap-2">
-                 <input 
-                   type="email" 
-                   placeholder="Enter email" 
-                   className="flex-1 bg-zinc-50 border border-input rounded-md px-3 py-2 text-sm outline-none focus:border-primary transition-colors"
-                 />
-                 <Button size="sm" className="rounded-md">Subscribe</Button>
+                 <Link href="/forum" className="w-full">
+                   <Button size="sm" className="rounded-md w-full">Go to Forum</Button>
+                 </Link>
               </div>
            </div>
         </div>
         
         <div className="border-t border-zinc-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-           <p>&copy; {new Date().getFullYear()} JKUATfindmyid. All rights reserved.</p>
+           <p>&copy; {new Date().getFullYear()} FindMyID. All rights reserved.</p>
            <div className="flex gap-6">
-              <Link href="#" className="hover:text-foreground">Privacy Policy</Link>
-              <Link href="#" className="hover:text-foreground">Terms</Link>
-              <Link href="#" className="hover:text-foreground">Cookies</Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors underline-offset-4 hover:underline">Privacy Policy</Link>
+              <Link href="/disclaimer" className="hover:text-foreground transition-colors underline-offset-4 hover:underline">Disclaimer</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors underline-offset-4 hover:underline">Terms</Link>
            </div>
         </div>
       </div>

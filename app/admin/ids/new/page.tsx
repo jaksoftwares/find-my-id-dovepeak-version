@@ -14,7 +14,7 @@ import { authFetch } from '@/app/lib/apiClient';
 const idTypeLabels: Record<string, string> = {
   national_id: 'National ID',
   student_id: 'Student ID',
-  drivers_license: "Driver's License",
+  driving_license: "Driving License",
   passport: 'Passport',
   atm_card: 'ATM Card',
   nhif: 'NHIF',

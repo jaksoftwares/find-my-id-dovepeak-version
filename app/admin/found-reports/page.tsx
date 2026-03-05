@@ -29,6 +29,7 @@ interface Submission {
   full_name: string;
   registration_number?: string;
   location_found?: string;
+  description?: string;
   image_url: string;
   contact_info: string;
   status: string;
@@ -222,8 +223,34 @@ export default function AdminFoundReportsPage() {
                 </div>
 
                 <div className="space-y-4">
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 bg-muted/30 rounded-lg border border-zinc-200">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">ID Type</p>
+                        <p className="text-sm font-semibold">{idTypeLabels[selectedSubmission.id_type] || selectedSubmission.id_type}</p>
+                      </div>
+                      <div className="p-3 bg-muted/30 rounded-lg border border-zinc-200">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Reg Number</p>
+                        <p className="text-sm font-semibold font-mono">{selectedSubmission.registration_number || 'N/A'}</p>
+                      </div>
+                      <div className="p-3 bg-muted/30 rounded-lg border border-zinc-200">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Found At</p>
+                        <p className="text-sm font-semibold">{selectedSubmission.location_found || 'Not specified'}</p>
+                      </div>
+                      <div className="p-3 bg-muted/30 rounded-lg border border-zinc-200">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Submitted On</p>
+                        <p className="text-sm font-semibold">{new Date(selectedSubmission.created_at).toLocaleDateString()}</p>
+                      </div>
+                   </div>
+
                    <div className="p-4 bg-muted/30 rounded-lg space-y-2 border border-zinc-200">
-                      <p className="text-xs font-bold text-primary uppercase tracking-widest">Submitter Info</p>
+                      <p className="text-xs font-bold text-primary uppercase tracking-widest">Description</p>
+                      <p className="text-sm text-zinc-700 leading-relaxed italic">
+                        "{selectedSubmission.description || 'No additional description provided by the submitter.'}"
+                      </p>
+                   </div>
+
+                   <div className="p-4 bg-muted/30 rounded-lg space-y-2 border border-zinc-200">
+                      <p className="text-xs font-bold text-primary uppercase tracking-widest">Submitter Contact Information</p>
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-zinc-600" />
                         <span className="text-sm font-semibold">{selectedSubmission.contact_info}</span>

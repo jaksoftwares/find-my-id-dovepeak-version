@@ -9,67 +9,71 @@ export async function GET() {
     
     const supabase = await createClient();
 
-    // Run all queries in parallel for better performance
+    const now = new Date();
+    const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+
     const [
       totalIdsResult,
-      verifiedIdsResult,
-      recoveredIdsResult,
+      thisMonthIdsResult, 
+      lastMonthIdsResult,
       lostRequestsResult,
-      thisMonthFoundResult
+      thisMonthLostResult,
+      lastMonthLostResult,
+      totalUsersResult,
+      thisMonthUsersResult,
+      lastMonthUsersResult,
+      recoveredIdsResult
     ] = await Promise.all([
-      // 1. Total IDs found
-      supabase
-        .from("ids_found")
-        .select("*", { count: "exact", head: true }),
+      // IDs Found
+      supabase.from("ids_found").select("*", { count: "exact", head: true }),
+      supabase.from("ids_found").select("*", { count: "exact", head: true }).gte("created_at", firstDayThisMonth),
+      supabase.from("ids_found").select("*", { count: "exact", head: true }).gte("created_at", firstDayLastMonth).lt("created_at", firstDayThisMonth),
       
-      // 2. Verified IDs
-      supabase
-        .from("ids_found")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "verified"),
-      
-      // 3. Claimed/Returned IDs (Recovered)
-      supabase
-        .from("ids_found")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["claimed", "returned"]),
-      
-      // 4. Lost Requests
-      supabase
-        .from("lost_requests")
-        .select("*", { count: "exact", head: true }),
-      
-      // 5. Monthly stats - IDs found this month
-      Promise.resolve(
-        (async () => {
-          const currentDate = new Date();
-          const currentMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-          
-          return supabase
-            .from("ids_found")
-            .select("*", { count: "exact", head: true })
-            .gte("created_at", currentMonthStart);
-        })()
-      )
+      // Lost Requests
+      supabase.from("lost_requests").select("*", { count: "exact", head: true }),
+      supabase.from("lost_requests").select("*", { count: "exact", head: true }).gte("created_at", firstDayThisMonth),
+      supabase.from("lost_requests").select("*", { count: "exact", head: true }).gte("created_at", firstDayLastMonth).lt("created_at", firstDayThisMonth),
+
+      // Users
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", firstDayThisMonth),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", firstDayLastMonth).lt("created_at", firstDayThisMonth),
+
+      // Recovered IDs
+      supabase.from("ids_found").select("*", { count: "exact", head: true }).in("status", ["claimed", "returned"]),
     ]);
 
     const totalIds = totalIdsResult.count || 0;
-    const verifiedIds = verifiedIdsResult.count || 0;
-    const recoveredIds = recoveredIdsResult.count || 0;
-    const lostRequests = lostRequestsResult.count || 0;
-    const thisMonthFound = thisMonthFoundResult.count || 0;
+    const thisMonthIds = thisMonthIdsResult.count || 0;
+    const lastMonthIds = lastMonthIdsResult.count || 0;
 
-    const recoveryRate = totalIds ? ((recoveredIds) / totalIds) * 100 : 0;
+    const totalLost = lostRequestsResult.count || 0;
+    const thisMonthLost = thisMonthLostResult.count || 0;
+    const lastMonthLost = lastMonthLostResult.count || 0;
+
+    const totalUsers = totalUsersResult.count || 0;
+    const thisMonthUsers = thisMonthUsersResult.count || 0;
+    const lastMonthUsers = lastMonthUsersResult.count || 0;
+
+    const recoveredIds = recoveredIdsResult.count || 0;
+    const recoveryRate = totalIds ? (recoveredIds / totalIds) * 100 : 0;
+    const lastMonthRecoveryRate = 20; // Placeholder
 
     return NextResponse.json({
       success: true,
       data: {
         totalIds,
-        verifiedIds,
-        recoveredIds,
-        lostRequests,
+        thisMonthIds,
+        lastMonthIds,
+        totalLost,
+        thisMonthLost,
+        lastMonthLost,
+        totalUsers,
+        thisMonthUsers,
+        lastMonthUsers,
         recoveryRate: parseFloat(recoveryRate.toFixed(2)),
-        thisMonthFound
+        lastMonthRecoveryRate,
       },
     });
   } catch (error) {

@@ -185,6 +185,7 @@ export function useForum() {
           ...updatedPost,
            author: p.author, // Keep original author metadata
            likes: p.likes,
+           dislikes: p.dislikes,
            comments: p.comments,
            createdAt: updatedPost.created_at
       } : p));

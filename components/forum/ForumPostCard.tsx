@@ -116,7 +116,7 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
                 onClick={() => onLike?.('like')}
             >
                 <ThumbsUp className={`h-4 w-4 ${post.user_vote === 'like' ? 'fill-current' : ''}`} />
-                <span className="text-xs font-semibold">{post.likes_count}</span>
+                <span className="text-xs font-semibold">{post.likes}</span>
             </Button>
             <div className="w-[1px] h-4 bg-zinc-200" />
             <Button 
@@ -128,7 +128,7 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
                 onClick={() => onLike?.('dislike')}
             >
                 <ThumbsDown className={`h-4 w-4 ${post.user_vote === 'dislike' ? 'fill-current' : ''}`} />
-                <span className="text-xs font-semibold">{post.dislikes_count}</span>
+                <span className="text-xs font-semibold">{post.dislikes}</span>
             </Button>
           </div>
 
@@ -139,7 +139,7 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
             onClick={toggleComments}
           >
             <MessageSquare className="h-4 w-4" />
-            <span className="text-xs">{post.comments_count} Comments</span>
+            <span className="text-xs">{post.comments} Comments</span>
           </Button>
           <Button variant="ghost" size="sm" className="ml-auto gap-2 text-muted-foreground hover:text-primary">
             <Share2 className="h-4 w-4" />

@@ -98,6 +98,7 @@ export function useForum() {
              ...createdPost.author
         },
         likes: 0,
+        dislikes: 0,
         comments: 0,
         createdAt: createdPost.created_at,
         user_vote: null

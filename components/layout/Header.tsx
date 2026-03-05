@@ -152,6 +152,11 @@ export function Header() {
                 <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors hidden sm:block">
                   Log In
                 </Link>
+                <Link href="/register" className="hidden sm:block">
+                  <Button variant="ghost" className="text-sm font-medium hover:text-primary hover:bg-primary/5 rounded-full px-4">
+                    Sign Up
+                  </Button>
+                </Link>
                 <Link href="/report-lost">
                   <Button className="rounded-full px-4 sm:px-6 font-semibold shadow-md hover:shadow-lg transition-all text-xs sm:text-sm">
                     Report Lost
@@ -182,13 +187,23 @@ export function Header() {
               </Link>
             ))}
             {!isAuthenticated && (
-              <Link
-                href="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-lg font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:bg-zinc-50 hover:text-primary sm:hidden"
-              >
-                Log In
-              </Link>
+              <div className="flex flex-col gap-2 mt-2 px-4">
+                <Link
+                  href="/login"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-lg font-semibold py-2 text-muted-foreground hover:text-primary"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button className="w-full rounded-xl h-12 text-lg font-bold shadow-lg shadow-primary/20">
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
             )}
           </nav>
         </div>

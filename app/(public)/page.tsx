@@ -97,14 +97,14 @@ function HomeContent() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
-             <Link href="/ids">
+             <Link href="/register">
                <Button className="rounded-full h-12 px-10 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-bold">
-                 Search
+                 Get Started
                </Button>
              </Link>
-             <Link href="/report-lost">
-               <Button variant="outline" className="rounded-full h-12 px-10 text-base bg-white border-zinc-200 hover:border-primary hover:text-primary transition-all font-bold">
-                 Report Lost
+             <Link href="/ids">
+               <Button variant="outline" className="rounded-full h-12 px-10 text-base bg-white border-zinc-200 hover:bg-primary hover:border-primary hover:text-white transition-all font-bold">
+                 Search Found
                </Button>
              </Link>
           </motion.div>
@@ -380,17 +380,20 @@ function HomeContent() {
             className="space-y-8"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-              Let's find your lost card.
+              Ready to join the community?
             </h2>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-               <Link href="/ids">
-                 <Button size="lg" className="rounded-full px-12 h-14 text-lg font-bold">
-                   Search Database
+            <p className="text-zinc-600 text-lg max-w-xl mx-auto">
+              Create an account today to report lost IDs, share in the forum, and help fellow students.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+               <Link href="/register">
+                 <Button size="lg" className="rounded-full px-12 h-14 text-lg font-bold shadow-xl shadow-primary/25">
+                   Create Account
                  </Button>
                </Link>
-               <Link href="/report-lost">
+               <Link href="/ids">
                  <Button size="lg" variant="outline" className="rounded-full px-12 h-14 text-lg font-bold">
-                   Report Lost
+                   Browse IDs
                  </Button>
                </Link>
             </div>

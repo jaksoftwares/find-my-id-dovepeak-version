@@ -139,11 +139,14 @@ export async function register(userData: RegisterData): Promise<AuthResponse> {
       };
     }
 
-    // Update profile with phone number if provided
-    if (userData.phone_number && data.user) {
+    // Update profile with names and phone if provided
+    if (data.user) {
       await supabase
         .from('profiles')
-        .update({ phone_number: userData.phone_number })
+        .update({ 
+          full_name: userData.full_name,
+          phone: userData.phone_number 
+        })
         .eq('id', data.user.id);
     }
 
@@ -293,6 +296,45 @@ export async function requestPasswordReset(email: string): Promise<{
     };
   } catch (error: any) {
     console.error('Password reset request error:', error);
+    return {
+      success: false,
+      message: error.message || 'An unexpected error occurred',
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Resend verification email
+ */
+export async function resendVerification(email: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`,
+      }
+    });
+
+    if (error) {
+      return {
+        success: false,
+        message: error.message,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Verification email resent successfully.',
+    };
+  } catch (error: any) {
+    console.error('Resend verification error:', error);
     return {
       success: false,
       message: error.message || 'An unexpected error occurred',

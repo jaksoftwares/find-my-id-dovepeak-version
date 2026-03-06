@@ -7,20 +7,39 @@ import { ExternalLink, ShieldCheck, Heart, Coffee, Landmark } from "lucide-react
 
 export default function DonationsPage() {
   return (
-    <div className="min-h-screen bg-white bg-gradient-to-b from-white to-zinc-50/30 selection:bg-primary/20 selection:text-primary pb-20">
-      <div className="container mx-auto px-4 py-16 md:py-24 max-w-4xl text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-            Support FindMyID
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            FindMyID is a community-driven initiative built to help JKUAT students recover lost identification cards. Your support helps us cover server costs, maintenance, and further development.
-          </p>
-        </motion.div>
+    <div className="min-h-screen bg-white selection:bg-primary/20 selection:text-primary pb-20">
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden border-b border-zinc-100">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 bg-zinc-50">
+          <img 
+            src="/donations-hero.png" 
+            alt="Donation Background" 
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white"></div>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6 max-w-3xl mx-auto"
+          >
+            <span className="text-primary font-bold text-sm tracking-[0.2em] uppercase mb-4 block">
+              Community Support
+            </span>
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#0B3D91]">
+              Support <span className="text-primary">findmyid</span>
+            </h1>
+            <p className="text-lg md:text-xl text-zinc-600 max-w-2xl mx-auto leading-relaxed font-medium">
+              A volunteer initiative created for the community. Your support helps us maintain and improve the platform.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      <div className="container mx-auto px-4 max-w-4xl pt-12">
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -30,23 +49,19 @@ export default function DonationsPage() {
         >
           {[
             {
-              icon: <ShieldCheck className="h-6 w-6 text-primary" />,
               title: "Free for Everyone",
               description: "The platform will always remain free for searching and reporting lost cards."
             },
             {
-              icon: <Landmark className="h-6 w-6 text-primary" />,
               title: "Infrastructure",
               description: "Donations help pay for hosting and the technology that keeps the system running."
             },
             {
-              icon: <Heart className="h-6 w-6 text-primary" />,
               title: "Community Driven",
               description: "Every contribution directly supports the growth of this community project."
             }
           ].map((item, i) => (
             <div key={i} className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
-              <div className="mb-4">{item.icon}</div>
               <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
             </div>

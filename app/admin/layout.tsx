@@ -116,7 +116,7 @@ export default function AdminLayout({
                   </div>
                   <div className="absolute -top-1 -right-1 h-3 w-3 bg-secondary rounded-full"></div>
                 </div>
-                <span className="font-bold">JKUATfindmyid</span>
+                <span className="font-bold">findmyid</span>
               </Link>
               <button
                 onClick={() => setIsSidebarOpen(false)}

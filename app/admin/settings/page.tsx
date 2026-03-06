@@ -39,9 +39,9 @@ export default function AdminSettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<SiteSettings>({
-    site_name: 'JKUAT Find My ID',
+    site_name: 'Find My ID',
     site_description: 'Platform for finding lost identification cards at JKUAT',
-    contact_email: 'support@jkuatfindmyid.ac.ke',
+    contact_email: 'support@findmyid.ac.ke',
     support_phone: '+254 700 000 000',
     address: 'JKUAT Main Campus, Juja',
     notifications_enabled: true,

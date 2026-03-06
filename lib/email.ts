@@ -61,7 +61,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #333;">
         <h2 style="color: #4f46e5;">Hello ${adminName},</h2>
-        <p>A new claim has been submitted on JKUATfindmyid for an identification document.</p>
+        <p>A new claim has been submitted on findmyid for an identification document.</p>
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; margin: 20px 0;">
           <p style="margin: 0;"><strong>Claimant:</strong> ${claimantName}</p>
           <p style="margin: 0;"><strong>Document:</strong> ${itemName}</p>
@@ -72,7 +72,7 @@ export const emailTemplates = {
           <a href="${process.env.NEXT_PUBLIC_SITE_URL}/admin/claims" style="background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Review Claim</a>
         </div>
         <br/>
-        <p>Regards,<br/><strong>JKUATfindmyid Team</strong></p>
+        <p>Regards,<br/><strong>findmyid Team</strong></p>
       </div>
     `,
   }),
@@ -97,7 +97,7 @@ export const emailTemplates = {
         </div>
         <p style="margin-top: 40px; text-align: center; font-size: 12px; color: #9ca3af;">
           Best of luck,<br/>
-          <strong>The JKUATfindmyid Team</strong>
+          <strong>The findmyid Team</strong>
         </p>
       </div>
     `,
@@ -126,7 +126,7 @@ export const emailTemplates = {
           </div>
         </div>
         <div style="background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-          JKUATfindmyid System Notification
+          findmyid System Notification
         </div>
       </div>
     `,
@@ -150,7 +150,7 @@ export const emailTemplates = {
           <p><strong>What should you do now?</strong></p>
           <p>Please keep the document safe until further instructions. If the owner reaches out through the system or if we need more info, we will contact you via the details you provided.</p>
           
-          <p style="margin-top: 30px;">Warm regards,<br/><strong>The JKUATfindmyid Team</strong></p>
+          <p style="margin-top: 30px;">Warm regards,<br/><strong>The findmyid Team</strong></p>
         </div>
       </div>
     `,
@@ -170,7 +170,7 @@ export const emailTemplates = {
           <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/claims" style="background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Go to Dashboard</a>
         </div>
         <br/>
-        <p>Best Regards,<br/><strong>The JKUATfindmyid Team</strong></p>
+        <p>Best Regards,<br/><strong>The findmyid Team</strong></p>
       </div>
     `,
   }),
@@ -199,8 +199,8 @@ export const emailTemplates = {
           </div>
           
           <p style="margin-top: 40px; font-size: 14px; color: #6b7280; text-align: center;">
-            Thank you for using JKUATfindmyid. We hope you recover your document soon.<br/>
-            <strong>The JKUATfindmyid Team</strong>
+            Thank you for using findmyid. We hope you recover your document soon.<br/>
+            <strong>The findmyid Team</strong>
           </p>
         </div>
       </div>
@@ -230,7 +230,7 @@ export const emailTemplates = {
           </div>
         </div>
         <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
-          Automated System Notification | JKUATfindmyid
+          Automated System Notification | findmyid
         </div>
       </div>
     `,
@@ -254,7 +254,7 @@ export const emailTemplates = {
           <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/requests" style="background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Go to Dashboard</a>
         </div>
         <br/>
-        <p>Best Regards,<br/><strong>The JKUATfindmyid Team</strong></p>
+        <p>Best Regards,<br/><strong>The findmyid Team</strong></p>
       </div>
     `,
   }),
@@ -264,7 +264,7 @@ export const emailTemplates = {
       <h2>Hello ${userName},</h2>
       <p>${message}</p>
       <br/>
-      <p>Regards,<br/>JKUATfindmyid Team</p>
+      <p>Regards,<br/>findmyid Team</p>
     `,
   }),
 };

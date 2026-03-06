@@ -122,5 +122,22 @@ export function usePostComments(postId: string) {
     }
   };
 
-  return { comments, loading, fetchComments, addComment, voteComment };
+  const deleteComment = async (commentId: string) => {
+    try {
+      const res = await fetch(`/api/forum/comments/${commentId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete comment");
+
+      setComments(comments.filter(c => c.id !== commentId));
+      toast.success("Comment deleted");
+      return true;
+    } catch (error) {
+      toast.error("Failed to delete comment");
+      return false;
+    }
+  };
+
+  return { comments, loading, fetchComments, addComment, voteComment, deleteComment };
 }

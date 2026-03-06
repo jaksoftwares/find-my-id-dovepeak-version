@@ -181,7 +181,7 @@ function HomeContent() {
             <div className="flex-1 text-center lg:text-left">
               <h2 className="text-3xl font-bold text-foreground mb-4">Hi, I'm Joseph Kirika</h2>
               <p className="text-lg text-zinc-600 mb-6 leading-relaxed italic">
-                "Imagine walking across campus and realizing your ID is gone. I've been there twice, and that's why I built FindMyID—a volunteer project to help us recover lost cards easily through technology."
+                "Imagine walking across campus and realizing your ID is gone. I've been there twice, and that's why I built FindMyID—a volunteer project to help JKUAT community recover lost cards easily through technology."
               </p>
               <Link href="/about">
                 <Button variant="outline" className="rounded-full px-8">
@@ -243,7 +243,7 @@ function HomeContent() {
               <div className="max-w-xl text-left">
                  <h2 className="text-3xl font-bold text-zinc-900">Recent Cards</h2>
                  <p className="text-zinc-600 mt-2">
-                    Here are the latest identification cards that have been reported found by fellow students.
+                    Here are the latest identification cards that have been reported and found.
                  </p>
               </div>
               <Link href="/ids">
@@ -323,10 +323,7 @@ function HomeContent() {
               <h2 className="text-2xl font-bold text-foreground mb-6">Common Questions</h2>
               <Accordion type="single" collapsible className="w-full space-y-3">
                 {[
-                  {
-                    q: "Is this affiliated with the school?",
-                    a: "No. This is a volunteer initiative created by a student for the community."
-                  },
+                  
                   {
                     q: "How do I pick up my card?",
                     a: "Once a claim is approved, you will receive an email with instructions on where to pick up your card from official school security spots."
@@ -334,6 +331,18 @@ function HomeContent() {
                   {
                     q: "Are there any charges?",
                     a: "No. FindMyID is completely free for all students."
+                  },
+                  {
+                    q: "What should I do if I find someone's ID?",
+                    a: "You can sign up and report the found ID through your dashboard. We'll then list it here to help the owner find it."
+                  },
+                  {
+                    q: "How do I know if an ID is mine?",
+                    a: "You can search by your name or ID number. If a match is found, you can view the location where it was found and start the claim process."
+                  },
+                  {
+                    q: "What if my ID is not listed?",
+                    a: "If your ID isn't in our database yet, please check back frequently. Our community volunteers report new found IDs every day."
                   }
                 ].map((item, i) => (
                   <AccordionItem key={i} value={`item-${i}`} className="border-none bg-white rounded-xl px-4 border border-zinc-200">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -13,16 +14,28 @@ export default function AboutPage() {
 
   return (
     <div className="bg-white min-h-screen selection:bg-primary/10 selection:text-primary">
-      {/* Hero Section - Zinc background for distinction from Header */}
-      <section className="relative pt-24 pb-20 bg-zinc-50 border-b border-zinc-100">
-        <div className="container mx-auto px-4 text-center max-w-3xl">
+      {/* Hero Section - With Background Image */}
+      <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden border-b border-zinc-100">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 bg-zinc-100">
+          <Image 
+            src="/jkuat-image.jpg" 
+            alt="JKUAT Campus" 
+            fill
+            priority
+            className="object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white"></div>
+        </div>
+
+        <div className="container mx-auto px-4 text-center max-w-3xl relative z-10">
           <motion.div {...fadeIn}>
-            <span className="text-primary font-bold text-sm tracking-[0.2em] uppercase mb-4 block">Our Journey</span>
-            <h1 className="text-4xl md:text-6xl font-extrabold text-[#0B3D91] mb-6 leading-tight tracking-tight">
-              The FindMyID Story
+            <span className="text-primary font-bold text-sm tracking-[0.2em] uppercase mb-4 block">The Story</span>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-[#0B3D91] mb-6 leading-tight tracking-tight">
+              The Story of FindMyID
             </h1>
-            <p className="text-xl text-zinc-600 leading-relaxed font-medium">
-              A community effort born from a simple personal experience, built to help JKUAT students help each other.
+            <p className="text-xl text-zinc-600 leading-relaxed font-medium max-w-2xl mx-auto">
+              A volunteer initiative built to help JKUAT community recover lost IDs and traceable small items.
             </p>
           </motion.div>
         </div>

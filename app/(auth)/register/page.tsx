@@ -133,7 +133,7 @@ export default function RegisterPage() {
               <div className="absolute -top-1 -right-1 h-4 w-4 bg-secondary rounded-full"></div>
             </div>
             <span className="text-2xl font-bold tracking-tight text-foreground">
-              JKUAT<span className="text-primary">findmyid</span>
+              <span className="text-primary">findmyid</span>
             </span>
           </Link>
         </div>

@@ -94,8 +94,9 @@ function LoginForm() {
         // Default redirect for all users to the main landing page
         window.location.replace('/');
       } else {
-        // Check if error is about email confirmation
-        if (result.message?.toLowerCase().includes('email not confirmed')) {
+        // Check if error is about email confirmation or verification
+        const message = result.message?.toLowerCase() || '';
+        if (message.includes('email not confirmed') || message.includes('verify your email') || message.includes('email address not verified')) {
             setLoginEmail(formData.email);
             setShowVerifyModal(true);
         } else {
@@ -130,7 +131,7 @@ function LoginForm() {
               <div className="absolute -top-1 -right-1 h-4 w-4 bg-secondary rounded-full"></div>
             </div>
             <span className="text-2xl font-bold tracking-tight text-foreground">
-              JKUAT<span className="text-primary">findmyid</span>
+              <span className="text-primary">findmyid</span>
             </span>
           </Link>
         </div>

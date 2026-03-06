@@ -121,7 +121,7 @@ export default function DashboardLayout({
                 </div>
                 <div className="absolute -top-1 -right-1 h-3 w-3 bg-secondary rounded-full"></div>
               </div>
-              <span className="font-bold text-foreground">JKUATfindmyid</span>
+              <span className="font-bold text-foreground">findmyid</span>
             </Link>
             <button
               onClick={() => setIsSidebarOpen(false)}

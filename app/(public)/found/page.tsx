@@ -49,10 +49,7 @@ export default function FoundPage() {
             className="text-center md:text-left md:flex items-center justify-between gap-12"
           >
             <div className="md:max-w-2xl">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-4">
-                <HandHeart className="mr-1.5 h-3.5 w-3.5" />
-                Volunteer Effort
-              </span>
+              
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#0B3D91] mb-4">
                 Found an ID Card? <br className="hidden md:block"/>
                 <span className="text-primary">Be the Help Someone Needs.</span>

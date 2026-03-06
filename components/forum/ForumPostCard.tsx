@@ -2,14 +2,33 @@ import { ForumPost } from "@/hooks/useForum";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, ThumbsUp, ThumbsDown, Share2, MoreHorizontal, Send, Trash2 } from "lucide-react";
+import { 
+  MessageSquare, 
+  ThumbsUp, 
+  ThumbsDown, 
+  Share2, 
+  Send, 
+  Trash2,
+  MoreHorizontal,
+  Loader2
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { usePostComments } from "@/hooks/usePostComments";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ForumPostCardProps {
   post: ForumPost;
@@ -19,7 +38,7 @@ interface ForumPostCardProps {
 
 export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
   const [showComments, setShowComments] = useState(false);
-  const { comments, loading, fetchComments, addComment, voteComment } = usePostComments(post.id);
+  const { comments, loading, fetchComments, addComment, voteComment, deleteComment } = usePostComments(post.id);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,8 +53,7 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
     setShowComments(!showComments);
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+  const handleDeletePost = async () => {
     if (onDelete) {
         onDelete();
         return;
@@ -71,11 +89,11 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
           <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold ${
             post.author.role === 'admin' ? 'bg-primary' : 'bg-zinc-200 text-zinc-600'
           }`}>
-            {post.author.role === 'admin' ? 'A' : post.author.full_name?.charAt(0) || '?'}
+            {post.author.role === 'admin' ? 'A' : (post.author.full_name || post.author.name)?.charAt(0) || '?'}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-foreground">{post.author.full_name || 'Unknown User'}</span>
+              <span className="font-semibold text-sm text-foreground">{post.author.full_name || post.author.name || 'Unknown User'}</span>
               {post.author.role === 'admin' && (
                 <Badge variant="default" className="text-[10px] h-4 px-1">Admin</Badge>
               )}
@@ -86,9 +104,27 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
           </div>
         </div>
         {(isAdmin || isOwner) && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this discussion?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This post and all its comments will be permanently removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeletePost} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Delete Post
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </CardHeader>
       
@@ -156,20 +192,46 @@ export function ForumPostCard({ post, onLike, onDelete }: ForumPostCardProps) {
                 </div>
               ) : comments.length > 0 ? (
                 comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-2 text-sm">
+                  <div key={comment.id} className="flex gap-2 text-sm group/comment">
                     <div className={`h-6 w-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold ${
                       comment.author.role === 'admin' ? 'bg-primary' : 'bg-zinc-200 text-zinc-600'
                     }`}>
                       {comment.author.full_name?.charAt(0) || '?'}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-semibold text-foreground text-xs">{comment.author.full_name}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                           {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-semibold text-foreground text-xs">{comment.author.full_name}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                             {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                        
+                        {(isAdmin || user?.id === (comment as any).author_id) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button className="text-muted-foreground hover:text-destructive opacity-0 group-hover/comment:opacity-100 transition-all p-1">
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove comment?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this comment?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteComment(comment.id)} className="bg-destructive text-destructive-foreground">
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
-                      <p className="text-foreground dark:text-zinc-200 mt-1 text-sm leading-relaxed">{comment.content}</p>
+                      <p className="text-foreground dark:text-zinc-200 mt-0.5 text-sm leading-relaxed">{comment.content}</p>
                       
                       <div className="flex items-center gap-3 mt-1.5">
                         <button 

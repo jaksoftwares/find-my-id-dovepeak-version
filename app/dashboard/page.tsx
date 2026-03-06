@@ -221,7 +221,7 @@ export default function DashboardPage() {
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle>Getting Started</CardTitle>
-          <CardDescription>Here's what you can do on JKUATfindmyid</CardDescription>
+          <CardDescription>Here's what you can do on findmyid</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

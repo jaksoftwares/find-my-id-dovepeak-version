@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FindMyID - Community Lost & Found Portal",
-  description: "A community-driven platform for recovering lost identification cards quickly and easily.",
+  title: "FindMyID — JKUAT Community Lost & Found",
+  description: "The  free platform for recovering lost IDs within the JKUAT community. Secure, student-driven, and efficient.",
 };
 
 export default function RootLayout({

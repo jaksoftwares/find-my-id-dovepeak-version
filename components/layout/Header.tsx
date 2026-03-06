@@ -16,6 +16,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuContainerRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -31,7 +32,14 @@ export function Header() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+      
+      // Check if the click is outside BOTH the trigger button AND the mobile menu container
+      if (
+        mobileMenuRef.current && 
+        !mobileMenuRef.current.contains(event.target as Node) &&
+        mobileMenuContainerRef.current && 
+        !mobileMenuContainerRef.current.contains(event.target as Node)
+      ) {
         setIsMobileMenuOpen(false);
       }
     }
@@ -170,7 +178,10 @@ export function Header() {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-xl z-40 animate-in fade-in slide-in-from-top-4">
+        <div 
+          ref={mobileMenuContainerRef}
+          className="lg:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-xl z-40 animate-in fade-in slide-in-from-top-4"
+        >
           <nav className="flex flex-col p-6 gap-4">
             {navLinks.map((link) => (
               <Link
@@ -186,18 +197,59 @@ export function Header() {
                 {link.name}
               </Link>
             ))}
+            {isAuthenticated && (
+              <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-gray-100">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 text-lg font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:bg-zinc-50 hover:text-primary transition-colors"
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/dashboard/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 text-lg font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:bg-zinc-50 hover:text-primary transition-colors"
+                >
+                  <User className="h-5 w-5" />
+                  My Profile
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 text-lg font-semibold px-4 py-2 rounded-lg text-muted-foreground hover:bg-zinc-50 hover:text-primary transition-colors"
+                  >
+                    <Settings className="h-5 w-5" />
+                    Admin Panel
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="flex items-center gap-3 text-lg font-semibold px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Logout
+                </button>
+              </div>
+            )}
             {!isAuthenticated && (
-              <div className="flex flex-col gap-2 mt-2 px-4">
+              <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-gray-100">
                 <Link
                   href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-lg font-semibold py-2 text-muted-foreground hover:text-primary"
+                  className="text-lg font-semibold px-4 py-2 text-muted-foreground hover:text-primary rounded-lg transition-colors"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/register"
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-4"
                 >
                   <Button className="w-full rounded-xl h-12 text-lg font-bold shadow-lg shadow-primary/20">
                     Get Started

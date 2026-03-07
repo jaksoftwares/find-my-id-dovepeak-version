@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { useNotifications } from '@/app/context/NotificationContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,9 +16,15 @@ import {
   Info,
   CheckCircle2,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
+  MoreVertical,
+  ChevronRight,
+  SquareCheck,
+  Square
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
+import { toast } from 'sonner';
 
 interface Notification {
   id: string;
@@ -54,9 +61,12 @@ const typeColors: Record<string, string> = {
 export default function NotificationsPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const { refreshUnreadCount } = useNotifications();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -97,11 +107,12 @@ export default function NotificationsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setNotifications(
-          notifications.map((n) =>
+        setNotifications(prev =>
+          prev.map((n) =>
             n.id === notificationId ? { ...n, is_read: true } : n
           )
         );
+        refreshUnreadCount();
       }
     } catch (err) {
       console.error('Error marking notification as read:', err);
@@ -109,6 +120,7 @@ export default function NotificationsPage() {
   };
 
   const markAllAsRead = async () => {
+    setIsProcessing(true);
     try {
       const response = await authFetch(`/api/notifications/read-all`, {
         method: 'POST',
@@ -117,9 +129,66 @@ export default function NotificationsPage() {
 
       if (data.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+        refreshUnreadCount();
+        toast.success("All notifications marked as read");
       }
     } catch (err) {
-      console.error('Error marking all notifications as read:', err);
+      toast.error("Failed to mark all as read");
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
+  const performBulkAction = async (action: 'delete' | 'clear-all') => {
+    if (action === 'delete' && selectedIds.size === 0) return;
+    
+    setIsProcessing(true);
+    try {
+      const response = await authFetch('/api/notifications/bulk-action', {
+        method: 'POST',
+        body: JSON.stringify({
+          action,
+          ids: Array.from(selectedIds)
+        })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        if (action === 'delete') {
+            setNotifications(prev => prev.filter(n => !selectedIds.has(n.id)));
+            setSelectedIds(new Set());
+            toast.success("Selected notifications deleted");
+        } else {
+            setNotifications([]);
+            setSelectedIds(new Set());
+            toast.success("All notifications cleared");
+        }
+        refreshUnreadCount();
+      } else {
+          toast.error(data.message || "Action failed");
+      }
+    } catch (err) {
+      toast.error("An error occurred");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === notifications.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(notifications.map(n => n.id)));
     }
   };
 
@@ -139,24 +208,49 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Bell className="h-6 w-6 text-primary" />
+            Notifications
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
             {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-              : 'All caught up!'}
+              ? `You have ${unreadCount} unread message${unreadCount > 1 ? 's' : ''}`
+              : 'You are all caught up!'}
           </p>
         </div>
-        {unreadCount > 0 && (
-          <Button variant="outline" onClick={markAllAsRead}>
-            <Check className="h-4 w-4 mr-2" />
-            Mark All as Read
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <Button variant="outline" size="sm" onClick={markAllAsRead} disabled={isProcessing}>
+              <Check className="h-4 w-4 mr-2" />
+              Mark all as read
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => performBulkAction('clear-all')} disabled={isProcessing}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear all
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Bulk Action Toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl flex items-center justify-between animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-primary">{selectedIds.size} selected</span>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Cancel</Button>
+            </div>
+            <Button variant="destructive" size="sm" onClick={() => performBulkAction('delete')} disabled={isProcessing}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Selected
+            </Button>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -171,83 +265,119 @@ export default function NotificationsPage() {
       )}
 
       {/* Notifications List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Notifications</CardTitle>
-          <CardDescription>Your recent notifications and updates</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="space-y-6 w-full">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-zinc-100 italic text-muted-foreground">
+              <Loader2 className="h-10 w-10 animate-spin text-primary/20 mb-4" />
+              Loading your messages...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No Notifications</h3>
-              <p className="text-muted-foreground">
-                You don't have any notifications yet.
+            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-zinc-200">
+              <div className="bg-zinc-50 h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bell className="h-10 w-10 text-zinc-300" />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900">Quiet for now</h3>
+              <p className="text-muted-foreground max-w-xs mx-auto mt-2">
+                We'll notify you here when there's an update on your ID reports or claims.
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden divide-y divide-zinc-100 shadow-sm">
+                <div className="px-4 py-3 bg-zinc-50/50 flex items-center gap-3">
+                    <button 
+                        onClick={toggleSelectAll}
+                        className="p-1 hover:bg-zinc-200 rounded transition-colors"
+                    >
+                        {selectedIds.size === notifications.length ? (
+                            <SquareCheck className="h-5 w-5 text-primary" />
+                        ) : (
+                            <Square className="h-5 w-5 text-zinc-400" />
+                        )}
+                    </button>
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Select All Messages</span>
+                </div>
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={`
-                    p-4 border rounded-lg transition-colors cursor-pointer
-                    ${notification.is_read ? 'bg-white' : 'bg-blue-50 border-blue-200'}
-                    hover:bg-gray-50
+                    group flex items-start gap-4 p-5 transition-all
+                    ${notification.is_read ? 'bg-white' : 'bg-primary/[0.02]'}
+                    hover:bg-zinc-50/80
                   `}
-                  onClick={() => {
-                    if (!notification.is_read) {
-                      markAsRead(notification.id);
-                    }
-                    if (notification.link) {
-                      router.push(notification.link);
-                    }
-                  }}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`p-2 rounded-lg ${typeColors[notification.type] || typeColors.info}`}>
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className={`font-semibold ${!notification.is_read ? 'text-primary' : ''}`}>
-                          {notification.title}
-                        </h3>
-                        {!notification.is_read && (
-                          <Badge variant="default" className="h-2 w-2 p-0 rounded-full bg-primary" />
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                        <Calendar className="h-3 w-3" />
-                        <span>{new Date(notification.created_at).toLocaleString()}</span>
-                      </div>
-                    </div>
-                    {!notification.is_read && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
+                  <button 
+                    onClick={() => toggleSelect(notification.id)}
+                    className={`mt-1.5 p-1 rounded transition-colors ${selectedIds.has(notification.id) ? 'text-primary' : 'text-zinc-300 opacity-0 group-hover:opacity-100'}`}
+                  >
+                    {selectedIds.has(notification.id) ? <SquareCheck className="h-5 w-5" /> : <Square className="h-5 w-5" />}
+                  </button>
+
+                  <div 
+                    className="flex-1 cursor-pointer"
+                    onClick={() => {
+                        if (!notification.is_read) {
                           markAsRead(notification.id);
+                        }
+                        if (notification.link) {
+                          router.push(notification.link);
+                        }
+                    }}
+                  >
+                    <div className="flex items-start gap-4">
+                        <div className={`p-2.5 rounded-xl shrink-0 ${typeColors[notification.type] || typeColors.info}`}>
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                                <h3 className={`font-bold text-sm ${!notification.is_read ? 'text-zinc-900' : 'text-zinc-600'}`}>
+                                  {notification.title}
+                                </h3>
+                                {!notification.is_read && (
+                                  <span className="h-2 w-2 rounded-full bg-primary" />
+                                )}
+                            </div>
+                            <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+                                {new Date(notification.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className={`text-sm leading-relaxed ${!notification.is_read ? 'text-zinc-800' : 'text-zinc-500'}`}>
+                            {notification.message}
+                          </p>
+                          <div className="flex items-center gap-2 mt-3">
+                             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                                {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                             </span>
+                             {notification.link && (
+                                <span className="text-[10px] font-bold text-primary flex items-center gap-0.5">
+                                    View Details <ChevronRight className="h-3 w-3" />
+                                </span>
+                             )}
+                          </div>
+                        </div>
+                    </div>
+                  </div>
+                  
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-zinc-400 hover:text-red-500"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedIds(new Set([notification.id]));
+                            performBulkAction('delete');
                         }}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                    )}
+                     >
+                        <Trash2 className="h-4 w-4" />
+                     </Button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }
+

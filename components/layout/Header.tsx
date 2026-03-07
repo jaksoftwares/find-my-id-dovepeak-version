@@ -96,6 +96,7 @@ export function Header() {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-full lg:hidden text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
             ref={mobileMenuRef}
+            suppressHydrationWarning
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -108,6 +109,7 @@ export function Header() {
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all"
+                  suppressHydrationWarning
                 >
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-4 w-4 text-primary" />
@@ -160,16 +162,16 @@ export function Header() {
                 <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors hidden sm:block">
                   Log In
                 </Link>
-                <Link href="/register" className="hidden sm:block">
-                  <Button variant="ghost" className="text-sm font-medium hover:text-primary hover:bg-primary/5 rounded-full px-4">
+                <Button asChild variant="ghost" className="text-sm font-medium hover:text-primary hover:bg-primary/5 rounded-full px-4">
+                  <Link href="/register">
                     Sign Up
-                  </Button>
-                </Link>
-                <Link href="/report-lost">
-                  <Button className="rounded-full px-4 sm:px-6 font-semibold shadow-md hover:shadow-lg transition-all text-xs sm:text-sm">
+                  </Link>
+                </Button>
+                <Button asChild className="rounded-full px-4 sm:px-6 font-semibold shadow-md hover:shadow-lg transition-all text-xs sm:text-sm">
+                  <Link href="/report-lost">
                     Report Lost
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </>
             )}
           </div>
@@ -246,15 +248,14 @@ export function Header() {
                 >
                   Log In
                 </Link>
-                <Link
-                  href="/register"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4"
-                >
-                  <Button className="w-full rounded-xl h-12 text-lg font-bold shadow-lg shadow-primary/20">
+                <Button asChild className="w-full rounded-xl h-12 text-lg font-bold shadow-lg shadow-primary/20">
+                  <Link
+                    href="/register"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
                     Get Started
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             )}
           </nav>

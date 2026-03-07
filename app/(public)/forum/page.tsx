@@ -59,6 +59,7 @@ export default function ForumPage() {
                        <button
                          key={cat}
                          onClick={() => setFilter(cat)}
+                         suppressHydrationWarning
                          className={`text-left px-3 py-2 rounded-md text-sm transition-colors ${
                            filter === cat 
                              ? "bg-primary/10 text-primary font-medium" 
@@ -77,14 +78,11 @@ export default function ForumPage() {
                     <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                        Your contributions help us maintain and improve FindMyID for all students.
                     </p>
-                    <Link 
-                      href="/donations" 
-                      className="block"
-                    >
-                       <Button variant="outline" size="sm" className="w-full text-xs h-8">
-                          Make a Donation
-                       </Button>
-                    </Link>
+                     <Button asChild variant="outline" size="sm" className="w-full text-xs h-8">
+                        <Link href="/donations">
+                           Make a Donation
+                        </Link>
+                     </Button>
                  </div>
               </div>
            </div>

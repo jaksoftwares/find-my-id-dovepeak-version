@@ -145,11 +145,9 @@ export default function FAQPage() {
               <p className="opacity-80 mb-8 leading-relaxed">
                 Our support team is always ready to assist you if you can't find the answer you're looking for.
               </p>
-              <Link href="/contact" className="block">
-                <button className="w-full bg-primary text-white font-bold py-4 rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2 group">
+              <Link href="/contact" className="block w-full bg-primary text-white font-bold py-4 rounded-2xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2 group text-center">
                   Contact Support
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </button>
               </Link>
             </motion.div>
 

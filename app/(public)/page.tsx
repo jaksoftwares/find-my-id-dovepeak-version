@@ -97,16 +97,16 @@ function HomeContent() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
-             <Link href="/register">
-               <Button className="rounded-full h-12 px-10 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-bold">
+             <Button asChild className="rounded-full h-12 px-10 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all font-bold">
+               <Link href="/register">
                  Get Started
-               </Button>
-             </Link>
-             <Link href="/ids">
-               <Button variant="outline" className="rounded-full h-12 px-10 text-base bg-white border-zinc-200 hover:bg-primary hover:border-primary hover:text-white transition-all font-bold">
+               </Link>
+             </Button>
+             <Button asChild variant="outline" className="rounded-full h-12 px-10 text-base bg-white border-zinc-200 hover:bg-primary hover:border-primary hover:text-white transition-all font-bold">
+               <Link href="/ids">
                  Search Found
-               </Button>
-             </Link>
+               </Link>
+             </Button>
           </motion.div>
         </div>
       </section>
@@ -183,11 +183,11 @@ function HomeContent() {
               <p className="text-lg text-zinc-600 mb-6 leading-relaxed italic">
                 "Imagine walking across campus and realizing your ID is gone. I've been there twice, and that's why I built FindMyID—a volunteer project to help JKUAT community recover lost cards easily through technology."
               </p>
-              <Link href="/about">
-                <Button variant="outline" className="rounded-full px-8">
+              <Button asChild variant="outline" className="rounded-full px-8">
+                <Link href="/about">
                   Read my full story
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@ function HomeContent() {
         <div className="container mx-auto px-4">
            <div className="text-center max-w-2xl mx-auto mb-16">
               <h2 className="text-3xl font-bold text-zinc-900 mb-4">How FindMyID works</h2>
-              <p className="text-zinc-600">A community effort to help students find their lost identification cards.</p>
+              <p className="text-zinc-600 mt-2">A community effort to help students find their lost identification cards.</p>
            </div>
            
             <div className="grid md:grid-cols-3 gap-10">
@@ -246,11 +246,11 @@ function HomeContent() {
                     Here are the latest identification cards that have been reported and found.
                  </p>
               </div>
-              <Link href="/ids">
-                <Button variant="outline" className="rounded-full px-6">
+              <Button asChild variant="outline" className="rounded-full px-6">
+                <Link href="/ids">
                   View all cards
-                </Button>
-              </Link>
+                </Link>
+              </Button>
            </div>
 
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -368,11 +368,11 @@ function HomeContent() {
                 Our forum is a place where we help each other and share suggestions to make campus life easier. 
               </p>
               <div className="flex gap-4">
-                <Link href="/forum">
-                  <Button className="rounded-full px-8 h-12 bg-primary">
+                <Button asChild className="rounded-full px-8 h-12 bg-primary">
+                  <Link href="/forum">
                     Go to Forum
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </motion.div>
           </div>
@@ -395,16 +395,16 @@ function HomeContent() {
               Create an account today to report lost IDs, share in the forum, and help fellow students.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-               <Link href="/register">
-                 <Button size="lg" className="rounded-full px-12 h-14 text-lg font-bold shadow-xl shadow-primary/25">
+               <Button asChild size="lg" className="rounded-full px-12 h-14 text-lg font-bold shadow-xl shadow-primary/25">
+                 <Link href="/register">
                    Create Account
-                 </Button>
-               </Link>
-               <Link href="/ids">
-                 <Button size="lg" variant="outline" className="rounded-full px-12 h-14 text-lg font-bold">
+                 </Link>
+               </Button>
+               <Button asChild size="lg" variant="outline" className="rounded-full px-12 h-14 text-lg font-bold">
+                 <Link href="/ids">
                    Browse IDs
-                 </Button>
-               </Link>
+                 </Link>
+               </Button>
             </div>
           </motion.div>
         </div>

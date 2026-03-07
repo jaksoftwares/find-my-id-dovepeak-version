@@ -18,25 +18,48 @@ import {
   FileText,
   AlertCircle,
   MessageSquare,
-  Upload
+  Upload,
+  Mail,
+  MessageCircle,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
 import { RoleProtectedRoute } from '@/app/components/auth';
 import { NotificationBell } from '@/components/shared/NotificationBell';
 
-const adminNavigation = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'IDs Management', href: '/admin/ids', icon: FileSearch },
-  { name: 'Found Reports', href: '/admin/found-reports', icon: Upload },
-  { name: 'Claims', href: '/admin/claims', icon: HandHeart },
-  { name: 'Lost Requests', href: '/admin/requests', icon: FileText },
-  { name: 'Contact Messages', href: '/admin/messages', icon: MessageSquare },
-  { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { name: 'Community Forum', href: '/admin/forum', icon: MessageSquare },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
+const adminNavigationGroups = [
+  {
+    title: 'Overview',
+    items: [
+      { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    ]
+  },
+  {
+    title: 'Inventory & Reports',
+    items: [
+      { name: 'IDs Database', href: '/admin/ids', icon: Database },
+      { name: 'Found Submissions', href: '/admin/found-reports', icon: Upload },
+      { name: 'Lost Requests', href: '/admin/requests', icon: FileText },
+      { name: 'Claims Management', href: '/admin/claims', icon: HandHeart },
+    ]
+  },
+  {
+    title: 'Communication',
+    items: [
+      { name: 'Contact Messages', href: '/admin/messages', icon: Mail },
+      { name: 'Community Forum', href: '/admin/forum', icon: MessageCircle },
+      { name: 'Notifications', href: '/admin/notifications', icon: Bell },
+    ]
+  },
+  {
+    title: 'Administration',
+    items: [
+      { name: 'Users', href: '/admin/users', icon: Users },
+      { name: 'System Analytics', href: '/admin/analytics', icon: BarChart3 },
+      { name: 'Settings', href: '/admin/settings', icon: Settings },
+    ]
+  },
 ];
 
 export default function AdminLayout({
@@ -134,27 +157,36 @@ export default function AdminLayout({
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-              {adminNavigation.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                      ${isActive 
-                        ? 'bg-primary text-white' 
-                        : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                      }
-                    `}
-                    onClick={() => setIsSidebarOpen(false)}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                );
-              })}
+            <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+              {adminNavigationGroups.map((group) => (
+                <div key={group.title} className="space-y-1">
+                  <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    {group.title}
+                  </h3>
+                  <div className="space-y-1">
+                    {group.items.map((item) => {
+                      const isActive = pathname === item.href;
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className={`
+                            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                            ${isActive 
+                              ? 'bg-primary text-white' 
+                              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                            }
+                          `}
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <item.icon className="h-5 w-5" />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
 
             {/* User section */}
@@ -215,7 +247,7 @@ export default function AdminLayout({
                   <Menu className="h-5 w-5" />
                 </button>
                 <h1 className="text-lg font-semibold text-gray-900">
-                  {adminNavigation.find(n => n.href === pathname)?.name || 'Admin'}
+                  {adminNavigationGroups.flatMap(g => g.items).find(n => n.href === pathname)?.name || 'Admin'}
                 </h1>
               </div>
               <div className="flex items-center gap-3">

@@ -29,6 +29,7 @@ interface AuthContextType {
   clearError: () => void;
   hasRole: (role: string) => boolean;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 // Create the context
@@ -156,14 +157,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasRole = useCallback((role: string): boolean => {
     if (!user) return false;
     
-    if (role === 'admin') {
-      return user.role === 'admin';
+    if (role === 'super_admin') {
+      return user.role === 'super_admin';
     }
     
-    return true;
+    if (role === 'admin') {
+      return user.role === 'admin' || user.role === 'super_admin';
+    }
+    
+    if (role === 'staff') {
+      return user.role === 'staff' || user.role === 'admin' || user.role === 'super_admin';
+    }
+    
+    return true; // All authenticated users have basic access
   }, [user]);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const isSuperAdmin = user?.role === 'super_admin';
 
   const value: AuthContextType = {
     user,
@@ -177,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearError,
     hasRole,
     isAdmin,
+    isSuperAdmin,
   };
 
   return (

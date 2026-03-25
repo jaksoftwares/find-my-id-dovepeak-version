@@ -75,7 +75,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 export default function AdminClaimsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const [claims, setClaims] = useState<Claim[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,17 +109,17 @@ export default function AdminClaimsPage() {
   const [isFetchingThread, setIsFetchingThread] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchClaims();
       fetchStats();
     }
-  }, [user, page, filterStatus, searchQuery]);
+  }, [user, isAdmin, page, filterStatus, searchQuery]);
 
   const fetchConversation = async (claimId: string) => {
     setIsFetchingThread(true);

@@ -73,7 +73,7 @@ const typeIcons: Record<string, any> = {
 
 export default function AdminNotificationsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const { refreshUnreadCount } = useNotifications();
   
   // State for My Inbox
@@ -115,10 +115,10 @@ export default function AdminNotificationsPage() {
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   const fetchInbox = useCallback(async () => {
     setIsInboxLoading(true);
@@ -158,11 +158,11 @@ export default function AdminNotificationsPage() {
   }, [page, filterType]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchInbox();
       fetchSent();
     }
-  }, [user, fetchInbox, fetchSent]);
+  }, [user, isAdmin, fetchInbox, fetchSent]);
 
   const markInboxAsRead = async (id: string) => {
     try {

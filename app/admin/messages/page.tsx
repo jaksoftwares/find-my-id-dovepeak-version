@@ -23,7 +23,7 @@ interface ContactMessage {
 
 export default function AdminMessagesPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,16 +31,16 @@ export default function AdminMessagesPage() {
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchMessages();
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   const fetchMessages = async () => {
     setIsLoading(true);

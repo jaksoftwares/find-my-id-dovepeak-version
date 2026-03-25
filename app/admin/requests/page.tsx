@@ -64,7 +64,7 @@ const statusColors: Record<string, string> = {
 
 export default function AdminRequestsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const [requests, setRequests] = useState<LostRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,16 +85,16 @@ export default function AdminRequestsPage() {
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchRequests();
     }
-  }, [user, page, filterStatus, filterType]);
+  }, [user, isAdmin, page, filterStatus, filterType]);
 
   const fetchRequests = async () => {
     setIsLoading(true);

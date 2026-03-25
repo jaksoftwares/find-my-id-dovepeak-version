@@ -38,23 +38,23 @@ interface RecentActivity {
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchDashboardData();
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   const fetchDashboardData = async () => {
     setIsLoading(true);

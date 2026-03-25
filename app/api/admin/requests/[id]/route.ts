@@ -1,4 +1,4 @@
-import { getSessionUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -7,13 +7,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSessionUser();
-    if (!session || session.profile.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+    const { session } = auth;
 
     const { id } = await params;
     const body = await request.json();

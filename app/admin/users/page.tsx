@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { RoleProtectedRoute } from '@/app/components/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,7 +70,7 @@ const roleColors: Record<string, string> = {
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,17 +105,17 @@ export default function AdminUsersPage() {
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchUsers();
       fetchStats();
     }
-  }, [user, page, filterRole]);
+  }, [user, isAdmin, page, filterRole]);
 
   const fetchStats = async () => {
     setIsLoadingStats(true);
@@ -289,7 +290,8 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleProtectedRoute allowedRoles={['super_admin']}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -804,6 +806,7 @@ export default function AdminUsersPage() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </RoleProtectedRoute>
   );
 }

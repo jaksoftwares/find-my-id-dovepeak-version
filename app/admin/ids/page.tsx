@@ -24,6 +24,7 @@ import {
   User
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
+import { RestrictionModal } from '@/components/admin/RestrictionModal';
 
 interface FoundId {
   id: string;
@@ -64,7 +65,7 @@ const statusColors: Record<string, string> = {
 
 export default function AdminIDsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin, isSuperAdmin } = useAuth();
   const [ids, setIds] = useState<FoundId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +79,7 @@ export default function AdminIDsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showRestrictionModal, setShowRestrictionModal] = useState(false);
   const [selectedId, setSelectedId] = useState<FoundId | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -98,16 +100,16 @@ export default function AdminIDsPage() {
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchIDs();
     }
-  }, [user, page, filterStatus, filterType]);
+  }, [user, isAdmin, page, filterStatus, filterType]);
 
   const fetchIDs = async () => {
     setIsLoading(true);
@@ -174,6 +176,10 @@ export default function AdminIDsPage() {
   };
 
   const openDeleteModal = (id: FoundId) => {
+    if (user?.role !== 'super_admin') {
+      setShowRestrictionModal(true);
+      return;
+    }
     setSelectedId(id);
     setShowDeleteModal(true);
   };
@@ -268,6 +274,11 @@ export default function AdminIDsPage() {
 
   return (
     <div className="space-y-6">
+      <RestrictionModal 
+        isOpen={showRestrictionModal} 
+        onClose={() => setShowRestrictionModal(false)} 
+        action="deleting IDs"
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

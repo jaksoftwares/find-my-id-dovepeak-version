@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { RoleProtectedRoute } from '@/app/components/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,7 @@ interface SiteSettings {
 
 export default function AdminSettingsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin, isSuperAdmin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,16 +50,16 @@ export default function AdminSettingsPage() {
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchSettings();
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   const fetchSettings = async () => {
     setIsLoading(true);
@@ -119,7 +120,8 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleProtectedRoute allowedRoles={['super_admin']}>
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
@@ -270,6 +272,7 @@ export default function AdminSettingsPage() {
           </Button>
         </div>
       </form>
-    </div>
+      </div>
+    </RoleProtectedRoute>
   );
 }

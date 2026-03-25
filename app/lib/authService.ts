@@ -32,7 +32,7 @@ export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
-  role: 'student' | 'staff' | 'admin';
+  role: 'student' | 'staff' | 'admin' | 'super_admin';
   avatar_url?: string;
   phone_number?: string;
   registration_number?: string;
@@ -401,9 +401,17 @@ export async function updatePassword(newPassword: string): Promise<{
 export function hasRole(user: UserProfile | null, requiredRole: string): boolean {
   if (!user) return false;
   
+  if (requiredRole === 'super_admin') {
+    return user.role === 'super_admin';
+  }
+
   if (requiredRole === 'admin') {
-    return user.role === 'admin';
+    return user.role === 'admin' || user.role === 'super_admin';
+  }
+
+  if (requiredRole === 'staff') {
+    return user.role === 'staff' || user.role === 'admin' || user.role === 'super_admin';
   }
   
-  return true; // All authenticated users have 'student' role
+  return true; // All authenticated users have student role
 }

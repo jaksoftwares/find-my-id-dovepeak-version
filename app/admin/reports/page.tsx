@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
+import { RoleProtectedRoute } from '@/app/components/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +52,7 @@ const TABS = [
 
 export default function AdminReportsPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isAdmin, isSuperAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<any>(null);
@@ -71,16 +72,16 @@ export default function AdminReportsPage() {
   const years = [2024, 2025, 2026];
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'admin')) {
+    if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (user && isAdmin) {
       fetchReportData();
     }
-  }, [user, dateRange, selectedMonth, selectedYear]);
+  }, [user, isAdmin, dateRange, selectedMonth, selectedYear]);
 
   const fetchReportData = async () => {
     setIsLoading(true);
@@ -568,11 +569,11 @@ export default function AdminReportsPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-zinc-50 border-b">
                 <tr>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Name</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Email</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Role</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">ID Number</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Date Joined</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Name</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Email</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Role</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">ID Number</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Date Joined</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -673,11 +674,11 @@ export default function AdminReportsPage() {
               <table className="w-full text-left text-sm">
                  <thead className="bg-zinc-50 border-b">
                     <tr>
-                       <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Claimant</th>
-                       <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Target Item</th>
-                       <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">ID Reference</th>
-                       <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Status</th>
-                       <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Date Submitted</th>
+                       <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Claimant</th>
+                       <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Target Item</th>
+                       <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">ID Reference</th>
+                       <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Status</th>
+                       <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Date Submitted</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-zinc-100">
@@ -808,9 +809,9 @@ export default function AdminReportsPage() {
                    <table className="w-full text-left text-sm">
                       <thead className="bg-zinc-50/50 sticky top-0 backdrop-blur-md">
                          <tr>
-                            <th className="py-3 px-6 font-bold text-zinc-500 uppercase text-[10px]">Name on ID</th>
-                            <th className="py-3 px-6 font-bold text-zinc-500 uppercase text-[10px]">Reference</th>
-                            <th className="py-3 px-6 font-bold text-zinc-500 uppercase text-[10px]">Status</th>
+                            <th className="py-3 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Name on ID</th>
+                            <th className="py-3 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Reference</th>
+                            <th className="py-3 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Status</th>
                          </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-100">
@@ -839,7 +840,7 @@ export default function AdminReportsPage() {
   const renderSubmissions = () => (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-[#0B3D91] tracking-tight">
+        <h2 className="text-lg font-bold text-zinc-900">
           {submissionsFilter === 'all' ? 'Consolidated Platform Submissions' : 
            submissionsFilter === 'found' ? 'Found Item Reports' : 'Lost Item Retrieval Requests'}
         </h2>
@@ -893,13 +894,13 @@ export default function AdminReportsPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-zinc-50 border-b">
+               <thead className="bg-zinc-50 border-b">
                 <tr>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Type</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Full Name</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">ID Category</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Reference</th>
-                  <th className="py-4 px-6 font-bold text-zinc-500 uppercase text-[10px]">Contact/Date</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Submission Type</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Reported Name</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Item Category</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Item Reference</th>
+                  <th className="py-4 px-6 font-semibold text-zinc-500 uppercase text-xs tracking-wider">Contact Info</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -936,12 +937,13 @@ export default function AdminReportsPage() {
   );
 
   return (
-    <div className="min-h-screen space-y-8 pb-12">
+    <RoleProtectedRoute allowedRoles={['super_admin']}>
+      <div className="min-h-screen space-y-8 pb-12">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-extrabold text-[#0B3D91] tracking-tight">System Reports</h1>
-          <p className="text-zinc-500 font-medium">Comprehensive platform performance & security auditing</p>
+          <h1 className="text-2xl font-bold text-zinc-900">System Reports</h1>
+          <p className="text-sm text-zinc-500">Comprehensive platform performance & security auditing</p>
         </div>
 
           <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border shadow-sm self-start">
@@ -987,7 +989,7 @@ export default function AdminReportsPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl transition-all shrink-0 font-bold text-sm ${
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl transition-all shrink-0 font-semibold text-sm ${
               activeTab === tab.id 
                 ? "bg-[#0B3D91] text-white shadow-lg shadow-blue-500/10" 
                 : "bg-white text-zinc-500 border border-zinc-100 hover:border-[#0B3D91]/30 hover:text-[#0B3D91]"
@@ -1015,7 +1017,8 @@ export default function AdminReportsPage() {
           {activeTab === 'submissions' && renderSubmissions()}
         </motion.div>
       </AnimatePresence>
-    </div>
+      </div>
+    </RoleProtectedRoute>
   );
 }
 
@@ -1025,20 +1028,20 @@ function MetricCard({ title, value, sub, icon: Icon, color, bg }: any) {
        <div className={`h-1.5 w-full ${bg} relative overflow-hidden`}>
           <div className={`absolute inset-y-0 left-0 w-1/3 ${color.replace('text-', 'bg-')} bg-current opacity-60`} />
        </div>
-       <CardContent className="p-6">
+        <CardContent className="p-6">
           <div className="flex items-start justify-between">
              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none mb-2">{title}</p>
+                <p className="text-sm font-medium text-zinc-500">{title}</p>
                 <div className="flex items-baseline gap-1">
-                   <h3 className="text-3xl font-black text-zinc-900 tracking-tighter leading-tight">{value}</h3>
+                   <h3 className="text-2xl font-bold text-zinc-900 mt-1">{value}</h3>
                 </div>
-                <p className="text-[10px] text-zinc-400 font-medium italic leading-none mt-1">{sub}</p>
+                <p className="text-xs text-zinc-400 font-medium opacity-80 mt-1">{sub}</p>
              </div>
-             <div className={`p-3 ${bg} rounded-2xl group-hover:scale-110 transition-transform`}>
+             <div className={`p-3 ${bg} rounded-2xl group-hover:scale-110 transition-transform shadow-sm`}>
                 <Icon className={`h-6 w-6 ${color}`} />
              </div>
           </div>
-       </CardContent>
+        </CardContent>
     </Card>
   );
 }

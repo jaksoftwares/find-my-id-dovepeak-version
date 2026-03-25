@@ -38,6 +38,14 @@ export async function requireAuth() {
   return { session };
 }
 
+export function isAdminRole(role: string | null | undefined): boolean {
+  return role === "admin" || role === "super_admin";
+}
+
+export function isSuperAdminRole(role: string | null | undefined): boolean {
+  return role === "super_admin";
+}
+
 export async function requireAdmin() {
   const session = await getSessionUser();
   
@@ -45,8 +53,22 @@ export async function requireAdmin() {
     return { error: NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 }) };
   }
 
-  if (session.profile.role !== "admin" && session.profile.role !== "super_admin") {
+  if (!isAdminRole(session.profile.role)) {
     return { error: NextResponse.json({ success: false, message: "Forbidden: Administrative access required" }, { status: 403 }) };
+  }
+
+  return { session };
+}
+
+export async function requireSuperAdmin() {
+  const session = await getSessionUser();
+  
+  if (!session) {
+    return { error: NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 }) };
+  }
+
+  if (!isSuperAdminRole(session.profile.role)) {
+    return { error: NextResponse.json({ success: false, message: "Forbidden: Super Administrative access required" }, { status: 403 }) };
   }
 
   return { session };

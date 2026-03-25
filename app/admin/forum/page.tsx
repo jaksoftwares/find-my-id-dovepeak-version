@@ -2,6 +2,8 @@
 "use client";
 
 import { useForum, ForumPost } from "@/hooks/useForum";
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
 import { 
   Table, 
   TableBody, 
@@ -70,6 +72,8 @@ interface ForumComment {
 }
 
 export default function AdminCommunityPage() {
+  const router = useRouter();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
   const { posts, loading: postsLoading, fetchPosts, createPost, updatePost } = useForum();
   const [activeTab, setActiveTab] = useState("overview");
   const [stats, setStats] = useState<CommunityStats | null>(null);
@@ -87,6 +91,12 @@ export default function AdminCommunityPage() {
     content: "",
     category: "General" as any
   });
+  
+  useEffect(() => {
+    if (!authLoading && (!user || !isAdmin)) {
+      router.push('/dashboard');
+    }
+  }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
     fetchStats();

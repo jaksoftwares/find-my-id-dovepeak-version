@@ -20,7 +20,7 @@ export async function GET() {
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "student"),
       supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "staff"),
-      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "admin"),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).in("role", ["admin", "super_admin"]),
     ]);
 
     return NextResponse.json({

@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth"; // For GET
+import { requireAdmin, isAdminRole } from "@/lib/auth"; // For GET
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { createSubmissionSchema } from "@/lib/validations/submissions";
@@ -71,8 +71,8 @@ export async function POST(request: Request) {
       const contactInfo = validation.data.contact_info || "";
       const idName = `${idType.replace('_', ' ')}: ${fullName}`;
 
-      // Notify Admins
-      const { data: adminProfiles } = await supabase.from("profiles").select("email, full_name").eq("role", "admin");
+      // Notify Admins & Super Admins
+      const { data: adminProfiles } = await supabase.from("profiles").select("email, full_name").in("role", ["admin", "super_admin"]);
       if (adminProfiles) {
         for (const admin of adminProfiles) {
           if (admin.email) {
@@ -120,7 +120,7 @@ export async function GET(request: Request) {
       .eq("id", user.id)
       .single();
 
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = isAdminRole(profile?.role);
     const { searchParams } = new URL(request.url);
     const approved = searchParams.get("approved");
 

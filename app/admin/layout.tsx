@@ -21,7 +21,8 @@ import {
   Upload,
   Mail,
   MessageCircle,
-  Database
+  Database,
+  Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
@@ -30,16 +31,16 @@ import { NotificationBell } from '@/components/shared/NotificationBell';
 
 const adminNavigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'IDs Database', href: '/admin/ids', icon: Database },
-  { name: 'Found Submissions', href: '/admin/found-reports', icon: Upload },
+  { name: 'ID Database', href: '/admin/ids', icon: Database },
+  { name: 'Found Reports', href: '/admin/found-reports', icon: Upload },
   { name: 'Lost Requests', href: '/admin/requests', icon: FileText },
-  { name: 'Claims Management', href: '/admin/claims', icon: HandHeart },
-  { name: 'Contact Messages', href: '/admin/messages', icon: Mail },
-  { name: 'Community Forum', href: '/admin/forum', icon: MessageCircle },
+  { name: 'Claims', href: '/admin/claims', icon: HandHeart },
+  { name: 'Messages', href: '/admin/messages', icon: Mail },
+  { name: 'Community', href: '/admin/forum', icon: MessageCircle },
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'System Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { name: 'System Reports', href: '/admin/reports', icon: FileText },
+  { name: 'User Management', href: '/admin/users', icon: Users },
+  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { name: 'Reports', href: '/admin/reports', icon: FileText },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
@@ -66,10 +67,10 @@ export default function AdminLayout({
     }
     
     // Check if user is admin - if not, redirect to dashboard
-    if (user.role !== 'admin') {
+    if (!isAdmin) {
       router.push('/dashboard');
     }
-    // If user.role === 'admin', stay on this page
+    // If isAdmin is true, stay on this page
   }, [isLoading, isAuthenticated, user, router, pathname]);
 
   const handleLogout = async () => {
@@ -133,13 +134,18 @@ export default function AdminLayout({
             {/* Admin Badge */}
             <div className="px-4 py-3 bg-primary/20 border-b border-gray-800">
               <span className="text-xs font-medium text-primary-foreground uppercase tracking-wider">
-                Admin Panel
+                {user?.role === 'super_admin' ? 'Super Admin Panel' : 'Admin Panel'}
               </span>
             </div>
 
             {/* Navigation */}
             <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
               {adminNavigation.map((item) => {
+                const restrictedItems = ['User Management', 'Analytics', 'Reports', 'Settings'];
+                if (restrictedItems.includes(item.name) && user?.role !== 'super_admin') {
+                  return null;
+                }
+
                 const isActive = pathname === item.href;
                 return (
                   <Link
@@ -179,6 +185,15 @@ export default function AdminLayout({
                 </div>
               </div>
               <div className="space-y-2">
+                <Link href="/" className="block">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800"
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    Visit Website
+                  </Button>
+                </Link>
                 <Link href="/dashboard" className="block">
                   <Button
                     variant="ghost"
@@ -227,7 +242,9 @@ export default function AdminLayout({
                 <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
                   <span className="font-medium">{user?.full_name}</span>
                   <span className="text-gray-400">|</span>
-                  <span className="text-primary font-medium">Admin</span>
+                  <span className="text-primary font-medium">
+                    {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                  </span>
                 </div>
               </div>
             </div>

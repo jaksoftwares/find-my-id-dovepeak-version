@@ -46,7 +46,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, data });
+    // Obfuscate image_url for non-admins
+    const result = profile.role !== "admin"
+      ? data?.map((claim: any) => ({
+          ...claim,
+          ids_found: claim.ids_found ? { ...claim.ids_found, image_url: undefined } : null
+        }))
+      : data;
+
+    return NextResponse.json({ success: true, data: result });
   } catch (error) {
     return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }

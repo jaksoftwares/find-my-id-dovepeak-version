@@ -23,15 +23,20 @@ export interface RegisterData {
   password: string;
   full_name: string;
   phone_number?: string;
+  role: 'student' | 'staff';
+  registration_number?: string;
+  faculty?: string;
 }
 
 export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
-  role: 'student' | 'admin';
+  role: 'student' | 'staff' | 'admin';
   avatar_url?: string;
   phone_number?: string;
+  registration_number?: string;
+  faculty?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -71,7 +76,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     try {
       const result = await supabase
         .from('profiles')
-        .select('id, full_name, role, avatar_url, phone')
+        .select('id, full_name, role, avatar_url, phone, registration_number, faculty')
         .eq('id', user?.id)
         .single();
       
@@ -90,11 +95,13 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       role: profile.role || 'student',
       avatar_url: profile.avatar_url,
       phone_number: profile.phone,
+      registration_number: profile.registration_number,
+      faculty: profile.faculty,
     } : {
       id: user?.id!,
       email: user?.email!,
       full_name: user?.user_metadata?.full_name || 'User',
-      role: 'student',
+      role: (user?.user_metadata?.role as any) || 'student',
     };
 
     return {
@@ -127,6 +134,9 @@ export async function register(userData: RegisterData): Promise<AuthResponse> {
         data: {
           full_name: userData.full_name,
           phone_number: userData.phone_number,
+          role: userData.role,
+          registration_number: userData.registration_number,
+          faculty: userData.faculty,
         },
       },
     });
@@ -145,7 +155,10 @@ export async function register(userData: RegisterData): Promise<AuthResponse> {
         .from('profiles')
         .update({ 
           full_name: userData.full_name,
-          phone: userData.phone_number 
+          phone: userData.phone_number,
+          role: userData.role,
+          registration_number: userData.registration_number,
+          faculty: userData.faculty,
         })
         .eq('id', data.user.id);
     }
@@ -153,7 +166,7 @@ export async function register(userData: RegisterData): Promise<AuthResponse> {
     // Fetch updated profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, full_name, role, avatar_url, phone')
+      .select('id, full_name, role, avatar_url, phone, registration_number, faculty')
       .eq('id', data.user?.id)
       .single();
 
@@ -161,9 +174,11 @@ export async function register(userData: RegisterData): Promise<AuthResponse> {
       id: data.user?.id!,
       email: data.user?.email!,
       full_name: profile?.full_name || userData.full_name,
-      role: profile?.role || 'student',
+      role: profile?.role || (userData.role as any) || 'student',
       avatar_url: profile?.avatar_url,
-      phone_number: profile?.phone,
+      phone_number: profile?.phone || userData.phone_number,
+      registration_number: profile?.registration_number || userData.registration_number,
+      faculty: profile?.faculty || userData.faculty,
     };
 
     return {
@@ -204,7 +219,7 @@ export async function getCurrentUser(): Promise<{
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, role, avatar_url, phone')
+      .select('id, full_name, role, avatar_url, phone, registration_number, faculty')
       .eq('id', user.id)
       .single();
 
@@ -230,6 +245,8 @@ export async function getCurrentUser(): Promise<{
       role: profile.role,
       avatar_url: profile.avatar_url,
       phone_number: profile.phone,
+      registration_number: profile.registration_number,
+      faculty: profile.faculty,
     };
 
     return {

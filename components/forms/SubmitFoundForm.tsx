@@ -59,9 +59,13 @@ export function SubmitFoundForm() {
     formData.append("location_found", data.location_found);
     formData.append("contact_info", data.contact_info);
     
-    if (selectedFile) {
-      formData.append("image", selectedFile);
+    if (!selectedFile) {
+      setError("Please upload an image of the ID card.");
+      setIsSubmitting(false);
+      return;
     }
+
+    formData.append("image", selectedFile);
 
     try {
       const response = await fetch("/api/found-id-reports", {
@@ -157,7 +161,7 @@ export function SubmitFoundForm() {
       </div>
 
       <div className="bg-zinc-50 p-6 rounded-2xl border border-dashed border-zinc-200">
-         <Label htmlFor="image" className="block mb-4 font-bold text-zinc-900">Upload Image of ID (Recommended)</Label>
+         <Label htmlFor="image" className="block mb-4 font-bold text-zinc-900">Upload Image of ID <span className="text-red-500">* (Required)</span></Label>
          <div className="flex items-center gap-4">
             <div className="relative group flex-1">
               <Input 

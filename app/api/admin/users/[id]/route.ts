@@ -18,9 +18,11 @@ export async function PUT(
       updated_at: new Date().toISOString(),
     };
 
-    if (body.full_name) updateData.full_name = body.full_name;
-    if (body.role) updateData.role = body.role;
+    if (body.full_name !== undefined) updateData.full_name = body.full_name;
+    if (body.role !== undefined) updateData.role = body.role;
     if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.registration_number !== undefined) updateData.registration_number = body.registration_number;
+    if (body.faculty !== undefined) updateData.faculty = body.faculty;
 
     const { data, error } = await supabase
       .from("profiles")
@@ -29,9 +31,10 @@ export async function PUT(
       .select()
       .single();
 
-    if (error) {
+    if (error || !data) {
+      console.error("Error updating profile:", error);
       return NextResponse.json(
-        { success: false, message: error.message },
+        { success: false, message: error?.message || "Failed to update profile or user not found" },
         { status: 500 }
       );
     }

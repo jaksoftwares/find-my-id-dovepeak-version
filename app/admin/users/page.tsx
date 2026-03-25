@@ -7,17 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Loader2, 
-  AlertCircle, 
+import {
+  Search,
+  Loader2,
+  AlertCircle,
   Users,
   Plus,
   MoreVertical,
   Pencil,
   Trash2,
   Eye,
-  Shield
+  Shield,
+  UserCheck,
+  UserPlus,
+  UserX,
+  School,
+  Hash,
+  Briefcase,
+  TrendingUp
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 
@@ -28,8 +35,17 @@ interface User {
   role: string;
   avatar_url?: string;
   phone?: string;
+  registration_number?: string;
+  faculty?: string;
   created_at: string;
   updated_at?: string;
+}
+
+interface UserStats {
+  total: number;
+  students: number;
+  staff: number;
+  admins: number;
 }
 
 interface UsersResponse {
@@ -45,6 +61,7 @@ interface UsersResponse {
 }
 
 const roleColors: Record<string, string> = {
+  super_admin: 'bg-purple-100 text-purple-700',
   admin: 'bg-red-100 text-red-700',
   staff: 'bg-yellow-100 text-yellow-700',
   student: 'bg-blue-100 text-blue-700',
@@ -61,7 +78,14 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  
+  const [stats, setStats] = useState<UserStats>({
+    total: 0,
+    students: 0,
+    staff: 0,
+    admins: 0,
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -75,6 +99,8 @@ export default function AdminUsersPage() {
     full_name: '',
     role: 'student',
     phone: '',
+    registration_number: '',
+    faculty: '',
   });
 
   useEffect(() => {
@@ -86,8 +112,24 @@ export default function AdminUsersPage() {
   useEffect(() => {
     if (user && user.role === 'admin') {
       fetchUsers();
+      fetchStats();
     }
   }, [user, page, filterRole]);
+
+  const fetchStats = async () => {
+    setIsLoadingStats(true);
+    try {
+      const response = await authFetch('/api/admin/users/stats');
+      const data = await response.json();
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -132,6 +174,8 @@ export default function AdminUsersPage() {
       full_name: '',
       role: 'student',
       phone: '',
+      registration_number: '',
+      faculty: '',
     });
     setShowCreateModal(true);
   };
@@ -143,6 +187,8 @@ export default function AdminUsersPage() {
       full_name: user.full_name,
       role: user.role,
       phone: user.phone || '',
+      registration_number: user.registration_number || '',
+      faculty: user.faculty || '',
     });
     setShowEditModal(true);
   };
@@ -181,7 +227,7 @@ export default function AdminUsersPage() {
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
-    
+
     setIsSubmitting(true);
     setError(null);
 
@@ -209,7 +255,7 @@ export default function AdminUsersPage() {
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    
+
     setIsSubmitting(true);
     setError(null);
 
@@ -251,9 +297,72 @@ export default function AdminUsersPage() {
           <p className="text-muted-foreground">Manage platform users and roles</p>
         </div>
         <Button onClick={openCreateModal}>
-          <Plus className="h-4 w-4 mr-2" />
+          <UserPlus className="h-4 w-4 mr-2" />
           Add User
         </Button>
+      </div>
+
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-0 shadow-sm bg-primary/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Total Users</p>
+                <p className="text-3xl font-bold mt-1 text-primary">{isLoadingStats ? '...' : stats.total}</p>
+              </div>
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            {/* Footer removed for clarity */}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm bg-blue-50/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Students</p>
+                <p className="text-3xl font-bold mt-1 text-blue-600">{isLoadingStats ? '...' : stats.students}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <School className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+            {/* Footer removed for clarity */}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm bg-orange-50/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Staff Members</p>
+                <p className="text-3xl font-bold mt-1 text-orange-600">{isLoadingStats ? '...' : stats.staff}</p>
+              </div>
+              <div className="p-3 bg-orange-100 rounded-xl">
+                <Briefcase className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+            {/* Footer removed for clarity */}
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm bg-purple-50/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Administrators</p>
+                <p className="text-3xl font-bold mt-1 text-purple-600">{isLoadingStats ? '...' : stats.admins}</p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-xl">
+                <Shield className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+            {/* Footer removed for clarity */}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Error Message */}
@@ -292,6 +401,7 @@ export default function AdminUsersPage() {
                 className="px-3 py-2 border rounded-md text-sm"
               >
                 <option value="all">All Roles</option>
+                <option value="super_admin">Super Admin</option>
                 <option value="admin">Admin</option>
                 <option value="staff">Staff</option>
                 <option value="student">Student</option>
@@ -335,7 +445,7 @@ export default function AdminUsersPage() {
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 font-medium">User</th>
                       <th className="text-left py-3 px-4 font-medium">Role</th>
-                      <th className="text-left py-3 px-4 font-medium">Phone</th>
+                      <th className="text-left py-3 px-4 font-medium">Academic Info</th>
                       <th className="text-left py-3 px-4 font-medium">Joined</th>
                       <th className="text-right py-3 px-4 font-medium">Actions</th>
                     </tr>
@@ -361,8 +471,15 @@ export default function AdminUsersPage() {
                             {user.role}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          {user.phone || '-'}
+                        <td className="py-3 px-4">
+                          {user.role === 'student' ? (
+                            <div className="flex flex-col gap-0.5">
+                              <p className="text-xs font-medium">{user.registration_number || 'No Reg.'}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-semibold">{user.faculty || 'No School'}</p>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">{user.phone || 'No phone'}</p>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-muted-foreground">
                           {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
@@ -463,18 +580,46 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Role</label>
+                  <label className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-[10px] font-bold">Account Role</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full h-10 px-3 py-2 border rounded-xl text-sm bg-background ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:border-primary"
                     required
                   >
-                    <option value="student">Student</option>
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
+                    <option value="student">Student Account</option>
+                    <option value="staff">Staff Member</option>
+                    <option value="admin">Administrator</option>
+                    <option value="super_admin">Super Administrator</option>
                   </select>
                 </div>
+
+                {formData.role === 'student' && (
+                  <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300 pt-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-[10px] font-bold">Reg Number</label>
+                      <Input
+                        type="text"
+                        placeholder="e.g. SBIT/001/2024"
+                        value={formData.registration_number}
+                        onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
+                        required={formData.role === 'student'}
+                        className="rounded-xl border-gray-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-[10px] font-bold">School/Faculty</label>
+                      <Input
+                        type="text"
+                        placeholder="e.g. SCIT"
+                        value={formData.faculty}
+                        onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                        required={formData.role === 'student'}
+                        className="rounded-xl border-gray-200"
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -541,18 +686,46 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Role</label>
+                  <label className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-[10px] font-bold">Account Role</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full h-10 px-3 py-2 border rounded-xl text-sm bg-background ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:border-primary"
                     required
                   >
-                    <option value="student">Student</option>
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
+                    <option value="student">Student Account</option>
+                    <option value="staff">Staff Member</option>
+                    <option value="admin">Administrator</option>
+                    <option value="super_admin">Super Administrator</option>
                   </select>
                 </div>
+
+                {formData.role === 'student' && (
+                  <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300 pt-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-[10px] font-bold">Reg Number</label>
+                      <Input
+                        type="text"
+                        placeholder="e.g. SBIT/001/2024"
+                        value={formData.registration_number}
+                        onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
+                        required={formData.role === 'student'}
+                        className="rounded-xl border-gray-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground uppercase tracking-widest text-[10px] font-bold">School/Faculty</label>
+                      <Input
+                        type="text"
+                        placeholder="e.g. SCIT"
+                        value={formData.faculty}
+                        onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                        required={formData.role === 'student'}
+                        className="rounded-xl border-gray-200"
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button
                     type="button"

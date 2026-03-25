@@ -270,7 +270,21 @@ function HomeContent() {
                   >
                     <div className="aspect-[4/3] bg-zinc-200 relative overflow-hidden">
                        <img 
-                          src={id.image_url || '/images/id-placeholder.png'} 
+                          src={
+                            id.id_type === 'student_id' 
+                              ? '/templates/jkuat-id-placeholder.png' 
+                              : id.id_type === 'national_id' 
+                                ? '/templates/nationalid-template.png' 
+                              : id.id_type === 'passport' 
+                                ? '/templates/passport-template.png' 
+                              : id.id_type === 'atm_card' 
+                                ? '/templates/atmcard-template.png' 
+                              : id.id_type === 'nhif' 
+                                ? '/templates/nhifcard-template.png' 
+                              : id.id_type === 'driving_license' 
+                                ? '/templates/drivinglicence-template.png' 
+                              : '/templates/id-placeholder.png'
+                          } 
                           alt={id.full_name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 blur-[2px] group-hover:blur-0"
                        />

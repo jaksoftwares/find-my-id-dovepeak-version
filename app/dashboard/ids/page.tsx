@@ -251,20 +251,29 @@ export default function IDsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {ids.map((id) => (
                 <Card key={id.id} className="overflow-hidden">
-                  <div className="aspect-video relative bg-gray-100">
-                    {id.image_url ? (
-                      <img
-                        src={id.image_url}
-                        alt={id.full_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <User className="h-12 w-12 text-muted-foreground opacity-50" />
-                      </div>
-                    )}
+                  <div className="aspect-video relative bg-zinc-50 overflow-hidden">
+                    <img 
+                      src={
+                        id.id_type === 'student_id' 
+                          ? '/templates/jkuat-id-placeholder.png' 
+                          : id.id_type === 'national_id' 
+                            ? '/templates/nationalid-template.png' 
+                          : id.id_type === 'passport' 
+                            ? '/templates/passport-template.png' 
+                          : id.id_type === 'atm_card' 
+                            ? '/templates/atmcard-template.png' 
+                          : id.id_type === 'nhif' 
+                            ? '/templates/nhifcard-template.png' 
+                          : id.id_type === 'driving_license' 
+                            ? '/templates/drivinglicence-template.png' 
+                          : '/templates/id-placeholder.png'
+                      } 
+                      alt="ID Preview" 
+                      className="w-full h-full object-cover opacity-60 blur-[2px]" 
+                      loading="lazy"
+                    />
                     <Badge
-                      className={`absolute top-2 right-2 ${statusColors[id.status]}`}
+                      className={`absolute top-2 right-2 ${statusColors[id.status] || 'bg-secondary'}`}
                     >
                       {id.status}
                     </Badge>

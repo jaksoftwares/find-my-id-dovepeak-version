@@ -45,8 +45,8 @@ export async function requireAdmin() {
     return { error: NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 }) };
   }
 
-  if (session.profile.role !== "admin") {
-    return { error: NextResponse.json({ success: false, message: "Forbidden: Admin access required" }, { status: 403 }) };
+  if (session.profile.role !== "admin" && session.profile.role !== "super_admin") {
+    return { error: NextResponse.json({ success: false, message: "Forbidden: Administrative access required" }, { status: 403 }) };
   }
 
   return { session };

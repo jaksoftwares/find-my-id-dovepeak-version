@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     // Build the query for profiles
     let query = supabase
       .from("profiles")
-      .select("id, full_name, role, phone, created_at, updated_at", { count: "exact" });
+      .select("id, full_name, role, phone, registration_number, faculty, created_at, updated_at", { count: "exact" });
 
     if (role && role !== "all") {
       query = query.eq("role", role);
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     if (auth.error) return auth.error;
 
     const body = await request.json();
-    const { email, full_name, role, phone } = body;
+    const { email, full_name, role, phone, registration_number, faculty } = body;
 
     if (!email || !full_name || !role) {
       return NextResponse.json(
@@ -146,6 +146,8 @@ export async function POST(request: Request) {
         full_name,
         role,
         phone: phone || null,
+        registration_number: registration_number || null,
+        faculty: faculty || null,
       })
       .select()
       .single();

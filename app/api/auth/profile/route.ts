@@ -6,6 +6,8 @@ import { z } from "zod";
 const updateProfileSchema = z.object({
   full_name: z.string().min(2).optional(),
   phone_number: z.string().optional(),
+  registration_number: z.string().optional(),
+  faculty: z.string().optional(),
 });
 
 export async function PUT(request: Request) {
@@ -28,12 +30,14 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { full_name, phone_number } = validation.data;
+    const { full_name, phone_number, registration_number, faculty } = validation.data;
     const supabase = await createClient();
 
     const updateData: Record<string, any> = {};
     if (full_name) updateData.full_name = full_name;
     if (phone_number !== undefined) updateData.phone = phone_number;
+    if (registration_number !== undefined) updateData.registration_number = registration_number;
+    if (faculty !== undefined) updateData.faculty = faculty;
     updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase

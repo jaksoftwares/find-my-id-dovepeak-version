@@ -5,12 +5,31 @@ export interface CreateNotificationOptions {
   title: string;
   message: string;
   type?: string;
+  senderId?: string;
+  parentId?: string;
+  entityType?: string;
+  entityId?: string;
+  allowReply?: boolean;
+  conversationId?: string;
+  link?: string;
 }
 
 /**
- * Create an in-app notification for a user
+ * Create an in-app notification/message
  */
-export async function createNotification({ userId, title, message, type = "info" }: CreateNotificationOptions) {
+export async function createNotification({ 
+  userId, 
+  title, 
+  message, 
+  type = "info",
+  senderId,
+  parentId,
+  entityType,
+  entityId,
+  allowReply = false,
+  conversationId,
+  link
+}: CreateNotificationOptions) {
   const supabase = await createClient();
 
   try {
@@ -22,6 +41,13 @@ export async function createNotification({ userId, title, message, type = "info"
         message,
         type,
         is_read: false,
+        sender_id: senderId,
+        parent_id: parentId,
+        entity_type: entityType,
+        entity_id: entityId,
+        allow_reply: allowReply,
+        conversation_id: conversationId,
+        link
       })
       .select()
       .single();
@@ -41,7 +67,7 @@ export async function createNotification({ userId, title, message, type = "info"
 /**
  * Notify all admins
  */
-export async function notifyAdmins(title: string, message: string) {
+export async function notifyAdmins(title: string, message: string, extra: Partial<CreateNotificationOptions> = {}) {
   const supabase = await createClient();
 
   try {
@@ -62,6 +88,7 @@ export async function notifyAdmins(title: string, message: string) {
       message,
       type: "admin_alert",
       is_read: false,
+      ...extra
     }));
 
     const { error: insertError } = await supabase

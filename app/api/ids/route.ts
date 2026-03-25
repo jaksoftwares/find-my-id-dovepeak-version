@@ -52,11 +52,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, message: "Failed to fetch IDs. Please try again later." }, { status: 500 });
     }
     
-    // Mask sensitive data for non-admins
+    // Mask sensitive data and remove image_url for non-admins
     const maskedData = data?.map(item => {
       if (session?.profile.role !== "admin") {
+        const { image_url, ...rest } = item;
         return {
-          ...item,
+          ...rest,
           registration_number: item.registration_number ? item.registration_number.replace(/.(?=.{4})/g, "*") : null,
         };
       }

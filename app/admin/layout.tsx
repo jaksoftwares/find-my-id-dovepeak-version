@@ -39,6 +39,7 @@ const adminNavigation = [
   { name: 'Notifications', href: '/admin/notifications', icon: Bell },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'System Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { name: 'System Reports', href: '/admin/reports', icon: FileText },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Loader2, Mail, Lock, User, Phone, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail, Lock, User, Phone, AlertCircle, CheckCircle2, School, Hash, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,9 @@ export default function RegisterPage() {
     phone_number: '',
     password: '',
     confirmPassword: '',
+    role: 'student' as 'student' | 'staff',
+    registration_number: '',
+    faculty: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +39,7 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (error) setError(null);
@@ -77,6 +80,16 @@ export default function RegisterPage() {
       errors.confirmPassword = 'Passwords do not match';
     }
 
+    // Role-specific validation
+    if (formData.role === 'student') {
+      if (!formData.registration_number.trim()) {
+        errors.registration_number = 'Registration number is required for students';
+      }
+      if (!formData.faculty.trim()) {
+        errors.faculty = 'School/Faculty is required for students';
+      }
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -97,6 +110,9 @@ export default function RegisterPage() {
         email: formData.email.trim().toLowerCase(),
         phone_number: formData.phone_number.trim() || undefined,
         password: formData.password,
+        role: formData.role,
+        registration_number: formData.role === 'student' ? formData.registration_number.trim() : undefined,
+        faculty: formData.role === 'student' ? formData.faculty.trim() : undefined,
       });
 
       if (result.success) {
@@ -204,7 +220,7 @@ export default function RegisterPage() {
 
               {/* Phone Number Field */}
               <div className="space-y-2">
-                <Label htmlFor="phone_number">Phone Number (Optional)</Label>
+                <Label htmlFor="phone_number">Phone Number</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -215,11 +231,78 @@ export default function RegisterPage() {
                     value={formData.phone_number}
                     onChange={handleChange}
                     className="pl-10"
+                    required
                     disabled={isSubmitting}
                     autoComplete="tel"
                   />
                 </div>
               </div>
+
+              {/* Role Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="role">Sign up as</Label>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <select
+                    id="role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    disabled={isSubmitting}
+                  >
+                    <option value="student">Student</option>
+                    <option value="staff">Staff</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Student Specific Fields */}
+              {formData.role === 'student' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="registration_number">Registration Number</Label>
+                    <div className="relative">
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="registration_number"
+                        name="registration_number"
+                        type="text"
+                        placeholder="e.g. SBIT/001/2024"
+                        value={formData.registration_number}
+                        onChange={handleChange}
+                        className="pl-10"
+                        required={formData.role === 'student'}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {validationErrors.registration_number && (
+                      <p className="text-xs text-red-500">{validationErrors.registration_number}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="faculty">School/Faculty</Label>
+                    <div className="relative">
+                      <School className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="faculty"
+                        name="faculty"
+                        type="text"
+                        placeholder="e.g. SCIT"
+                        value={formData.faculty}
+                        onChange={handleChange}
+                        className="pl-10"
+                        required={formData.role === 'student'}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    {validationErrors.faculty && (
+                      <p className="text-xs text-red-500">{validationErrors.faculty}</p>
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Password Field */}
               <div className="space-y-2">

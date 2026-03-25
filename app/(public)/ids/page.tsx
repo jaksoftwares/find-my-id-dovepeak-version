@@ -52,6 +52,10 @@ function BrowseIdsContent() {
   // Claim states
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [selectedIdForClaim, setSelectedIdForClaim] = useState<FoundID | null>(null);
+  const [claimStep, setClaimStep] = useState(1);
+  const [claimName, setClaimName] = useState('');
+  const [claimIdNumber, setClaimIdNumber] = useState('');
+  const [claimAdditionalDetails, setClaimAdditionalDetails] = useState('');
   const [proofDescription, setProofDescription] = useState('');
   const [isSubmittingClaim, setIsSubmittingClaim] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
@@ -84,15 +88,22 @@ function BrowseIdsContent() {
     setShowClaimModal(true);
     setClaimError(null);
     setClaimSuccess(false);
+    setClaimStep(1);
+    setClaimName('');
+    setClaimIdNumber('');
+    setClaimAdditionalDetails('');
     setProofDescription('');
   };
 
   const handleClaimSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedIdForClaim || !proofDescription) return;
+    if (!selectedIdForClaim) return;
 
-    if (proofDescription.length < 10) {
-      setClaimError("Please provide a more detailed proof description.");
+    // Build template message
+    const finalProofDescription = `Hello, my name is ${claimName}. My ID/Card number is ${claimIdNumber}. Additional details: ${claimAdditionalDetails || 'None'}. Kindly verify my details on the ID, thank you.`;
+
+    if (claimStep < 4) {
+      setClaimStep(claimStep + 1);
       return;
     }
 
@@ -105,7 +116,7 @@ function BrowseIdsContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           item_id: selectedIdForClaim.id,
-          proof_description: proofDescription,
+          proof_description: finalProofDescription,
         }),
       });
 
@@ -243,9 +254,23 @@ function BrowseIdsContent() {
                 <Card key={id.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-zinc-200 rounded-2xl bg-white flex flex-col h-full">
                   <div className="aspect-[1.85/1] bg-zinc-50 relative overflow-hidden">
                     <img 
-                      src={id.image_url || '/images/id-placeholder.png'} 
+                      src={
+                        id.id_type === 'student_id' 
+                          ? '/templates/jkuat-id-placeholder.png' 
+                          : id.id_type === 'national_id' 
+                            ? '/templates/nationalid-template.png' 
+                          : id.id_type === 'passport' 
+                            ? '/templates/passport-template.png' 
+                          : id.id_type === 'atm_card' 
+                            ? '/templates/atmcard-template.png' 
+                          : id.id_type === 'nhif' 
+                            ? '/templates/nhifcard-template.png' 
+                          : id.id_type === 'driving_license' 
+                            ? '/templates/drivinglicence-template.png' 
+                          : '/templates/id-placeholder.png'
+                      } 
                       alt="ID Preview" 
-                      className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500" 
+                      className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500 blur-[2px] group-hover:blur-0" 
                       loading="lazy"
                     />
                     <div className="absolute top-4 left-4">
@@ -372,38 +397,137 @@ function BrowseIdsContent() {
                 {claimSuccess ? (
                   <div className="py-6 text-center space-y-4">
                     <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-2" />
-                    <h3 className="text-2xl font-extrabold text-zinc-900">Request Sent</h3>
-                    <p className="text-zinc-600">We have received your request. You can track the status in your dashboard.</p>
-                    <Button 
-                      className="w-full h-11 rounded-xl font-bold bg-[#0B3D91]" 
-                      onClick={() => {
-                        setShowClaimModal(false);
-                        setSelectedIdForClaim(null);
-                      }}
-                    >
-                      Close
-                    </Button>
+                    <h3 className="text-2xl font-extrabold text-zinc-900">Claim Submitted</h3>
+                    <p className="text-zinc-600">Your claim has been submitted successfully. Our team will review it and get back to you.</p>
+                    
+                    <div className="flex flex-col gap-3 pt-4">
+                      <Button 
+                        asChild
+                        className="w-full h-11 rounded-xl font-bold bg-[#0B3D91]" 
+                      >
+                        <Link href="/dashboard/claims">Track in Dashboard</Link>
+                      </Button>
+                      <Button 
+                        variant="ghost"
+                        className="w-full h-11 rounded-xl font-bold text-zinc-500" 
+                        onClick={() => {
+                          setShowClaimModal(false);
+                          setSelectedIdForClaim(null);
+                        }}
+                      >
+                        Close
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <form onSubmit={handleClaimSubmit} className="space-y-6">
-                    <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
-                       <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest leading-none mb-1">Recovered Item</p>
-                       <p className="font-extrabold text-[#0B3D91]">{maskName(selectedIdForClaim.full_name)}</p>
+                    {/* Progress Indicator */}
+                    <div className="flex justify-center gap-2 mb-4">
+                      {[1, 2, 3, 4].map((step) => (
+                        <div 
+                          key={step} 
+                          className={`h-1.5 rounded-full transition-all duration-300 ${
+                            claimStep === step ? "w-8 bg-[#0B3D91]" : "w-1.5 bg-zinc-200"
+                          }`}
+                        />
+                      ))}
                     </div>
 
-                    <div className="space-y-2">
-                      <label htmlFor="proof" className="text-xs font-extrabold text-[#0B3D91] uppercase tracking-widest">Verification Details</label>
-                      <Textarea
-                        id="proof"
-                        placeholder="e.g. your full name, registration number, or where you think you lost it..."
-                        value={proofDescription}
-                        onChange={(e) => setProofDescription(e.target.value)}
-                        rows={4}
-                        className="resize-none rounded-xl border-zinc-200 font-medium"
-                        disabled={isSubmittingClaim}
-                        required
-                      />
+                    <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex items-center justify-between">
+                       <div>
+                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none mb-1">Item You're Claiming</p>
+                         <p className="font-extrabold text-[#0B3D91] text-sm">{maskName(selectedIdForClaim.full_name)}</p>
+                       </div>
+                       <Badge variant="outline" className="text-[10px] font-bold text-[#0B3D91] border-[#0B3D91]/20">
+                         {formatIdType(selectedIdForClaim.id_type)}
+                       </Badge>
                     </div>
+
+                    {claimStep === 1 && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-2"
+                      >
+                        <label className="text-xs font-extrabold text-[#0B3D91] uppercase tracking-widest">
+                          Name as it appears on the ID
+                        </label>
+                        <Input
+                          placeholder="Enter full name..."
+                          value={claimName}
+                          onChange={(e) => setClaimName(e.target.value)}
+                          className="h-12 rounded-xl border-zinc-200 font-medium"
+                          required
+                        />
+                      </motion.div>
+                    )}
+
+                    {claimStep === 2 && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-2"
+                      >
+                        <label className="text-xs font-extrabold text-[#0B3D91] uppercase tracking-widest">
+                          ID or Serial Number
+                        </label>
+                        <Input
+                          placeholder="Enter identification number..."
+                          value={claimIdNumber}
+                          onChange={(e) => setClaimIdNumber(e.target.value)}
+                          className="h-12 rounded-xl border-zinc-200 font-medium"
+                          required
+                        />
+                      </motion.div>
+                    )}
+
+                    {claimStep === 3 && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-2"
+                      >
+                        <label className="text-xs font-extrabold text-[#0B3D91] uppercase tracking-widest">
+                          Any other identifying details
+                        </label>
+                        <Textarea
+                          placeholder="e.g. any other detail that you feel is on the ID..."
+                          value={claimAdditionalDetails}
+                          onChange={(e) => setClaimAdditionalDetails(e.target.value)}
+                          rows={4}
+                          className="resize-none rounded-xl border-zinc-200 font-medium"
+                        />
+                        <p className="text-[10px] text-zinc-400 font-medium italic">
+                          This information helps us confirm your ownership faster.
+                        </p>
+                      </motion.div>
+                    )}
+
+                    {claimStep === 4 && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-2"
+                      >
+                        <label className="text-xs font-extrabold text-[#0B3D91] uppercase tracking-widest">
+                          Preview your claim submission
+                        </label>
+                        <div className="p-4 bg-[#0B3D91]/5 border border-[#0B3D91]/10 rounded-2xl relative">
+                          <p className="text-sm font-medium text-zinc-700 leading-relaxed italic">
+                            &quot;Hello, my name is <span className="font-bold text-[#0B3D91]">{claimName}</span>. 
+                            My ID/Card number is <span className="font-bold text-[#0B3D91]">{claimIdNumber}</span>. 
+                            Additional details: <span className="font-bold text-[#0B3D91]">{claimAdditionalDetails || 'None'}</span>. 
+                            Kindly verify my details on the ID, thank you.&quot;
+                          </p>
+                          <div className="absolute -top-2 -right-2 p-1.5 bg-[#0B3D91] text-white rounded-full">
+                            <ShieldCheck className="h-4 w-4" />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-[#0B3D91] font-bold uppercase tracking-widest text-center mt-4">
+                          Ready to submit?
+                        </p>
+                      </motion.div>
+                    )}
 
                     {claimError && (
                       <div className="p-4 bg-red-50 text-red-600 text-sm font-bold rounded-xl">
@@ -412,17 +536,36 @@ function BrowseIdsContent() {
                     )}
 
                     <div className="flex gap-3 pt-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="flex-1 h-11 rounded-xl font-bold text-zinc-500"
-                        onClick={() => setShowClaimModal(false)}
-                        disabled={isSubmittingClaim}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" className="flex-1 h-11 rounded-xl font-bold" disabled={isSubmittingClaim}>
-                        {isSubmittingClaim ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : 'Claim ID'}
+                      {claimStep > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1 h-11 rounded-xl font-bold border-zinc-200 text-zinc-500"
+                          onClick={() => setClaimStep(claimStep - 1)}
+                          disabled={isSubmittingClaim}
+                        >
+                          Back
+                        </Button>
+                      )}
+                      {claimStep === 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1 h-11 rounded-xl font-bold text-zinc-500"
+                          onClick={() => setShowClaimModal(false)}
+                          disabled={isSubmittingClaim}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      <Button type="submit" className="flex-1 h-11 rounded-xl font-bold" disabled={isSubmittingClaim || (claimStep === 1 && !claimName) || (claimStep === 2 && !claimIdNumber)}>
+                        {isSubmittingClaim ? (
+                          <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+                        ) : claimStep === 4 ? (
+                          'Confirm & Submit'
+                        ) : (
+                          'Continue'
+                        )}
                       </Button>
                     </div>
                   </form>

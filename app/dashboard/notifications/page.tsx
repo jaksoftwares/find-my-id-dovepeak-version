@@ -21,7 +21,8 @@ import {
   MoreVertical,
   ChevronRight,
   SquareCheck,
-  Square
+  Square,
+  MessageSquare
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ import { toast } from 'sonner';
 interface Notification {
   id: string;
   user_id: string;
+  sender_id?: string;
   title: string;
   message: string;
   type: string;
@@ -36,6 +38,12 @@ interface Notification {
   is_broadcast: boolean;
   created_at: string;
   link?: string;
+  allow_reply?: boolean;
+  conversation_id?: string;
+  sender?: {
+      full_name: string;
+      avatar_url?: string;
+  };
 }
 
 const notificationIcons: Record<string, any> = {
@@ -46,6 +54,7 @@ const notificationIcons: Record<string, any> = {
   claim: CheckCircle2,
   request: Info,
   system: Bell,
+  reply: MessageSquare,
 };
 
 const typeColors: Record<string, string> = {
@@ -56,6 +65,7 @@ const typeColors: Record<string, string> = {
   claim: 'bg-purple-100 text-purple-600',
   request: 'bg-orange-100 text-orange-600',
   system: 'bg-gray-100 text-gray-600',
+  reply: 'bg-indigo-100 text-indigo-600',
 };
 
 export default function NotificationsPage() {
@@ -67,6 +77,13 @@ export default function NotificationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Conversation/Reply state
+  const [selectedConversation, setSelectedConversation] = useState<Notification | null>(null);
+  const [conversationThread, setConversationThread] = useState<Notification[]>([]);
+  const [isFetchingThread, setIsFetchingThread] = useState(false);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [showReplyModal, setShowReplyModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -96,6 +113,66 @@ export default function NotificationsPage() {
       setError(err.message || 'An error occurred');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchConversation = async (notification: Notification) => {
+    if (!notification.conversation_id) {
+       // Single message, no thread yet
+       setConversationThread([notification]);
+       return;
+    }
+
+    setIsFetchingThread(true);
+    try {
+        const response = await authFetch(`/api/notifications/conversation/${notification.conversation_id}`);
+        const data = await response.json();
+        if (data.success) {
+            setConversationThread(data.data || []);
+        } else {
+            setConversationThread([notification]);
+        }
+    } catch (err) {
+        setConversationThread([notification]);
+    } finally {
+        setIsFetchingThread(false);
+    }
+  };
+
+  const openReplyModal = (notification: Notification) => {
+    setSelectedConversation(notification);
+    setReplyMessage('');
+    setShowReplyModal(true);
+    fetchConversation(notification);
+  };
+
+  const handleSendReply = async () => {
+    if (!selectedConversation || !replyMessage.trim()) return;
+    
+    setIsProcessing(true);
+    try {
+      const response = await authFetch(`/api/notifications/${selectedConversation.id}/reply`, {
+        method: 'POST',
+        body: JSON.stringify({ message: replyMessage }),
+      });
+      const data = await response.json();
+
+      if (data.success) {
+          toast.success("Reply sent successfully");
+          setReplyMessage('');
+          // Refresh thread
+          fetchConversation(selectedConversation);
+          // Also mark original as read
+          if (!selectedConversation.is_read) {
+            markAsRead(selectedConversation.id);
+          }
+      } else {
+          toast.error(data.message || "Failed to send reply");
+      }
+    } catch (err) {
+        toast.error("An error occurred");
+    } finally {
+        setIsProcessing(false);
     }
   };
 
@@ -130,10 +207,10 @@ export default function NotificationsPage() {
       if (data.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
         refreshUnreadCount();
-        toast.success("All notifications marked as read");
+        toast.success("Read");
       }
     } catch (err) {
-      toast.error("Failed to mark all as read");
+      toast.error("Failed");
     } finally {
         setIsProcessing(false);
     }
@@ -157,18 +234,18 @@ export default function NotificationsPage() {
         if (action === 'delete') {
             setNotifications(prev => prev.filter(n => !selectedIds.has(n.id)));
             setSelectedIds(new Set());
-            toast.success("Selected notifications deleted");
+            toast.success("Deleted");
         } else {
             setNotifications([]);
             setSelectedIds(new Set());
-            toast.success("All notifications cleared");
+            toast.success("Cleared");
         }
         refreshUnreadCount();
       } else {
-          toast.error(data.message || "Action failed");
+          toast.error(data.message || "Failed");
       }
     } catch (err) {
-      toast.error("An error occurred");
+      toast.error("Error");
     } finally {
       setIsProcessing(false);
     }
@@ -214,12 +291,12 @@ export default function NotificationsPage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Bell className="h-6 w-6 text-primary" />
-            Notifications
+            Messages
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {unreadCount > 0
-              ? `You have ${unreadCount} unread message${unreadCount > 1 ? 's' : ''}`
-              : 'You are all caught up!'}
+              ? `${unreadCount} unread`
+              : 'All caught up'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -269,7 +346,7 @@ export default function NotificationsPage() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-zinc-100 italic text-muted-foreground">
               <Loader2 className="h-10 w-10 animate-spin text-primary/20 mb-4" />
-              Loading your messages...
+              Loading...
             </div>
           ) : notifications.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-zinc-200">
@@ -294,7 +371,7 @@ export default function NotificationsPage() {
                             <Square className="h-5 w-5 text-zinc-400" />
                         )}
                     </button>
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Select All Messages</span>
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Select all</span>
                 </div>
               {notifications.map((notification) => (
                 <div
@@ -318,7 +395,9 @@ export default function NotificationsPage() {
                         if (!notification.is_read) {
                           markAsRead(notification.id);
                         }
-                        if (notification.link) {
+                        if (notification.allow_reply) {
+                           openReplyModal(notification);
+                        } else if (notification.link) {
                           router.push(notification.link);
                         }
                     }}
@@ -348,7 +427,12 @@ export default function NotificationsPage() {
                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
                                 {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                              </span>
-                             {notification.link && (
+                             {notification.allow_reply && (
+                                <span className="text-[10px] font-bold text-indigo-600 flex items-center gap-0.5 bg-indigo-50 px-2 py-0.5 rounded-full">
+                                    <MessageSquare className="h-3 w-3" /> Reply
+                                </span>
+                             )}
+                             {notification.link && !notification.allow_reply && (
                                 <span className="text-[10px] font-bold text-primary flex items-center gap-0.5">
                                     View Details <ChevronRight className="h-3 w-3" />
                                 </span>
@@ -358,7 +442,20 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                   
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                     {notification.allow_reply && (
+                        <Button 
+                           variant="ghost" 
+                           size="sm"
+                           className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                           onClick={(e) => {
+                               e.stopPropagation();
+                               openReplyModal(notification);
+                           }}
+                        >
+                           Reply
+                        </Button>
+                     )}
                      <Button 
                         variant="ghost" 
                         size="icon" 
@@ -377,6 +474,85 @@ export default function NotificationsPage() {
             </div>
           )}
       </div>
+
+      {/* Reply/Conversation Modal */}
+      {showReplyModal && selectedConversation && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border-0">
+                <CardHeader className="border-b bg-zinc-50/50 p-6">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
+                                <MessageSquare className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-xl">{selectedConversation.title}</CardTitle>
+                                <CardDescription>Message thread</CardDescription>
+                            </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setShowReplyModal(false)} className="rounded-full">
+                            <XCircle className="h-5 w-5" />
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="h-[400px] overflow-y-auto p-6 space-y-4 bg-white">
+                        {isFetchingThread ? (
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground animate-pulse">
+                                <Loader2 className="h-8 w-8 animate-spin mb-2" />
+                                Loading...
+                            </div>
+                        ) : (
+                            conversationThread.map((msg, idx) => (
+                                <div 
+                                    key={msg.id} 
+                                    className={`flex flex-col ${msg.sender_id === user?.id ? 'items-end' : 'items-start'}`}
+                                >
+                                    <div className={`
+                                        max-w-[85%] rounded-2xl p-4 shadow-sm
+                                        ${msg.sender_id === user?.id 
+                                            ? 'bg-primary text-white rounded-tr-none' 
+                                            : 'bg-zinc-100 text-zinc-800 rounded-tl-none'}
+                                    `}>
+                                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                                        <div className={`text-[10px] mt-2 font-medium opacity-60 ${msg.sender_id === user?.id ? 'text-white' : 'text-zinc-500'}`}>
+                                            {msg.sender?.full_name || (msg.sender_id === user?.id ? 'Me' : 'Admin')} • {new Date(msg.created_at).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' })}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </CardContent>
+                <div className="p-4 border-t bg-zinc-50/80">
+                    <div className="flex gap-2">
+                        <textarea
+                            placeholder="Write a reply..."
+                            value={replyMessage}
+                            onChange={(e) => setReplyMessage(e.target.value)}
+                            className="flex-1 min-h-[44px] max-h-[120px] rounded-xl border border-zinc-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white resize-none"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendReply();
+                                }
+                            }}
+                        />
+                        <Button 
+                            className="h-[44px] px-6 rounded-xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
+                            onClick={handleSendReply}
+                            disabled={isProcessing || !replyMessage.trim()}
+                        >
+                            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send'}
+                        </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                        Enter to send
+                    </p>
+                </div>
+            </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -165,9 +165,16 @@ export default function DashboardLayout({
                 <p className="text-sm font-medium text-gray-900 truncate">
                   {user?.full_name || 'User'}
                 </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {user?.email}
-                </p>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs text-gray-500 truncate">
+                    {user?.email}
+                  </p>
+                  {user?.role && (
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                      {user.role} {user.registration_number ? `• ${user.registration_number}` : ''}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             <Button

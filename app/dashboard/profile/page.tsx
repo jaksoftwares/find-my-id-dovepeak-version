@@ -17,7 +17,9 @@ import {
   Loader2, 
   AlertCircle, 
   CheckCircle2,
-  Shield
+  Shield,
+  School,
+  Hash
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 
@@ -28,6 +30,8 @@ interface UserProfile {
   phone_number?: string;
   role: string;
   avatar_url?: string;
+  registration_number?: string;
+  faculty?: string;
 }
 
 export default function ProfilePage() {
@@ -41,6 +45,8 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     full_name: '',
     phone_number: '',
+    registration_number: '',
+    faculty: '',
   });
 
   useEffect(() => {
@@ -54,6 +60,8 @@ export default function ProfilePage() {
       setFormData({
         full_name: user.full_name || '',
         phone_number: user.phone_number || '',
+        registration_number: user.registration_number || '',
+        faculty: user.faculty || '',
       });
     }
   }, [user]);
@@ -169,6 +177,32 @@ export default function ProfilePage() {
                 />
               </div>
 
+              {user?.role === 'student' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="registration_number">Registration Number</Label>
+                    <Input
+                      id="registration_number"
+                      type="text"
+                      placeholder="Enter registration number"
+                      value={formData.registration_number}
+                      onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="faculty">School/Faculty</Label>
+                    <Input
+                      id="faculty"
+                      type="text"
+                      placeholder="Enter school/faculty"
+                      value={formData.faculty}
+                      onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+
               <Button type="submit" disabled={isSaving} className="w-full">
                 {isSaving ? (
                   <>
@@ -216,11 +250,33 @@ export default function ProfilePage() {
               <User className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">Role</p>
-                <Badge variant={getRoleBadgeVariant(user?.role || 'user')} className="mt-1">
-                  {user?.role || 'user'}
-                </Badge>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant={getRoleBadgeVariant(user?.role || 'user')}>
+                    {user?.role || 'user'}
+                  </Badge>
+                </div>
               </div>
             </div>
+
+            {user?.role === 'student' && (
+              <>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Hash className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Registration Number</p>
+                    <p className="text-sm text-muted-foreground">{user?.registration_number || 'Not set'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <School className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">School/Faculty</p>
+                    <p className="text-sm text-muted-foreground">{user?.faculty || 'Not set'}</p>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

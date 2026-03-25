@@ -62,8 +62,14 @@ export async function POST(
     // 1. In-app notification
     await createNotification({
       userId: claim.claimant,
+      senderId: session.user.id,
       title: "Message from Admin",
       message: message,
+      entityType: 'claim',
+      entityId: claimId,
+      allowReply: true,
+      conversationId: claimId, // Using claim ID as conversation group
+      link: `/dashboard/claims`
     });
 
     // 2. Email notification

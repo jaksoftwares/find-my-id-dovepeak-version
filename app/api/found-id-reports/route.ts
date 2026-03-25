@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth"; // For GET
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { createSubmissionSchema } from "@/lib/validations/submissions";
 import { NextResponse } from "next/server";
 
@@ -43,7 +43,8 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const imageUrl = await uploadToCloudinary(buffer, "submissions");
 
-    const { data, error } = await supabase
+    const adminSupabase = await createAdminClient();
+    const { data, error } = await adminSupabase
       .from("public_found_reports")
       .insert({
         ...validation.data,

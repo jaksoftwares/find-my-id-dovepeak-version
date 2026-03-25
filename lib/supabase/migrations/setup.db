@@ -6,10 +6,7 @@ create extension if not exists pgcrypto;
 
 
 -- User roles
-create type user_role as enum (
-  'student',
-  'admin'
-);
+create type user_role as enum ('student', 'staff', 'admin', 'super_admin');
 
 -- ID types
 create type id_type as enum (
@@ -68,8 +65,22 @@ create table profiles (
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, full_name)
-  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', 'Student'));
+  insert into public.profiles (
+    id, 
+    full_name, 
+    registration_number, 
+    faculty, 
+    phone, 
+    role
+  )
+  values (
+    new.id, 
+    coalesce(new.raw_user_meta_data->>'full_name', 'User'),
+    new.raw_user_meta_data->>'registration_number',
+    new.raw_user_meta_data->>'faculty',
+    new.raw_user_meta_data->>'phone_number',
+    coalesce((new.raw_user_meta_data->>'role')::user_role, 'student'::user_role)
+  );
   return new;
 end;
 $$ language plpgsql security definer;
@@ -160,6 +171,7 @@ create table audit_logs (
   action text not null,
   entity_type text,
   entity_id uuid,
+  details jsonb,
   created_at timestamptz default now()
 );
 
@@ -187,17 +199,28 @@ on profiles
 for select
 using (auth.uid() = id);
 
-
-
-create policy "Admins can view all profiles"
+create policy "Users can update own profile"
 on profiles
-for select
-using (
-  exists (
+for update
+using (auth.uid() = id);
+
+
+
+-- Function to break recursion in profiles policy
+create or replace function public.is_admin()
+returns boolean as $$
+begin
+  return exists (
     select 1 from profiles
-    where id = auth.uid() and role = 'admin'
-  )
-);
+    where id = auth.uid() and (role = 'admin' or role = 'super_admin')
+  );
+end;
+$$ language plpgsql security definer;
+
+create policy "Admins manage all profiles"
+on profiles
+for all
+using (is_admin());
 
 
 

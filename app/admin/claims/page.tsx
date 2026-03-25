@@ -18,7 +18,11 @@ import {
   FileSearch,
   MessageSquare,
   CheckCircle,
-  XCircle
+  XCircle,
+  Clock,
+  ThumbsUp,
+  PackageCheck,
+  ClipboardList
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 
@@ -76,7 +80,16 @@ export default function AdminClaimsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    completed: 0,
+    rejected: 0,
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   
   // Modal states
   const [showViewModal, setShowViewModal] = useState(false);
@@ -92,6 +105,8 @@ export default function AdminClaimsPage() {
 
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [conversationThread, setConversationThread] = useState<any[]>([]);
+  const [isFetchingThread, setIsFetchingThread] = useState(false);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
@@ -102,8 +117,42 @@ export default function AdminClaimsPage() {
   useEffect(() => {
     if (user && user.role === 'admin') {
       fetchClaims();
+      fetchStats();
     }
-  }, [user, page, filterStatus]);
+  }, [user, page, filterStatus, searchQuery]);
+
+  const fetchConversation = async (claimId: string) => {
+    setIsFetchingThread(true);
+    try {
+      const response = await authFetch(`/api/notifications/conversation/${claimId}`);
+      const data = await response.json();
+      if (data.success) {
+        setConversationThread(data.data || []);
+      } else {
+        setConversationThread([]);
+      }
+    } catch (err) {
+      console.error('Error fetching conversation:', err);
+      setConversationThread([]);
+    } finally {
+      setIsFetchingThread(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    setIsLoadingStats(true);
+    try {
+      const response = await authFetch('/api/admin/claims/stats');
+      const data = await response.json();
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
 
   const fetchClaims = async () => {
     setIsLoading(true);
@@ -114,6 +163,9 @@ export default function AdminClaimsPage() {
       params.append('limit', '10');
       if (filterStatus !== 'all') {
         params.append('status', filterStatus);
+      }
+      if (searchQuery) {
+        params.append('query', searchQuery);
       }
 
       const response = await authFetch(`/api/admin/claims?${params.toString()}`);
@@ -149,6 +201,7 @@ export default function AdminClaimsPage() {
     setSelectedClaim(claim);
     setNotificationMessage('');
     setShowNotificationModal(true);
+    fetchConversation(claim.id);
   };
 
   const handleSendNotification = async (e: React.FormEvent) => {
@@ -167,10 +220,9 @@ export default function AdminClaimsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setShowNotificationModal(false);
         setNotificationMessage('');
-        setSelectedClaim(null);
-        // Maybe show a success toast here
+        fetchConversation(selectedClaim.id);
+        // Don't close modal, show the new message in thread
       } else {
         setError(data.message || 'Failed to send notification');
       }
@@ -180,6 +232,8 @@ export default function AdminClaimsPage() {
       setIsSubmitting(false);
     }
   };
+// ... rest of the component (keeping handleProcessClaim etc.)
+// Jumping to render part for the modal
 
   const handleProcessClaim = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,6 +330,81 @@ export default function AdminClaimsPage() {
         </div>
       </div>
 
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card 
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'all' ? 'ring-2 ring-primary bg-primary/10' : 'bg-primary/5'}`}
+          onClick={() => setFilterStatus('all')}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Total Claims</p>
+                <p className="text-3xl font-bold mt-1 text-primary">{isLoadingStats ? '...' : stats.total}</p>
+                <p className="text-[10px] text-primary/60 font-medium mt-1">View all records</p>
+              </div>
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <ClipboardList className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+ 
+        <Card 
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'pending' ? 'ring-2 ring-yellow-500 bg-yellow-100/50' : 'bg-yellow-50/50'}`}
+          onClick={() => setFilterStatus('pending')}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Pending</p>
+                <p className="text-3xl font-bold mt-1 text-yellow-600">{isLoadingStats ? '...' : stats.pending}</p>
+                <p className="text-[10px] text-yellow-600/60 font-medium mt-1">Needs attention</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-xl">
+                <Clock className="h-6 w-6 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+ 
+        <Card 
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'approved' ? 'ring-2 ring-green-500 bg-green-100/50' : 'bg-green-50/50'}`}
+          onClick={() => setFilterStatus('approved')}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Approved</p>
+                <p className="text-3xl font-bold mt-1 text-green-600">{isLoadingStats ? '...' : stats.approved}</p>
+                <p className="text-[10px] text-green-600/60 font-medium mt-1">Verified records</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-xl">
+                <ThumbsUp className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+ 
+        <Card 
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'completed' ? 'ring-2 ring-blue-500 bg-blue-100/50' : 'bg-blue-50/50'}`}
+          onClick={() => setFilterStatus('completed')}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Completed</p>
+                <p className="text-3xl font-bold mt-1 text-blue-600">{isLoadingStats ? '...' : stats.completed}</p>
+                <p className="text-[10px] text-blue-600/60 font-medium mt-1">Closed claims</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <PackageCheck className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Error Message */}
       {error && (
         <Card className="border-red-200 bg-red-50">
@@ -291,14 +420,26 @@ export default function AdminClaimsPage() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-2">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search claimant name, email or ID details..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-10"
+              />
+            </div>
             <select
               value={filterStatus}
               onChange={(e) => {
                 setFilterStatus(e.target.value);
                 setPage(1);
               }}
-              className="px-3 py-2 border rounded-md text-sm"
+              className="px-3 py-2 border rounded-md text-sm min-w-[150px]"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -560,52 +701,96 @@ export default function AdminClaimsPage() {
 
       {/* Notification Modal */}
       {showNotificationModal && selectedClaim && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Send Message to User</CardTitle>
-              <CardDescription>
-                Send a custom notification (email and in-app) to {selectedClaim.profiles?.full_name}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSendNotification} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Message</label>
-                  <Textarea
-                    placeholder="e.g., Your ID is ready for collection at the security office. Please bring your original student ID for verification..."
-                    value={notificationMessage}
-                    onChange={(e) => setNotificationMessage(e.target.value)}
-                    rows={5}
-                    required
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border-0">
+            <CardHeader className="border-b bg-zinc-50/50 p-6">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-xl text-blue-600">
+                      <MessageSquare className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">Messages</CardTitle>
+                      <CardDescription>
+                        Conversation with {selectedClaim.profiles?.full_name}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
                     onClick={() => {
-                      setShowNotificationModal(false);
-                      setSelectedClaim(null);
-                    }}
-                    disabled={isSubmitting}
+                        setShowNotificationModal(false);
+                        setSelectedClaim(null);
+                    }} 
+                    className="rounded-full"
                   >
-                    Cancel
+                    <XCircle className="h-5 w-5" />
                   </Button>
-                  <Button type="submit" className="flex-1" disabled={isSubmitting || !notificationMessage}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
+               </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                <div className="h-[350px] overflow-y-auto p-6 space-y-4 bg-white bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-opacity-5">
+                    {isFetchingThread ? (
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                            <Loader2 className="h-8 w-8 animate-spin mb-2" />
+                            Loading...
+                        </div>
+                    ) : conversationThread.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground italic">
+                            No messages.
+                        </div>
                     ) : (
-                      'Send Notification'
+                        conversationThread.map((msg) => (
+                            <div 
+                                key={msg.id} 
+                                className={`flex flex-col ${msg.sender_id === user?.id ? 'items-end' : 'items-start'}`}
+                            >
+                                <div className={`
+                                    max-w-[85%] rounded-2xl p-4 shadow-sm
+                                    ${msg.sender_id === user?.id 
+                                        ? 'bg-primary text-white rounded-tr-none' 
+                                        : 'bg-zinc-100 text-zinc-800 rounded-tl-none'}
+                                `}>
+                                    <p className="text-sm whitespace-pre-wrap font-medium">{msg.message}</p>
+                                    <div className={`text-[10px] mt-2 font-bold opacity-70 flex items-center gap-1 ${msg.sender_id === user?.id ? 'text-white' : 'text-zinc-500'}`}>
+                                        {msg.sender_id === user?.id ? 'Admin (Me)' : 'Claimant'} • {new Date(msg.created_at).toLocaleString()}
+                                        {msg.is_read && msg.sender_id === user?.id && <CheckCircle className="h-3 w-3 inline" />}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
                     )}
-                  </Button>
                 </div>
-              </form>
             </CardContent>
+            <div className="p-4 border-t bg-zinc-50/80">
+                <form onSubmit={handleSendNotification} className="space-y-3">
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder="Write a message..."
+                      value={notificationMessage}
+                      onChange={(e) => setNotificationMessage(e.target.value)}
+                      rows={2}
+                      className="flex-1 rounded-xl border-zinc-200 focus:ring-primary shadow-sm bg-white resize-none"
+                      required
+                    />
+                    <Button 
+                      type="submit" 
+                      className="h-auto shrink-0 rounded-xl px-6 bg-primary shadow-lg shadow-primary/20" 
+                      disabled={isSubmitting || !notificationMessage}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Send'
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center">
+                    User will be notified.
+                  </p>
+                </form>
+            </div>
           </Card>
         </div>
       )}

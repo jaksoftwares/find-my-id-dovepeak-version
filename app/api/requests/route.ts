@@ -1,5 +1,5 @@
 import { getSessionUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { createRequestSchema } from "@/lib/validations/requests";
 import { NextResponse } from "next/server";
 
@@ -74,7 +74,8 @@ export async function POST(request: Request) {
       imageUrl = await uploadToCloudinary(buffer, "requests");
     }
 
-    const { data: requestData, error } = await supabase
+    const adminSupabase = await createAdminClient();
+    const { data: requestData, error } = await adminSupabase
       .from("lost_requests")
       .insert({
         ...validation.data,

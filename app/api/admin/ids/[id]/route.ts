@@ -1,4 +1,4 @@
-import { requireAdmin, requireSuperAdmin, getSessionUser } from "@/lib/auth";
+import { requireAdmin, requireSuperAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -9,7 +9,6 @@ export async function GET(
   try {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
-    const { session } = auth;
 
     const { id } = await params;
     const supabase = await createClient();
@@ -45,13 +44,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSessionUser();
-    if (!session || session.profile.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
 
     const { id } = await params;
     const body = await request.json();
@@ -108,13 +102,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSessionUser();
-    if (!session || session.profile.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const auth = await requireSuperAdmin();
+    if (auth.error) return auth.error;
 
     const { id } = await params;
     const supabase = await createClient();

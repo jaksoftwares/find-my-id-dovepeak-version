@@ -104,7 +104,7 @@ export async function PUT(
 
     // Trigger notification for the user
     if (body.status || body.admin_notes) {
-      triggerUserClaimNotification(id, body.status, body.admin_notes);
+      triggerUserClaimNotification(id, body.status, body.admin_notes, session.user.email);
     }
 
     return NextResponse.json({
@@ -121,7 +121,7 @@ export async function PUT(
   }
 }
 
-async function triggerUserClaimNotification(claimId: string, status?: string, notes?: string) {
+async function triggerUserClaimNotification(claimId: string, status?: string, notes?: string, adminEmail?: string) {
   try {
     const supabase = await createClient();
     
@@ -160,6 +160,15 @@ async function triggerUserClaimNotification(claimId: string, status?: string, no
     const item = claim.id_found as any;
     const itemName = item?.full_name || "your ID";
 
+    // Get site settings for branding
+    const { data: settings } = await supabase
+      .from("settings")
+      .select("*")
+      .single();
+
+    const senderName = settings?.sender_name || "JKUAT Customer Service Center";
+    const routingEmail = settings?.admin_email_claims || settings?.contact_email;
+
     // 1. In-app notification
     const { createNotification } = await import("@/lib/notifications");
     await createNotification({
@@ -180,7 +189,9 @@ async function triggerUserClaimNotification(claimId: string, status?: string, no
       await sendEmail({
         to: claimant.email,
         subject: template.subject,
-        htmlBody: template.html
+        htmlBody: template.html,
+        fromName: senderName,
+        replyTo: adminEmail || routingEmail
       });
     }
   } catch (err) {

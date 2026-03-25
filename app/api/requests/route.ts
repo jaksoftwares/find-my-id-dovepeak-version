@@ -93,37 +93,58 @@ export async function POST(request: Request) {
     // Send email notifications
     try {
       const { sendEmail, emailTemplates } = await import("@/lib/email");
+      // Fetch site settings for branding and routing
+      const { data: settings } = await supabase.from("settings").select("*").single();
+      const senderName = settings?.sender_name || "JKUAT Customer Service Center";
+      const routingEmail = settings?.admin_email_lost_ids || settings?.contact_email;
       
-      // 1. Notify the User
+      const idName = `${validation.data.id_type.replace('_', ' ')}: ${validation.data.registration_number}`;
+
+      // 1. Notify the User (Acknowledgment)
       const userEmail = validation.data.contact_email;
       if (userEmail) {
         const userTemplate = emailTemplates.lostReportSubmitted(
           validation.data.full_name,
-          `${validation.data.id_type.replace('_', ' ')}: ${validation.data.registration_number}`
+          idName
         );
         await sendEmail({
           to: userEmail,
           subject: userTemplate.subject,
           htmlBody: userTemplate.html,
+          fromName: senderName,
+          replyTo: routingEmail
         });
       }
 
-      // 2. Notify Admins
+      // 2. Notify Admins (Routing)
       const adminTemplate = emailTemplates.lostReportAdmin(
-        "Admin",
+        "Administrator",
         validation.data.contact_email || "Anonymous User",
-        `${validation.data.id_type.replace('_', ' ')}: ${validation.data.registration_number}`
+        idName
       );
-      // Sending to a generic admin email or fetching from profiles
-      const { data: admins } = await supabase.from("profiles").select("email").eq("role", "admin");
-      if (admins && admins.length > 0) {
-        for (const admin of admins) {
-          if (admin.email) {
-            await sendEmail({
-              to: admin.email,
-              subject: adminTemplate.subject,
-              htmlBody: adminTemplate.html,
-            });
+
+      if (routingEmail) {
+        await sendEmail({
+          to: routingEmail,
+          subject: adminTemplate.subject,
+          htmlBody: adminTemplate.html,
+          fromName: senderName,
+          replyTo: userEmail || routingEmail
+        });
+      } else {
+        // Fallback to all admins if no routing email is set
+        const { data: admins } = await supabase.from("profiles").select("email").in("role", ["admin", "super_admin"]);
+        if (admins && admins.length > 0) {
+          for (const admin of admins) {
+            if (admin.email) {
+              await sendEmail({
+                to: admin.email,
+                subject: adminTemplate.subject,
+                htmlBody: adminTemplate.html,
+                fromName: senderName,
+                replyTo: userEmail || admin.email
+              });
+            }
           }
         }
       }

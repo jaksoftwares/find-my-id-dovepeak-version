@@ -70,22 +70,50 @@ export async function POST(request: Request) {
       const fullName = validation.data.full_name || "Unknown";
       const contactInfo = validation.data.contact_info || "";
       const idName = `${idType.replace('_', ' ')}: ${fullName}`;
+      // Fetch site settings for branding and routing
+      const { data: settings } = await supabase.from("settings").select("*").single();
+      const senderName = settings?.sender_name || "JKUAT Customer Service Center";
+      const routingEmail = settings?.admin_email_found_ids || settings?.contact_email;
 
-      // Notify Admins & Super Admins
-      const { data: adminProfiles } = await supabase.from("profiles").select("email, full_name").in("role", ["admin", "super_admin"]);
-      if (adminProfiles) {
-        for (const admin of adminProfiles) {
-          if (admin.email) {
-            const template = emailTemplates.foundReportSubmittedAdmin(admin.full_name || "Admin", idName, contactInfo);
-            await sendEmail({ to: admin.email, subject: template.subject, htmlBody: template.html });
+      // Notify Admins & Super Admins (Routing)
+      if (routingEmail) {
+        const template = emailTemplates.foundReportSubmittedAdmin("Administrator", idName, contactInfo || "Not provided");
+        await sendEmail({
+          to: routingEmail,
+          subject: template.subject,
+          htmlBody: template.html,
+          fromName: senderName,
+          replyTo: (contactInfo && contactInfo.includes("@")) ? contactInfo : routingEmail
+        });
+      } else {
+        // Fallback to all admins if no routing email is set
+        const { data: adminProfiles } = await supabase.from("profiles").select("email, full_name").in("role", ["admin", "super_admin"]);
+        if (adminProfiles) {
+          for (const admin of adminProfiles) {
+            if (admin.email) {
+              const template = emailTemplates.foundReportSubmittedAdmin(admin.full_name || "Admin", idName, contactInfo || "Not provided");
+              await sendEmail({
+                to: admin.email,
+                subject: template.subject,
+                htmlBody: template.html,
+                fromName: senderName,
+                replyTo: (contactInfo && contactInfo.includes("@")) ? contactInfo : admin.email
+              });
+            }
           }
         }
       }
 
-      // Notify Submitter if contactInfo looks like an email
+      // Notify Submitter acknowledgment if contactInfo looks like an email
       if (contactInfo && contactInfo.includes("@")) {
          const userTemplate = emailTemplates.foundReportSubmittedUser("", idName);
-         await sendEmail({ to: contactInfo, subject: userTemplate.subject, htmlBody: userTemplate.html });
+         await sendEmail({
+            to: contactInfo,
+            subject: userTemplate.subject,
+            htmlBody: userTemplate.html,
+            fromName: senderName,
+            replyTo: routingEmail
+         });
       }
     } catch (notificationError) {
       console.error("Found ID Notification Error:", notificationError);

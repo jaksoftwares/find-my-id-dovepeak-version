@@ -185,7 +185,7 @@ export default function AdminLayout({
                 </div>
               </div>
               <div className="space-y-2">
-                <Link href="/" className="block">
+                <Link href="/" target="_blank" rel="noopener noreferrer" className="block">
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800"
@@ -194,7 +194,7 @@ export default function AdminLayout({
                     Visit Website
                   </Button>
                 </Link>
-                <Link href="/dashboard" className="block">
+                <Link href="/dashboard" target="_blank" rel="noopener noreferrer" className="block">
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800"

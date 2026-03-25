@@ -63,6 +63,12 @@ export async function PUT(request: Request) {
           address: body.address,
           notifications_enabled: body.notifications_enabled,
           email_notifications: body.email_notifications,
+          sender_name: body.sender_name || 'JKUAT Customer Service Center',
+          admin_email_submissions: body.admin_email_submissions,
+          admin_email_claims: body.admin_email_claims,
+          admin_email_messages: body.admin_email_messages,
+          admin_email_found_ids: body.admin_email_found_ids,
+          admin_email_lost_ids: body.admin_email_lost_ids,
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
@@ -88,6 +94,12 @@ export async function PUT(request: Request) {
           address: body.address,
           notifications_enabled: body.notifications_enabled,
           email_notifications: body.email_notifications,
+          sender_name: body.sender_name || 'JKUAT Customer Service Center',
+          admin_email_submissions: body.admin_email_submissions,
+          admin_email_claims: body.admin_email_claims,
+          admin_email_messages: body.admin_email_messages,
+          admin_email_found_ids: body.admin_email_found_ids,
+          admin_email_lost_ids: body.admin_email_lost_ids,
         })
         .select()
         .single();

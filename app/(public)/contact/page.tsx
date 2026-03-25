@@ -28,11 +28,17 @@ export default function ContactPage() {
     setError(null);
     
     try {
-      const { error: submitError } = await supabase
-        .from("contact_messages")
-        .insert([formData]);
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      if (submitError) throw submitError;
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || "Something went wrong");
+      }
       
       setSubmitted(true);
     } catch (err: any) {

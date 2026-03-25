@@ -10,7 +10,7 @@ export async function POST(
 ) {
   try {
     const session = await getSessionUser();
-    if (!session || session.profile.role !== 'admin') {
+    if (!session || (session.profile.role !== 'admin' && session.profile.role !== 'super_admin')) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 }
@@ -59,6 +59,15 @@ export async function POST(
 
     const claimant = claim.profiles as any;
 
+    // Get site settings for branding
+    const { data: settings } = await supabase
+      .from("settings")
+      .select("*")
+      .single();
+
+    const senderName = settings?.sender_name || "JKUAT Customer Service Center";
+    const routingEmail = settings?.admin_email_claims || settings?.contact_email;
+
     // 1. In-app notification
     await createNotification({
       userId: claim.claimant,
@@ -81,7 +90,9 @@ export async function POST(
       await sendEmail({
         to: claimant.email,
         subject: template.subject,
-        htmlBody: template.html
+        htmlBody: template.html,
+        fromName: senderName,
+        replyTo: session.user.email || routingEmail
       });
     }
 

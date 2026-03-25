@@ -88,6 +88,38 @@ export async function POST(
       });
     }
 
+    // 5. Send email notification to finder if email exists
+    try {
+       const contactInfo = submission.contact_info;
+       if (contactInfo && contactInfo.includes("@")) {
+          const { sendEmail, emailTemplates } = await import("@/lib/email");
+          const { data: settings } = await supabase.from("settings").select("*").single();
+          
+          const senderName = settings?.sender_name || "JKUAT Customer Service Center";
+          const routingEmail = settings?.admin_email_found_ids || settings?.contact_email;
+          
+          const idName = `${submission.id_type.replace('_', ' ')}: ${submission.full_name}`;
+          const template = emailTemplates.foundReportSubmittedUser(submission.name || "Finder", idName);
+          
+          // Overwrite body with approval specific text
+          const approvalTemplate = emailTemplates.customNotification(
+            submission.name || "Finder",
+            `Good news! Your submission for <strong>${idName}</strong> has been <strong>approved and verified</strong> by our administration.<br/><br/>
+            It is now listed on FindMyID for the owner to find. Thank you for your honesty and for making JKUAT a safer community!`
+          );
+
+          await sendEmail({
+             to: contactInfo,
+             subject: "ID Submission Approved - JKUAT FindMyID",
+             htmlBody: approvalTemplate.html,
+             fromName: senderName,
+             replyTo: auth.session.user.email || routingEmail
+          });
+       }
+    } catch (emailErr) {
+       console.error("Email notification error in found ID approval:", emailErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Submission approved and listed",

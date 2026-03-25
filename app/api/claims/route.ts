@@ -161,6 +161,15 @@ async function triggerClaimNotifications(user: any, claimantProfile: any, itemId
 
     if (!item) return;
 
+    // Get site settings for email branding and routing
+    const { data: settings } = await supabase
+      .from("settings")
+      .select("*")
+      .single();
+
+    const senderName = settings?.sender_name || "JKUAT Customer Service Center";
+    const routingEmail = settings?.admin_email_claims || settings?.contact_email;
+
     const title = "New ID Claim";
     const message = `${claimantProfile.full_name} has claimed the ID for ${item.full_name}.`;
 
@@ -171,31 +180,47 @@ async function triggerClaimNotifications(user: any, claimantProfile: any, itemId
     // 2. Email notifications
     const { sendEmail, emailTemplates } = await import("@/lib/email");
     
-    // 2a. Email to User (claimant)
+    // 2a. Email to User (acknowledgment)
     if (user.email) {
       const userTemplate = emailTemplates.claimSubmittedUser(claimantProfile.full_name, item.full_name);
       await sendEmail({
         to: user.email,
         subject: userTemplate.subject,
-        htmlBody: userTemplate.html
+        htmlBody: userTemplate.html,
+        fromName: senderName,
+        replyTo: routingEmail
       });
     }
 
-    // 2b. Email to Admins
-    const { data: adminProfiles } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("role", "admin");
+    // 2b. Email to Admin (routing)
+    if (routingEmail) {
+      const template = emailTemplates.claimSubmittedAdmin("Administrator", claimantProfile.full_name, item.full_name);
+      await sendEmail({
+        to: routingEmail,
+        subject: template.subject,
+        htmlBody: template.html,
+        fromName: senderName,
+        replyTo: user.email // Admin can reply directly to the student
+      });
+    } else {
+      // Fallback to all admins if no routing email is set
+      const { data: adminProfiles } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .in("role", ["admin", "super_admin"]);
 
-    if (adminProfiles) {
-      for (const admin of adminProfiles) {
-        if (admin.email) {
-          const template = emailTemplates.claimSubmittedAdmin(admin.full_name, claimantProfile.full_name, item.full_name);
-          await sendEmail({
-            to: admin.email,
-            subject: template.subject,
-            htmlBody: template.html
-          });
+      if (adminProfiles) {
+        for (const admin of adminProfiles) {
+          if (admin.email) {
+            const template = emailTemplates.claimSubmittedAdmin(admin.full_name, claimantProfile.full_name, item.full_name);
+            await sendEmail({
+              to: admin.email,
+              subject: template.subject,
+              htmlBody: template.html,
+              fromName: senderName,
+              replyTo: user.email
+            });
+          }
         }
       }
     }

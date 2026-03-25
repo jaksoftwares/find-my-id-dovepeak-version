@@ -1,4 +1,4 @@
-import { requireAdmin, requireSuperAdmin } from "@/lib/auth";
+import { requireAdmin, requireSuperAdmin, getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 

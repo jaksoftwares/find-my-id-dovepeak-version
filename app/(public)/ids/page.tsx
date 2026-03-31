@@ -20,11 +20,11 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Filter, 
-  Shield, 
-  Info,
   ShieldCheck
 } from "lucide-react";
 import { ErrorDisplay } from "@/components/ui/error-display";
+import { getIDPlaceholder } from "@/lib/utils";
+
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -254,21 +254,7 @@ function BrowseIdsContent() {
                 <Card key={id.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-zinc-200 rounded-2xl bg-white flex flex-col h-full">
                   <div className="aspect-[1.85/1] bg-zinc-50 relative overflow-hidden">
                     <img 
-                      src={
-                        id.id_type === 'student_id' 
-                          ? '/templates/jkuat-id-placeholder.png' 
-                          : id.id_type === 'national_id' 
-                            ? '/templates/nationalid-template.png' 
-                          : id.id_type === 'passport' 
-                            ? '/templates/passport-template.png' 
-                          : id.id_type === 'atm_card' 
-                            ? '/templates/atmcard-template.png' 
-                          : id.id_type === 'nhif' 
-                            ? '/templates/nhifcard-template.png' 
-                          : id.id_type === 'driving_license' 
-                            ? '/templates/drivinglicence-template.png' 
-                          : '/templates/id-placeholder.png'
-                      } 
+                      src={getIDPlaceholder(id.id_type)} 
                       alt="ID Preview" 
                       className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500 blur-[2px] group-hover:blur-0" 
                       loading="lazy"

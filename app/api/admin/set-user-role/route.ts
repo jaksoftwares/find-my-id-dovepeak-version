@@ -5,36 +5,16 @@ import { z } from "zod";
 // Schema for updating user role
 const updateRoleSchema = z.object({
   userId: z.string().uuid(),
-  role: z.enum(["user", "admin"]),
+  role: z.enum(["student", "staff", "admin", "super_admin"]),
 });
 
 export async function POST(request: Request) {
   try {
-    // Check authentication and admin role
+    const { requireAdmin } = await import("@/lib/auth");
+    const auth = await requireAdmin();
+    if (auth.error) return auth.error;
+
     const supabase = await createClient();
-    
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    // Check if user is admin
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || profile?.role !== "admin") {
-      return NextResponse.json(
-        { success: false, message: "Forbidden: Admin access required" },
-        { status: 403 }
-      );
-    }
 
     const body = await request.json();
     const result = updateRoleSchema.safeParse(body);
@@ -47,6 +27,17 @@ export async function POST(request: Request) {
     }
 
     const { userId, role } = result.data;
+
+    // Additional check: Only super_admin can set a role to admin or super_admin
+    // and only super_admin can change anyone's role TO super_admin
+    const isSuperAdmin = auth.session.profile.role === "super_admin";
+    
+    if ((role === "admin" || role === "super_admin") && !isSuperAdmin) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Only super admins can grant administrative roles" },
+        { status: 403 }
+      );
+    }
 
     // Update the user's role in the profiles table
     const { data, error } = await supabase

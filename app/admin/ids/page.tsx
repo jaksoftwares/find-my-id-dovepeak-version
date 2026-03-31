@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { motion } from 'framer-motion';
 import { 
   Search, 
   Loader2, 
@@ -21,10 +22,21 @@ import {
   XCircle,
   Calendar,
   MapPin,
-  User
+  User,
+  CheckSquare,
+  Square,
+  Trash,
+  Archive,
+  Filter,
+  RefreshCw,
+  Clock,
+  ShieldCheck,
+  PackageCheck,
+  HandHeart
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
 import { RestrictionModal } from '@/components/admin/RestrictionModal';
+import { getIDPlaceholder } from '@/lib/utils';
 
 interface FoundId {
   id: string;
@@ -75,6 +87,19 @@ export default function AdminIDsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   
+  // Stats state
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    verified: 0,
+    claimed: 0,
+    returned: 0,
+    archived: 0
+  });
+
+  // Bulk actions state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
   // Modal states
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -108,8 +133,21 @@ export default function AdminIDsPage() {
   useEffect(() => {
     if (user && isAdmin) {
       fetchIDs();
+      fetchStats();
     }
   }, [user, isAdmin, page, filterStatus, filterType]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await authFetch('/api/admin/ids/stats');
+      const data = await response.json();
+      if (data.success) {
+        setStats(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+    }
+  };
 
   const fetchIDs = async () => {
     setIsLoading(true);
@@ -143,6 +181,55 @@ export default function AdminIDsPage() {
       setError(err.message || 'An error occurred');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === ids.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(ids.map(id => id.id));
+    }
+  };
+
+  const toggleSelectId = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAction = async (action: string, updateData?: any) => {
+    if (selectedIds.length === 0) return;
+    
+    // Check permissions for bulk delete
+    if (action === 'delete' && user?.role !== 'super_admin') {
+      setShowRestrictionModal(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const method = action === 'delete' ? 'DELETE' : 'PUT';
+      const response = await authFetch('/api/admin/ids/bulk', {
+        method,
+        body: JSON.stringify({
+          ids: selectedIds,
+          updateData: updateData || (action === 'verify' ? { status: 'verified' } : action === 'archive' ? { status: 'archived' } : {})
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSelectedIds([]);
+        fetchIDs();
+        fetchStats();
+      } else {
+        setError(data.message || 'Bulk action failed');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during bulk operation');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -203,6 +290,7 @@ export default function AdminIDsPage() {
         setShowEditModal(false);
         setSelectedId(null);
         fetchIDs();
+        fetchStats();
       } else {
         setError(data.message || 'Failed to update ID');
       }
@@ -227,6 +315,7 @@ export default function AdminIDsPage() {
 
       if (data.success) {
         fetchIDs();
+        fetchStats();
       } else {
         setError(data.message || 'Failed to verify ID');
       }
@@ -254,6 +343,7 @@ export default function AdminIDsPage() {
         setShowDeleteModal(false);
         setSelectedId(null);
         fetchIDs();
+        fetchStats();
       } else {
         setError(data.message || 'Failed to delete ID');
       }
@@ -279,16 +369,52 @@ export default function AdminIDsPage() {
         onClose={() => setShowRestrictionModal(false)} 
         action="deleting IDs"
       />
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">IDs Management</h1>
           <p className="text-muted-foreground">Manage found identification cards</p>
         </div>
-        <Button onClick={() => router.push('/admin/ids/new')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add New ID
-        </Button>
+        <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { fetchIDs(); fetchStats(); }}>
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button onClick={() => router.push('/admin/ids/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add New ID
+            </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { label: 'Total', value: stats.total, color: 'text-primary', bg: 'bg-primary/10', icon: FileSearch, key: 'all' },
+          { label: 'Pending', value: stats.pending, color: 'text-yellow-600', bg: 'bg-yellow-50', icon: Clock, key: 'pending' },
+          { label: 'Verified', value: stats.verified, color: 'text-green-600', bg: 'bg-green-50', icon: ShieldCheck, key: 'verified' },
+          { label: 'Claimed', value: stats.claimed, color: 'text-blue-600', bg: 'bg-blue-50', icon: HandHeart, key: 'claimed' },
+          { label: 'Returned', value: stats.returned, color: 'text-purple-600', bg: 'bg-purple-50', icon: PackageCheck, key: 'returned' },
+          { label: 'Archived', value: stats.archived, color: 'text-gray-600', bg: 'bg-gray-100', icon: Archive, key: 'archived' },
+        ].map((s) => (
+          <Card 
+            key={s.label} 
+            className={`border-0 shadow-sm cursor-pointer hover:shadow-md transition-all ${filterStatus === s.key ? 'ring-2 ring-primary' : ''}`}
+            onClick={() => { setFilterStatus(s.key); setPage(1); }}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${s.bg}`}>
+                  <s.icon className={`h-4 w-4 ${s.color}`} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{s.label}</p>
+                  <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Error Message */}
@@ -304,156 +430,235 @@ export default function AdminIDsPage() {
       )}
 
       {/* Search and Filters */}
-      <Card>
+      <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
         <CardContent className="pt-6">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search by name, reg number or serial number..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+          <div className="flex flex-col lg:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex-1">
+                <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="text"
+                    placeholder="Search name, reg number or serial..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-11 bg-zinc-50 border-zinc-200 focus:bg-white transition-all rounded-xl"
+                />
+                </div>
+            </form>
             <div className="flex gap-2 flex-wrap">
-              <select
-                value={filterStatus}
-                onChange={(e) => {
-                  setFilterStatus(e.target.value);
-                  setPage(1);
-                }}
-                className="px-3 py-2 border rounded-md text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="verified">Verified</option>
-                <option value="claimed">Claimed</option>
-                <option value="returned">Returned</option>
-                <option value="archived">Archived</option>
-              </select>
-              <select
-                value={filterType}
-                onChange={(e) => {
-                  setFilterType(e.target.value);
-                  setPage(1);
-                }}
-                className="px-3 py-2 border rounded-md text-sm"
-              >
-                <option value="all">All Types</option>
-                <option value="national_id">National ID</option>
-                <option value="student_id">Student ID</option>
-                <option value="driving_license">Driving License</option>
-                <option value="passport">Passport</option>
-                <option value="atm_card">ATM Card</option>
-                <option value="nhif">NHIF</option>
-                <option value="other">Other</option>
-              </select>
-              <Button type="submit" variant="secondary">
-                Search
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <select
+                    value={filterType}
+                    onChange={(e) => {
+                    setFilterType(e.target.value);
+                    setPage(1);
+                    }}
+                    className="pl-9 pr-8 h-11 border-zinc-200 rounded-xl bg-zinc-50 text-sm focus:bg-white transition-all appearance-none outline-none min-w-[150px]"
+                >
+                    <option value="all">All Document Types</option>
+                    {Object.entries(idTypeLabels).map(([val, lab]) => (
+                        <option key={val} value={val}>{lab}</option>
+                    ))}
+                </select>
+              </div>
+              
+              <Button onClick={() => toggleSelectAll()} variant="outline" className="h-11 rounded-xl px-4 gap-2">
+                {selectedIds.length === ids.length && ids.length > 0 ? (
+                  <CheckSquare className="h-4 w-4 text-primary" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                <span className="text-sm font-medium">Select All</span>
               </Button>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Bulk Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl px-4">
+          <div className="bg-gray-900 border border-gray-800 text-white rounded-2xl p-4 shadow-2xl flex items-center justify-between animate-in slide-in-from-bottom-4 duration-300">
+             <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                  {selectedIds.length}
+                </div>
+                <div>
+                   <p className="text-sm font-bold leading-tight">Items selected</p>
+                   <p className="text-[10px] text-gray-400">Perform bulk actions</p>
+                </div>
+             </div>
+             
+             <div className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-9 rounded-lg hover:bg-white/10 text-white"
+                  onClick={() => handleBulkAction('verify')}
+                  disabled={isSubmitting}
+                >
+                   <CheckCircle className="h-4 w-4 mr-2 text-green-400" />
+                   Verify
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-9 rounded-lg hover:bg-white/10 text-white"
+                  onClick={() => handleBulkAction('archive')}
+                  disabled={isSubmitting}
+                >
+                   <Archive className="h-4 w-4 mr-2 text-yellow-400" />
+                   Archive
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-9 rounded-lg hover:bg-red-500/20 text-red-400"
+                  onClick={() => handleBulkAction('delete')}
+                  disabled={isSubmitting}
+                >
+                   <Trash className="h-4 w-4 mr-2" />
+                   Delete
+                </Button>
+                <div className="w-px h-6 bg-gray-800 mx-2" />
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-9 rounded-lg hover:bg-white/10 text-gray-400"
+                  onClick={() => setSelectedIds([])}
+                >
+                   Cancel
+                </Button>
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* IDs Grid */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Found IDs</CardTitle>
-          <CardDescription>Manage and verify found identification cards</CardDescription>
+      <Card className="border-0 shadow-xl overflow-hidden rounded-2xl">
+        <CardHeader className="bg-zinc-50/50 border-b">
+          <div className="flex items-center justify-between">
+            <div>
+                 <CardTitle className="text-xl">Inventory</CardTitle>
+                 <CardDescription>Manage and track all recovered identification cards</CardDescription>
+            </div>
+            {isLoading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-zinc-500 font-medium">Loading items...</p>
             </div>
           ) : ids.length === 0 ? (
-            <div className="text-center py-12">
-              <FileSearch className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No IDs Found</h3>
-              <p className="text-muted-foreground">
-                No found IDs match your search criteria.
+            <div className="text-center py-20 bg-zinc-50/30 rounded-2xl border border-dashed border-zinc-200">
+              <FileSearch className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-20" />
+              <h3 className="text-xl font-bold mb-2">No items found</h3>
+              <p className="text-muted-foreground max-w-sm mx-auto">
+                No found IDs match your current search or filter criteria. Try adjusting your filters.
               </p>
+              <Button 
+                variant="outline" 
+                className="mt-6 rounded-full"
+                onClick={() => {setFilterStatus('all'); setFilterType('all'); setSearchQuery('');}}
+              >
+                Clear all filters
+              </Button>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {ids.map((id) => (
-                  <Card key={id.id} className="overflow-hidden">
-                    <div className="aspect-video relative bg-gray-100">
-                      <img
-                      src={id.image_url || '/images/id-placeholder.png'}
-                      alt={id.full_name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/images/id-placeholder.png';
-                      }}
-                    />
-                      <Badge
-                        className={`absolute top-2 right-2 ${statusColors[id.status]}`}
-                      >
-                        {id.status}
-                      </Badge>
+                  <Card key={id.id} className={`group overflow-hidden rounded-2xl transition-all duration-300 border-zinc-200 hover:shadow-xl relative ${selectedIds.includes(id.id) ? 'ring-2 ring-primary border-primary bg-primary/5' : 'bg-white'}`}>
+                    {/* Selection Overlay */}
+                    <div 
+                      className={`absolute top-3 left-3 z-10 h-6 w-6 rounded-md border-2 transition-all cursor-pointer flex items-center justify-center ${selectedIds.includes(id.id) ? 'bg-primary border-primary shadow-lg' : 'bg-white/80 border-white/20 opacity-0 group-hover:opacity-100'}`}
+                      onClick={(e) => { e.stopPropagation(); toggleSelectId(id.id); }}
+                    >
+                      {selectedIds.includes(id.id) && <CheckSquare className="h-4 w-4 text-white" />}
                     </div>
-                    <CardContent className="pt-4">
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold">{id.full_name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {idTypeLabels[id.id_type] || id.id_type}
+
+                    <div className="aspect-[1.85/1] relative bg-zinc-100 overflow-hidden">
+                      <img
+                        src={id.image_url || getIDPlaceholder(id.id_type)}
+                        alt={id.full_name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = getIDPlaceholder(id.id_type);
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute top-3 right-3">
+                        <Badge className={`shadow-sm font-bold uppercase text-[10px] ${statusColors[id.status]}`}>
+                            {id.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <CardContent className="p-5">
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                            <h3 className="font-extrabold text-[#0B3D91] truncate leading-tight">{id.full_name}</h3>
+                            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+                                {idTypeLabels[id.id_type] || id.id_type}
                             </p>
-                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="font-mono">{id.registration_number}</span>
+
+                        <div className="grid grid-cols-2 gap-3 pb-2">
+                           <div className="space-y-1">
+                                <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">Registration #</p>
+                                <p className="text-xs font-mono font-bold truncate">{id.registration_number}</p>
+                           </div>
+                           <div className="space-y-1">
+                                <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter">Date Found</p>
+                                <p className="text-xs font-bold">{new Date(id.created_at).toLocaleDateString()}</p>
+                           </div>
                         </div>
+
                         {id.holding_location && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                            <span>{id.holding_location}</span>
-                          </div>
+                           <div className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg border border-zinc-100">
+                                <MapPin className="h-3 w-3 text-primary" />
+                                <span className="text-[11px] font-semibold text-zinc-600 truncate">{id.holding_location}</span>
+                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {new Date(id.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-3">
+
+                        <div className="flex items-center gap-2 pt-2 border-t border-zinc-100">
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
+                            className="flex-1 rounded-lg h-9 font-bold text-xs"
                             onClick={() => openViewModal(id)}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3.5 w-3.5 mr-2" />
+                            Details
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
+                            className="h-9 w-9 p-0 rounded-lg"
                             onClick={() => openEditModal(id)}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           {id.status === 'pending' && (
                             <Button
                               variant="outline"
                               size="sm"
+                              className="h-9 w-9 p-0 rounded-lg text-green-600 border-green-100 hover:bg-green-50"
                               onClick={() => handleVerifyID(id.id)}
-                              className="text-green-600 hover:text-green-700"
                             >
-                              <CheckCircle className="h-4 w-4" />
+                              <CheckCircle className="h-3.5 w-3.5" />
                             </Button>
                           )}
                           <Button
                             variant="outline"
                             size="sm"
+                            className="h-9 w-9 p-0 rounded-lg text-red-600 border-red-100 hover:bg-red-50"
                             onClick={() => openDeleteModal(id)}
-                            className="text-red-600 hover:text-red-700"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
@@ -464,19 +669,29 @@ export default function AdminIDsPage() {
               
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-4 mt-8">
+                <div className="flex justify-center items-center gap-3 mt-12 py-6 border-t border-zinc-100">
                   <Button
-                    variant="outline"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl h-10 px-6 font-bold"
                     disabled={page <= 1}
                     onClick={() => setPage(prev => prev - 1)}
                   >
                     Previous
                   </Button>
-                  <div className="text-sm font-medium">
-                    Page {page} of {totalPages}
+                  <div className="flex items-center gap-2">
+                     <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">
+                        {page}
+                     </div>
+                     <span className="text-zinc-300 font-bold mx-1">of</span>
+                     <div className="h-10 w-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-500 font-bold text-sm">
+                        {totalPages}
+                     </div>
                   </div>
                   <Button
-                    variant="outline"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl h-10 px-6 font-bold"
                     disabled={page >= totalPages}
                     onClick={() => setPage(prev => prev + 1)}
                   >
@@ -491,108 +706,85 @@ export default function AdminIDsPage() {
 
       {/* View Modal */}
       {showViewModal && selectedId && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>ID Details</CardTitle>
-              <CardDescription>
-                Full information about this found ID
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="aspect-video relative bg-gray-100 rounded-lg overflow-hidden">
-                <img
-                  src={selectedId.image_url || '/images/id-placeholder.png'}
-                  alt={selectedId.full_name}
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/id-placeholder.png';
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Full Name</label>
-                  <p>{selectedId.full_name}</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-2xl">
+            <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden bg-white max-h-[90vh] overflow-y-auto">
+                <CardHeader className="bg-zinc-50/50 border-b p-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle className="text-2xl font-extrabold text-[#0B3D91]">ID Details</CardTitle>
+                        <CardDescription className="font-medium">System Record Review</CardDescription>
+                    </div>
+                    <Button variant="ghost" className="rounded-full" onClick={() => { setShowViewModal(false); setSelectedId(null); }}>
+                        <XCircle className="h-6 w-6" />
+                    </Button>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">ID Type</label>
-                  <p>{idTypeLabels[selectedId.id_type] || selectedId.id_type}</p>
+                </CardHeader>
+                <CardContent className="p-8 space-y-8">
+                <div className="aspect-[1.85/1] relative bg-zinc-100 rounded-2xl overflow-hidden border border-zinc-200">
+                    <img
+                    src={selectedId.image_url || getIDPlaceholder(selectedId.id_type)}
+                    alt={selectedId.full_name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = getIDPlaceholder(selectedId.id_type);
+                    }}
+                    />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Registration Number</label>
-                  <p className="font-mono">{selectedId.registration_number}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Full Name (on ID)</label>
+                        <p className="text-lg font-extrabold text-[#0B3D91] leading-tight">{selectedId.full_name}</p>
+                    </div>
+                    <div className="space-y-1 text-right md:text-left">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Document Type</label>
+                        <p className="text-lg font-extrabold text-zinc-700">{idTypeLabels[selectedId.id_type] || selectedId.id_type}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Reg / ID Number</label>
+                        <p className="text-lg font-mono font-bold text-zinc-700">{selectedId.registration_number}</p>
+                    </div>
+                    <div className="space-y-1 text-right md:text-left">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Current Status</label>
+                        <div>
+                            <Badge className={`mt-1 h-7 px-4 shadow-sm font-bold uppercase text-[10px] ${statusColors[selectedId.status]}`}>
+                                {selectedId.status}
+                            </Badge>
+                        </div>
+                    </div>
+                    
+                    {selectedId.location_found && (
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Location Found</label>
+                        <p className="font-bold text-zinc-700">{selectedId.location_found}</p>
+                    </div>
+                    )}
+                    {selectedId.holding_location && (
+                    <div className="space-y-1 text-right md:text-left">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Current Storage</label>
+                        <p className="font-bold text-zinc-700">{selectedId.holding_location}</p>
+                    </div>
+                    )}
+                    {selectedId.description && (
+                    <div className="col-span-full space-y-2 p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Internal Notes</label>
+                        <p className="text-zinc-600 leading-relaxed font-medium">{selectedId.description}</p>
+                    </div>
+                    )}
+                    
+                    <div className="col-span-full pt-4 border-t border-zinc-100 flex items-center justify-between text-zinc-400 text-[10px] font-bold uppercase">
+                        <span>Recorded on: {new Date(selectedId.created_at).toLocaleString()}</span>
+                        <span>Visibility: {selectedId.visibility ? 'Publicly Listed' : 'Internal Only'}</span>
+                    </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Badge className={statusColors[selectedId.status]}>
-                    {selectedId.status}
-                  </Badge>
-                </div>
-                {selectedId.location_found && (
-                  <div>
-                    <label className="text-sm font-medium">Location Found</label>
-                    <p>{selectedId.location_found}</p>
-                  </div>
-                )}
-                {selectedId.serial_number && (
-                  <div>
-                    <label className="text-sm font-medium">Serial Number</label>
-                    <p className="font-mono">{selectedId.serial_number}</p>
-                  </div>
-                )}
-                {selectedId.faculty && (
-                  <div>
-                    <label className="text-sm font-medium">Faculty</label>
-                    <p>{selectedId.faculty}</p>
-                  </div>
-                )}
-                {selectedId.year_of_study && (
-                  <div>
-                    <label className="text-sm font-medium">Year of Study</label>
-                    <p>{selectedId.year_of_study}</p>
-                  </div>
-                )}
-                {selectedId.date_found && (
-                  <div>
-                    <label className="text-sm font-medium">Date Found</label>
-                    <p>{new Date(selectedId.date_found).toLocaleDateString()}</p>
-                  </div>
-                )}
-                {selectedId.holding_location && (
-                  <div>
-                    <label className="text-sm font-medium">Holding Location</label>
-                    <p>{selectedId.holding_location}</p>
-                  </div>
-                )}
-                {selectedId.description && (
-                  <div className="col-span-2">
-                    <label className="text-sm font-medium">Description</label>
-                    <p>{selectedId.description}</p>
-                  </div>
-                )}
-                <div>
-                  <label className="text-sm font-medium">Created At</label>
-                  <p>{new Date(selectedId.created_at).toLocaleString()}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Visibility</label>
-                  <p>{selectedId.visibility ? 'Visible' : 'Hidden'}</p>
-                </div>
-              </div>
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setShowViewModal(false);
-                  setSelectedId(null);
-                }}
-              >
-                Close
-              </Button>
-            </CardContent>
-          </Card>
+                </CardContent>
+            </Card>
+          </motion.div>
         </div>
       )}
+
+      {/* Edit and Delete modals remain similar but with updated styling if desired */}
+      {/* ... keeping the rest of the file for modals ... */}
 
       {/* Edit Modal */}
       {showEditModal && selectedId && (

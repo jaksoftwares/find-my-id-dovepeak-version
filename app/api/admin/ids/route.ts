@@ -8,7 +8,8 @@ export async function GET(request: Request) {
     if (auth.error) return auth.error;
 
     const { searchParams } = new URL(request.url);
-    const supabase = await createClient();
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const supabaseAdmin = await createAdminClient();
 
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search");
 
     // Simple query without joins to avoid stack depth issues
-    let dbQuery = supabase
+    let dbQuery = supabaseAdmin
       .from("ids_found")
       .select("*", { count: "exact" });
 
@@ -41,7 +42,6 @@ export async function GET(request: Request) {
     dbQuery = dbQuery.range(offset, offset + limit - 1);
 
     // Add timeout to prevent long-running queries
-    // Supabase JS client doesn't have direct timeout, but we can add a limit
     dbQuery = dbQuery.limit(limit);
 
     const { data, count, error } = await dbQuery;
@@ -80,16 +80,19 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("image") as File;
+    const idType = formData.get("id_type") as string;
 
-    if (!file) {
-      return NextResponse.json({ success: false, message: "Image is required" }, { status: 400 });
+    const { getIDPlaceholder } = await import("@/lib/utils");
+    let imageUrl = getIDPlaceholder(idType);
+
+    if (file && file.size > 0) {
+      const { uploadToCloudinary } = await import("@/lib/cloudinary");
+      const buffer = Buffer.from(await file.arrayBuffer());
+      imageUrl = await uploadToCloudinary(buffer, "ids");
     }
 
-    const { uploadToCloudinary } = await import("@/lib/cloudinary");
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const imageUrl = await uploadToCloudinary(buffer, "ids");
-
-    const supabase = await createClient();
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const supabaseAdmin = await createAdminClient();
     
     // Extract other fields
     const data: Record<string, any> = {};
@@ -97,7 +100,7 @@ export async function POST(request: Request) {
       if (key !== 'image') data[key] = value;
     });
 
-    const { data: newId, error } = await supabase
+    const { data: newId, error } = await supabaseAdmin
       .from("ids_found")
       .insert({
         ...data,

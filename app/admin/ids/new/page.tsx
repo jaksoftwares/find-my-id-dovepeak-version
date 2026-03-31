@@ -47,10 +47,9 @@ export default function AddNewIDPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) {
-      setError('Please upload an image of the ID');
-      return;
-    }
+    // Image is now optional in admin panel
+    const imageToUpload = selectedFile;
+
 
     setIsSubmitting(true);
     setError(null);
@@ -60,7 +59,10 @@ export default function AddNewIDPage() {
       Object.entries(formData).forEach(([key, value]) => {
         data.append(key, value.toString());
       });
-      data.append('image', selectedFile);
+      if (imageToUpload) {
+        data.append('image', imageToUpload);
+      }
+
 
       const response = await authFetch('/api/admin/ids', {
         method: 'POST',
@@ -191,10 +193,10 @@ export default function AddNewIDPage() {
             </div>
 
             <div className="bg-zinc-50 p-6 rounded-2xl border border-dashed border-zinc-200">
-               <Label htmlFor="image" className="block mb-4 font-bold text-zinc-900 flex items-center gap-2">
-                 <Upload className="h-4 w-4 text-primary" />
-                 Upload Official Image Proof (Required)
-               </Label>
+                <Label htmlFor="image" className="block mb-4 font-bold text-zinc-900 flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-primary" />
+                  Upload Official Image Proof (Optional)
+                </Label>
                <div className="flex items-center gap-4">
                   <div className="relative group flex-1">
                     <Input 
@@ -203,7 +205,6 @@ export default function AddNewIDPage() {
                       accept="image/*" 
                       onChange={handleFileChange}
                       className="cursor-pointer file:hidden bg-white border-zinc-200 h-11 flex items-center pt-2"
-                      required
                     />
                     <div className="absolute right-3 top-3 pointer-events-none">
                       <Upload className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />

@@ -7,7 +7,8 @@ export async function GET(request: Request) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
     
-    const supabase = await createClient();
+    const { createAdminClient } = await import("@/lib/supabase/server");
+    const supabaseAdmin = await createAdminClient();
     const { searchParams } = new URL(request.url);
     
     const page = parseInt(searchParams.get("page") || "1");
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search");
 
     // Build the query for profiles
-    let query = supabase
+    let query = supabaseAdmin
       .from("profiles")
       .select("id, full_name, role, phone, registration_number, faculty, created_at, updated_at", { count: "exact" });
 
@@ -50,12 +51,12 @@ export async function GET(request: Request) {
     let usersEmails: Record<string, string> = {};
     
     if (userIds.length > 0) {
-      // Use the auth.users table directly with a more targeted query
-      // This is faster than listing all users
       try {
+        const { createAdminClient } = await import("@/lib/supabase/server");
+        const supabaseAdmin = await createAdminClient();
+        
         // Try to get emails using admin API with pagination
-        const { data: usersData, error: usersError } = await supabase
-          .auth.admin.listUsers();
+        const { data: usersData, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
         
         if (!usersError && usersData?.users) {
           // Filter to only the users we need (much faster than iterating all)
@@ -113,10 +114,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Security: Only super_admin can create admin or super_admin users
+    const requesterRole = auth.session.profile.role;
+    if ((role === 'admin' || role === 'super_admin') && requesterRole !== 'super_admin') {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Only super admins can create administrative accounts" },
+        { status: 403 }
+      );
+    }
+
+    const { createAdminClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
+    const supabaseAdmin = await createAdminClient();
 
     // Create user in auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       email_confirm: true,
       user_metadata: {
@@ -139,7 +151,7 @@ export async function POST(request: Request) {
     }
 
     // Create profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .insert({
         id: authData.user.id,
@@ -154,7 +166,9 @@ export async function POST(request: Request) {
 
     if (profileError) {
       // Delete auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      const { createAdminClient } = await import("@/lib/supabase/server");
+      const supabaseAdmin = await createAdminClient();
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return NextResponse.json(
         { success: false, message: profileError.message },
         { status: 500 }

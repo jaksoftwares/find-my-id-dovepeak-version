@@ -19,6 +19,8 @@ import {
   HandHeart
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
+import { getIDPlaceholder } from '@/lib/utils';
+
 
 interface FoundId {
   id: string;
@@ -36,8 +38,10 @@ interface FoundId {
 const idTypeLabels: Record<string, string> = {
   national_id: 'National ID',
   student_id: 'Student ID',
-  drivers_license: "Driver's License",
+  driving_license: "Driving License",
   passport: 'Passport',
+  atm_card: 'ATM Card',
+  nhif: 'NHIF',
   other: 'Other',
 };
 
@@ -200,11 +204,9 @@ export default function IDsPage() {
                 className="px-3 py-2 border rounded-md text-sm"
               >
                 <option value="all">All Types</option>
-                <option value="national_id">National ID</option>
-                <option value="student_id">Student ID</option>
-                <option value="drivers_license">Driver's License</option>
-                <option value="passport">Passport</option>
-                <option value="other">Other</option>
+                {Object.entries(idTypeLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
               <Button type="submit" variant="secondary">
                 <Filter className="h-4 w-4 mr-2" />
@@ -253,21 +255,7 @@ export default function IDsPage() {
                 <Card key={id.id} className="overflow-hidden">
                   <div className="aspect-video relative bg-zinc-50 overflow-hidden">
                     <img 
-                      src={
-                        id.id_type === 'student_id' 
-                          ? '/templates/jkuat-id-placeholder.png' 
-                          : id.id_type === 'national_id' 
-                            ? '/templates/nationalid-template.png' 
-                          : id.id_type === 'passport' 
-                            ? '/templates/passport-template.png' 
-                          : id.id_type === 'atm_card' 
-                            ? '/templates/atmcard-template.png' 
-                          : id.id_type === 'nhif' 
-                            ? '/templates/nhifcard-template.png' 
-                          : id.id_type === 'driving_license' 
-                            ? '/templates/drivinglicence-template.png' 
-                          : '/templates/id-placeholder.png'
-                      } 
+                      src={getIDPlaceholder(id.id_type)} 
                       alt="ID Preview" 
                       className="w-full h-full object-cover opacity-60 blur-[2px]" 
                       loading="lazy"

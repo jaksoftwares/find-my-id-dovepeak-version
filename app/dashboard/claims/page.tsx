@@ -17,6 +17,8 @@ import {
   FileSearch
 } from 'lucide-react';
 import { authFetch } from '@/app/lib/apiClient';
+import { getIDPlaceholder } from '@/lib/utils';
+
 
 interface Claim {
   id: string;
@@ -43,8 +45,10 @@ interface Claim {
 const idTypeLabels: Record<string, string> = {
   national_id: 'National ID',
   student_id: 'Student ID',
-  drivers_license: "Driver's License",
+  driving_license: "Driving License",
   passport: 'Passport',
+  atm_card: 'ATM Card',
+  nhif: 'NHIF',
   other: 'Other',
 };
 
@@ -191,21 +195,7 @@ export default function ClaimsPage() {
                     <div className="flex items-start gap-4">
                       <div className="p-2 bg-gray-100 rounded-lg">
                         <img
-                          src={
-                            claim.ids_found?.id_type === 'student_id' 
-                              ? '/templates/jkuat-id-placeholder.png' 
-                              : claim.ids_found?.id_type === 'national_id' 
-                                ? '/templates/nationalid-template.png' 
-                              : claim.ids_found?.id_type === 'passport' 
-                                ? '/templates/passport-template.png' 
-                              : claim.ids_found?.id_type === 'atm_card' 
-                                ? '/templates/atmcard-template.png' 
-                              : claim.ids_found?.id_type === 'nhif' 
-                                ? '/templates/nhifcard-template.png' 
-                              : claim.ids_found?.id_type === 'driving_license' 
-                                ? '/templates/drivinglicence-template.png' 
-                              : '/templates/id-placeholder.png'
-                          } 
+                          src={getIDPlaceholder(claim.ids_found?.id_type)}
                           alt={claim.ids_found?.full_name || 'ID'}
                           className="h-12 w-12 object-cover rounded"
                         />

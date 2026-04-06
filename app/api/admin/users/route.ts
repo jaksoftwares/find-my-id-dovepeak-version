@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -7,7 +7,6 @@ export async function GET(request: Request) {
     const auth = await requireAdmin();
     if (auth.error) return auth.error;
     
-    const { createAdminClient } = await import("@/lib/supabase/server");
     const supabaseAdmin = await createAdminClient();
     const { searchParams } = new URL(request.url);
     
@@ -52,7 +51,6 @@ export async function GET(request: Request) {
     
     if (userIds.length > 0) {
       try {
-        const { createAdminClient } = await import("@/lib/supabase/server");
         const supabaseAdmin = await createAdminClient();
         
         // Try to get emails using admin API with pagination
@@ -105,7 +103,7 @@ export async function POST(request: Request) {
     if (auth.error) return auth.error;
 
     const body = await request.json();
-    const { email, full_name, role, phone, registration_number, faculty } = body;
+    const { email, password, full_name, role, phone, registration_number, faculty } = body;
 
     if (!email || !full_name || !role) {
       return NextResponse.json(
@@ -123,40 +121,60 @@ export async function POST(request: Request) {
       );
     }
 
-    const { createAdminClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
     const supabaseAdmin = await createAdminClient();
 
-    // Create user in auth
+    // 1. Pre-flight check: Does the user already exist in Auth?
+    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (!listError && existingUsers.users.some(u => u.email === email)) {
+      return NextResponse.json(
+        { success: false, message: `Conflict: A user with the email address ${email} already exists in the system.` },
+        { status: 409 }
+      );
+    }
+
+    // 2. Create user in auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
+      password: password || 'Welcome@123',
       email_confirm: true,
       user_metadata: {
         full_name,
+        role,
+        phone: phone || '',
+        registration_number: registration_number || '',
+        faculty: faculty || '',
       },
     });
 
     if (authError) {
+      console.error("Supabase Auth Deep Error:", authError);
+      
       return NextResponse.json(
-        { success: false, message: authError.message },
-        { status: 500 }
+        { 
+          success: false, 
+          message: `Supabase Auth Error: ${authError.message}`,
+          details: authError.code || 'unexpected_failure',
+          hint: "If this is a 500 error, please verify your Supabase Database Triggers or SMTP settings."
+        },
+        { status: authError.status || 500 }
       );
     }
 
     if (!authData.user) {
       return NextResponse.json(
-        { success: false, message: "Failed to create user" },
+        { success: false, message: "System failed to return user data after creation. Check Supabase logs." },
         { status: 500 }
       );
     }
 
-    // Create profile
+    // 2. Upsert profile in database (upsert handles cases where a trigger already created it)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .insert({
+      .upsert({
         id: authData.user.id,
         full_name,
         role,
+        email,
         phone: phone || null,
         registration_number: registration_number || null,
         faculty: faculty || null,
@@ -166,8 +184,6 @@ export async function POST(request: Request) {
 
     if (profileError) {
       // Delete auth user if profile creation fails
-      const { createAdminClient } = await import("@/lib/supabase/server");
-      const supabaseAdmin = await createAdminClient();
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return NextResponse.json(
         { success: false, message: profileError.message },

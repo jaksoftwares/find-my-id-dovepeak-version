@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function PUT(
@@ -12,7 +12,6 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { createAdminClient } = await import("@/lib/supabase/server");
     const supabaseAdmin = await createAdminClient();
 
     // Fetch the target user's current role to check permissions
@@ -55,17 +54,41 @@ export async function PUT(
     if (body.registration_number !== undefined) updateData.registration_number = body.registration_number;
     if (body.faculty !== undefined) updateData.faculty = body.faculty;
 
-    const { data, error } = await supabaseAdmin
+    // Handle Auth Updates (Email/Password/Metadata)
+    if (body.email || body.password || body.full_name) {
+      const authUpdates: Record<string, any> = {};
+      if (body.email) {
+        authUpdates.email = body.email;
+        authUpdates.email_confirm = true;
+      }
+      if (body.password) authUpdates.password = body.password;
+      if (body.full_name) authUpdates.user_metadata = { full_name: body.full_name };
+
+      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+        id,
+        authUpdates
+      );
+
+      if (authError) {
+        console.error("Error updating auth user:", authError);
+        return NextResponse.json(
+          { success: false, message: `Auth error: ${authError.message}` },
+          { status: 500 }
+        );
+      }
+    }
+
+    const { data: profileData, error: profileError } = await supabaseAdmin
       .from("profiles")
       .update(updateData)
       .eq("id", id)
       .select()
       .single();
 
-    if (error || !data) {
-      console.error("Error updating profile:", error);
+    if (profileError || !profileData) {
+      console.error("Error updating profile:", profileError);
       return NextResponse.json(
-        { success: false, message: error?.message || "Failed to update profile or user not found" },
+        { success: false, message: profileError?.message || "Failed to update profile or user not found" },
         { status: 500 }
       );
     }
@@ -73,7 +96,7 @@ export async function PUT(
     return NextResponse.json({
       success: true,
       message: "User updated successfully",
-      data,
+      data: profileData,
     });
   } catch (error) {
     console.error("Error in PUT /api/admin/users/[id]:", error);
@@ -88,59 +111,108 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+  
   try {
+    // 1. Initial Authentication Check
     const auth = await requireAdmin();
-    if (auth.error) return auth.error;
+    if (auth.error) {
+      console.error("Authentication failed for DELETE request:", auth.error);
+      return auth.error;
+    }
 
-    const { id } = await params;
-    const { createAdminClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
+    const { session } = auth;
+    const requesterId = session.user.id;
+    const requesterRole = session.profile.role;
+
+    // 2. Prevent self-deletion
+    if (requesterId === id) {
+      return NextResponse.json(
+        { success: false, message: "Security error: You cannot delete your own account" },
+        { status: 400 }
+      );
+    }
+
+    // 3. Super Admin requirement check for administrative targets
     const supabaseAdmin = await createAdminClient();
 
-    // Fetch the persona to check their role before deletion
-    const { data: profileToDelete, error: fetchError } = await supabaseAdmin
+    // Fetch the target user's profile using admin client to ensure we get it
+    const { data: targetProfile, error: fetchError } = await supabaseAdmin
       .from("profiles")
-      .select("role")
+      .select("id, full_name, role")
       .eq("id", id)
       .single();
 
-    if (!fetchError && profileToDelete) {
-      const requesterRole = auth.session.profile.role;
-      const targetRole = profileToDelete.role;
-
-      // Only super_admin can delete admins or other super_admins
-      if ((targetRole === 'admin' || targetRole === 'super_admin') && requesterRole !== 'super_admin') {
-        return NextResponse.json(
-          { success: false, message: "Forbidden: Only super admins can delete administrative accounts" },
-          { status: 403 }
-        );
-      }
+    if (fetchError || !targetProfile) {
+      return NextResponse.json(
+        { success: false, message: "User not found or profile missing" },
+        { status: 404 }
+      );
     }
 
-    // Delete from auth
+    // Security: Only super_admin can delete other admins or super_admins
+    const isTargetAdmin = targetProfile.role === 'admin' || targetProfile.role === 'super_admin';
+    if (isTargetAdmin && requesterRole !== 'super_admin') {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Only super administrators can remove other administrative accounts" },
+        { status: 403 }
+      );
+    }
+
+    // 4. DEFENSIVE CLEANUP: Manually delete related data to prevent FK constraint errors
+    // Use Promise.allSettled to try to clear as much as possible even if some tables don't exist
+    await Promise.allSettled([
+      supabaseAdmin.from("claims").delete().eq("claimant", id),
+      supabaseAdmin.from("lost_requests").delete().eq("user_id", id),
+      supabaseAdmin.from("public_found_reports").delete().eq("finder_id", id),
+      supabaseAdmin.from("notifications").delete().eq("user_id", id),
+      supabaseAdmin.from("notification_reads").delete().eq("user_id", id),
+      supabaseAdmin.from("forum_likes").delete().eq("user_id", id),
+      supabaseAdmin.from("forum_comments").delete().eq("author_id", id),
+      supabaseAdmin.from("forum_posts").delete().eq("author_id", id),
+    ]);
+
+    // 5. Perform the deletion (Auth then Profile)
+    // We try to delete the Auth record which is the source of truth
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
 
     if (authError) {
+      console.error("Supabase Auth deletion error:", authError);
+      
+      // If auth deletion failed with DB error, it's almost certainly a missed FK constraint
+      const isFKError = authError.message.toLowerCase().includes("database error") || 
+                        authError.message.toLowerCase().includes("violate");
+      
       return NextResponse.json(
-        { success: false, message: authError.message },
+        { 
+          success: false, 
+          message: isFKError 
+            ? `Database Integrity Error: This user has active records in other tables (e.g. forum, requests) that cannot be automatically removed. Please contact technical support to fix the database constraints.`
+            : `Auth error: ${authError.message}` 
+        },
         { status: 500 }
       );
     }
 
-    // Delete profile (if exists)
-    await supabase
+    // Deleting the profile record
+    const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .delete()
       .eq("id", id);
 
+    if (profileError) {
+       console.error("Supabase Profile deletion error:", profileError);
+       // We don't fail the whole request here as the auth account is already gone
+    }
+
     return NextResponse.json({
       success: true,
-      message: "User deleted successfully",
+      message: `Account for ${targetProfile.full_name} has been permanently removed and related records cleaned up`,
     });
-  } catch (error) {
-    console.error("Error in DELETE /api/admin/users/[id]:", error);
+  } catch (error: any) {
+    console.error("Unexpected error in user deletion:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
+      { success: false, message: error.message || "A server-side error occurred during account removal" },
       { status: 500 }
     );
   }

@@ -30,8 +30,15 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      let friendlyMessage = error.message;
+      
+      // Translate technical DB errors for the end user
+      if (error.message.toLowerCase().includes("database error") || error.message.toLowerCase().includes("unexpected_failure")) {
+        friendlyMessage = "We encountered a temporary issue while setting up your account profile. Your account may have been created, but please try to log in or contact support if you have issues.";
+      }
+
       return NextResponse.json(
-        { success: false, message: error.message },
+        { success: false, message: friendlyMessage },
         { status: 400 }
       );
     }
@@ -40,7 +47,7 @@ export async function POST(request: Request) {
     if (phone_number) {
         await supabase
           .from('profiles')
-          .update({ phone_number })
+          .update({ phone: phone_number }) // Fixed: changed from phone_number to phone
           .eq('id', data.user?.id);
     }
     

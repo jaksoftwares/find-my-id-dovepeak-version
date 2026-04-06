@@ -18,6 +18,7 @@ import {
   Pencil,
   Trash2,
   Eye,
+  EyeOff,
   Shield,
   UserCheck,
   UserPlus,
@@ -93,10 +94,13 @@ export default function AdminUsersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
     email: '',
+    password: '',
     full_name: '',
     role: 'student',
     phone: '',
@@ -172,6 +176,7 @@ export default function AdminUsersPage() {
   const openCreateModal = () => {
     setFormData({
       email: '',
+      password: '',
       full_name: '',
       role: 'student',
       phone: '',
@@ -185,6 +190,7 @@ export default function AdminUsersPage() {
     setSelectedUser(user);
     setFormData({
       email: user.email,
+      password: '', // Leave empty unless resetting
       full_name: user.full_name,
       role: user.role,
       phone: user.phone || '',
@@ -215,6 +221,7 @@ export default function AdminUsersPage() {
       if (data.success) {
         setShowCreateModal(false);
         fetchUsers();
+        fetchStats(); // Update dashboard counters immediately
       } else {
         setError(data.message || 'Failed to create user');
       }
@@ -244,6 +251,7 @@ export default function AdminUsersPage() {
         setShowEditModal(false);
         setSelectedUser(null);
         fetchUsers();
+        fetchStats(); // Update dashboard counters immediately
       } else {
         setError(data.message || 'Failed to update user');
       }
@@ -258,6 +266,7 @@ export default function AdminUsersPage() {
     if (!selectedUser) return;
 
     setIsSubmitting(true);
+    setIsDeleting(true);
     setError(null);
 
     try {
@@ -271,6 +280,7 @@ export default function AdminUsersPage() {
         setShowDeleteModal(false);
         setSelectedUser(null);
         fetchUsers();
+        fetchStats(); // Update dashboard counters immediately
       } else {
         setError(data.message || 'Failed to delete user');
       }
@@ -278,6 +288,7 @@ export default function AdminUsersPage() {
       setError(err.message || 'An error occurred');
     } finally {
       setIsSubmitting(false);
+      setIsDeleting(false);
     }
   };
 
@@ -573,6 +584,25 @@ export default function AdminUsersPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <label className="text-sm font-medium">Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter password (default: Welcome@123)"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Phone</label>
                   <Input
                     type="tel"
@@ -674,9 +704,28 @@ export default function AdminUsersPage() {
                   <Input
                     type="email"
                     value={formData.email}
-                    disabled
-                    className="bg-gray-50"
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Password (leave blank to keep current)</label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter new password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Phone</label>
@@ -761,34 +810,50 @@ export default function AdminUsersPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md animate-in fade-in zoom-in duration-300">
             <CardHeader>
-              <CardTitle>Delete User</CardTitle>
-              <CardDescription>
-                Are you sure you want to delete this user? This action cannot be undone.
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <CardTitle className="text-xl">Delete User Account</CardTitle>
+              <CardDescription className="text-red-600/80 font-medium">
+                WARNING: This action is permanent and cannot be undone.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="p-4 bg-gray-50 rounded-lg mb-4">
-                <p><strong>Name:</strong> {selectedUser.full_name}</p>
-                <p><strong>Email:</strong> {selectedUser.email}</p>
-                <p><strong>Role:</strong> {selectedUser.role}</p>
+              <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl mb-6">
+                <p className="text-sm text-gray-500 mb-1">Deleting account for:</p>
+                <p className="font-bold text-gray-900">{selectedUser.full_name}</p>
+                <p className="text-sm text-gray-600">{selectedUser.email}</p>
+                <div className="mt-3">
+                   <Badge className={roleColors[selectedUser.role] || roleColors.student}>
+                    {selectedUser.role}
+                  </Badge>
+                </div>
               </div>
-              <div className="flex gap-2">
+
+              {isDeleting && (
+                <div className="flex flex-col items-center justify-center py-4 text-red-600 animate-pulse">
+                  <Loader2 className="h-6 w-6 animate-spin mb-2" />
+                  <p className="text-sm font-semibold">Deleting user data, please wait...</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-4">
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 rounded-xl"
                   onClick={() => {
                     setShowDeleteModal(false);
                     setSelectedUser(null);
                   }}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  No, Keep User
                 </Button>
                 <Button
                   variant="destructive"
-                  className="flex-1"
+                  className="flex-1 rounded-xl bg-red-600 hover:bg-red-700"
                   onClick={handleDeleteUser}
                   disabled={isSubmitting}
                 >
@@ -798,7 +863,7 @@ export default function AdminUsersPage() {
                       Deleting...
                     </>
                   ) : (
-                    'Delete User'
+                    'Confirm Delete'
                   )}
                 </Button>
               </div>

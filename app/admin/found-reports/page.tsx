@@ -105,9 +105,7 @@ export default function AdminFoundReportsPage() {
 
       const data = await response.json();
       if (data.success) {
-        setSubmissions(submissions.map(s => 
-          s.id === selectedSubmission.id ? { ...s, status: 'approved', approved: true } : s
-        ));
+        fetchSubmissions(); // Re-fetch all to ensure synchronization
         setSelectedSubmission(null);
         alert('Submission approved and listed successfully!');
       } else {

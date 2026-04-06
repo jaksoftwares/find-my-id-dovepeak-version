@@ -223,18 +223,16 @@ export async function getCurrentUser(): Promise<{
       .eq('id', user.id)
       .single();
 
-    // If profile doesn't exist, create a user profile from auth data
+    // STRICT SECURITY: If the profile record is missing, the user is considered deleted/invalid
     if (profileError || !profile) {
-      // Return user with data from auth, not from profiles table
+      console.error('Profile not found, logging out user:', profileError);
+      
+      // Clear the local session to prevent further unauthorized attempts
+      await supabase.auth.signOut();
+      
       return {
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email!,
-          full_name: user.user_metadata?.full_name || 'User',
-          role: 'student', // Default role
-          avatar_url: user.user_metadata?.avatar_url,
-        },
+        success: false,
+        error: 'Your account has been deactivated or removed.',
       };
     }
 

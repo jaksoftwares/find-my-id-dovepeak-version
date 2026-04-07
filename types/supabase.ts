@@ -14,7 +14,7 @@ export interface Database {
           id: string
           full_name: string
           email: string
-          role: 'student' | 'admin'
+          role: 'student' | 'staff' | 'admin' | 'super_admin'
           avatar_url: string | null
           phone_number: string | null
           created_at: string
@@ -24,7 +24,7 @@ export interface Database {
           id: string
           full_name: string
           email: string
-          role?: 'student' | 'admin'
+          role?: 'student' | 'staff' | 'admin' | 'super_admin'
           avatar_url?: string | null
           phone_number?: string | null
           created_at?: string
@@ -34,7 +34,7 @@ export interface Database {
           id?: string
           full_name?: string
           email?: string
-          role?: 'student' | 'admin'
+          role?: 'student' | 'staff' | 'admin' | 'super_admin'
           avatar_url?: string | null
           phone_number?: string | null
           created_at?: string
@@ -258,7 +258,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      user_role: 'student' | 'admin'
+      user_role: 'student' | 'staff' | 'admin' | 'super_admin'
       id_status: 'pending' | 'verified' | 'claimed' | 'returned' | 'archived'
       claim_status: 'pending' | 'approved' | 'rejected' | 'completed'
       request_status: 'submitted' | 'matched' | 'closed'

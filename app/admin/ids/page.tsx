@@ -378,10 +378,9 @@ export default function AdminIDsPage() {
         </div>
         <div className="flex gap-2">
             <Button variant="outline" onClick={() => { fetchIDs(); fetchStats(); }}>
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button onClick={() => router.push('/admin/ids/new')}>
-            <Plus className="h-4 w-4 mr-2" />
             Add New ID
             </Button>
         </div>
@@ -390,12 +389,12 @@ export default function AdminIDsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: 'Total', value: stats.total, color: 'text-primary', bg: 'bg-primary/10', icon: FileSearch, key: 'all' },
-          { label: 'Pending', value: stats.pending, color: 'text-yellow-600', bg: 'bg-yellow-50', icon: Clock, key: 'pending' },
-          { label: 'Verified', value: stats.verified, color: 'text-green-600', bg: 'bg-green-50', icon: ShieldCheck, key: 'verified' },
-          { label: 'Claimed', value: stats.claimed, color: 'text-blue-600', bg: 'bg-blue-50', icon: HandHeart, key: 'claimed' },
-          { label: 'Returned', value: stats.returned, color: 'text-purple-600', bg: 'bg-purple-50', icon: PackageCheck, key: 'returned' },
-          { label: 'Archived', value: stats.archived, color: 'text-gray-600', bg: 'bg-gray-100', icon: Archive, key: 'archived' },
+          { label: 'Total', value: stats.total, color: 'text-zinc-900', bg: 'bg-primary/10', key: 'all' },
+          { label: 'Pending', value: stats.pending, color: 'text-zinc-900', bg: 'bg-yellow-50', key: 'pending' },
+          { label: 'Verified', value: stats.verified, color: 'text-zinc-900', bg: 'bg-green-50', key: 'verified' },
+          { label: 'Claimed', value: stats.claimed, color: 'text-zinc-900', bg: 'bg-blue-50', key: 'claimed' },
+          { label: 'Returned', value: stats.returned, color: 'text-zinc-900', bg: 'bg-purple-50', key: 'returned' },
+          { label: 'Archived', value: stats.archived, color: 'text-zinc-900', bg: 'bg-gray-100', key: 'archived' },
         ].map((s) => (
           <Card 
             key={s.label} 
@@ -404,9 +403,6 @@ export default function AdminIDsPage() {
           >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${s.bg}`}>
-                  <s.icon className={`h-4 w-4 ${s.color}`} />
-                </div>
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{s.label}</p>
                   <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>

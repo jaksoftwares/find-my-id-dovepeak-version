@@ -310,70 +310,53 @@ export default function AdminUsersPage() {
           <p className="text-muted-foreground">Manage platform users and roles</p>
         </div>
         <Button onClick={openCreateModal}>
-          <UserPlus className="h-4 w-4 mr-2" />
           Add User
         </Button>
       </div>
 
       {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-sm bg-primary/5">
+        <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Total Users</p>
-                <p className="text-3xl font-bold mt-1 text-primary">{isLoadingStats ? '...' : stats.total}</p>
-              </div>
-              <div className="p-3 bg-primary/10 rounded-xl">
-                <Users className="h-6 w-6 text-primary" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.total}</p>
               </div>
             </div>
-            {/* Footer removed for clarity */}
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-blue-50/50">
+        <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Students</p>
-                <p className="text-3xl font-bold mt-1 text-blue-600">{isLoadingStats ? '...' : stats.students}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <School className="h-6 w-6 text-blue-600" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.students}</p>
               </div>
             </div>
-            {/* Footer removed for clarity */}
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-orange-50/50">
+        <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Staff Members</p>
-                <p className="text-3xl font-bold mt-1 text-orange-600">{isLoadingStats ? '...' : stats.staff}</p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-xl">
-                <Briefcase className="h-6 w-6 text-orange-600" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.staff}</p>
               </div>
             </div>
-            {/* Footer removed for clarity */}
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-purple-50/50">
+        <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Administrators</p>
-                <p className="text-3xl font-bold mt-1 text-purple-600">{isLoadingStats ? '...' : stats.admins}</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Shield className="h-6 w-6 text-purple-600" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.admins}</p>
               </div>
             </div>
-            {/* Footer removed for clarity */}
           </CardContent>
         </Card>
       </div>
@@ -395,13 +378,12 @@ export default function AdminUsersPage() {
         <CardContent className="pt-6">
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="px-4"
               />
             </div>
             <div className="flex gap-2">
@@ -437,12 +419,11 @@ export default function AdminUsersPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-20 text-muted-foreground italic text-sm">
+              Loading users...
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No Users Found</h3>
               <p className="text-muted-foreground">
                 {searchQuery || filterRole !== 'all'
@@ -468,8 +449,8 @@ export default function AdminUsersPage() {
                       <tr key={user.id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-sm font-medium text-primary">
+                            <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                              <span className="text-sm font-medium text-zinc-600">
                                 {user.full_name?.charAt(0) || 'U'}
                               </span>
                             </div>
@@ -502,17 +483,18 @@ export default function AdminUsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="text-xs font-bold uppercase tracking-wider text-blue-600 hover:text-blue-700"
                               onClick={() => openEditModal(user)}
                             >
-                              <Pencil className="h-4 w-4" />
+                              Edit
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="text-xs font-bold uppercase tracking-wider text-red-600 hover:text-red-700"
                               onClick={() => openDeleteModal(user)}
-                              className="text-red-600 hover:text-red-700"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              Delete
                             </Button>
                           </div>
                         </td>
@@ -595,10 +577,10 @@ export default function AdminUsersPage() {
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? "Hide" : "Show"}
                     </button>
                   </div>
                 </div>

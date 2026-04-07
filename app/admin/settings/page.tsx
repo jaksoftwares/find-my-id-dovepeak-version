@@ -172,9 +172,6 @@ export default function AdminSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-zinc-100 rounded-xl">
-             <Settings className="h-6 w-6 text-zinc-600" />
-          </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">System Settings</h1>
             <p className="text-muted-foreground">General platform configuration and email routing</p>
@@ -182,7 +179,6 @@ export default function AdminSettingsPage() {
         </div>
         {!isSuperAdmin && (
           <div className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl flex items-center gap-2 text-sm font-medium">
-             <Lock className="h-4 w-4" />
              View Only (Super Admin Needed)
           </div>
         )}
@@ -215,10 +211,7 @@ export default function AdminSettingsPage() {
         {/* General Settings */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              General Settings
-            </CardTitle>
+            <CardTitle>General Settings</CardTitle>
             <CardDescription>
               Basic site information
             </CardDescription>
@@ -279,10 +272,7 @@ export default function AdminSettingsPage() {
         {/* Email Branding & Sender Settings */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Email Branding & Sender Settings
-            </CardTitle>
+            <CardTitle>Email Branding & Sender Settings</CardTitle>
             <CardDescription>
               Configure how platform emails appear to users
             </CardDescription>
@@ -304,10 +294,7 @@ export default function AdminSettingsPage() {
         {/* Administrative Email Routing */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-600" />
-              Administrative Email Routing
-            </CardTitle>
+            <CardTitle>Administrative Email Routing</CardTitle>
             <CardDescription>
               Set which admin email address receives specific system notifications
             </CardDescription>
@@ -413,10 +400,7 @@ export default function AdminSettingsPage() {
         {/* Notification Settings */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Generic Notification Override
-            </CardTitle>
+            <CardTitle>Generic Notification Override</CardTitle>
             <CardDescription>
               Configure how global system notifications are handled
             </CardDescription>
@@ -459,7 +443,6 @@ export default function AdminSettingsPage() {
               </>
             ) : (
               <>
-                <Settings className="mr-2 h-4 w-4" />
                 Save Settings
               </>
             )}

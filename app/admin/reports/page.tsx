@@ -407,8 +407,8 @@ export default function AdminReportsPage() {
 
   if (authLoading || (isLoading && !reportData)) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[400px] text-zinc-400 italic text-sm">
+        Loading system data...
       </div>
     );
   }
@@ -461,9 +461,6 @@ export default function AdminReportsPage() {
                 {reportData?.claims?.recent?.map((claim: any) => (
                   <div key={claim.id} className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 border border-zinc-100/50">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-white rounded-lg border">
-                        <UserSquare2 className="h-4 w-4 text-primary" />
-                      </div>
                       <p className="text-sm font-bold text-zinc-900">{claim.profiles?.full_name}</p>
                     </div>
                     <Badge variant="outline" className="text-[10px] uppercase font-bold text-zinc-500">{claim.status}</Badge>
@@ -502,8 +499,7 @@ export default function AdminReportsPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* User Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-blue-50 rounded-lg"><UserCircle className="h-5 w-5 text-blue-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total Users</p>
             <div className="flex items-baseline gap-1.5">
@@ -514,25 +510,22 @@ export default function AdminReportsPage() {
             </div>
           </div>
         </div>
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-purple-50 rounded-lg"><UserCog className="h-5 w-5 text-purple-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Administrators</p>
-            <p className="text-xl font-black text-purple-600">{reportData?.users?.admins || 0}</p>
+            <p className="text-xl font-black text-zinc-900">{reportData?.users?.admins || 0}</p>
           </div>
         </div>
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-green-50 rounded-lg"><BriefcaseIcon className="h-5 w-5 text-green-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Staff Members</p>
-            <p className="text-xl font-black text-green-600">{reportData?.users?.staff || 0}</p>
+            <p className="text-xl font-black text-zinc-900">{reportData?.users?.staff || 0}</p>
           </div>
         </div>
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-orange-50 rounded-lg"><GraduationCap className="h-5 w-5 text-orange-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Students</p>
-            <p className="text-xl font-black text-orange-600">{reportData?.users?.students || 0}</p>
+            <p className="text-xl font-black text-zinc-900">{reportData?.users?.students || 0}</p>
           </div>
         </div>
       </div>
@@ -553,11 +546,9 @@ export default function AdminReportsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" className="rounded-full shadow-sm text-red-600 border-red-100 hover:bg-red-50" onClick={() => downloadReport('users', 'pdf')}>
-            <FileText className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
           <Button size="sm" variant="outline" className="rounded-full shadow-sm" onClick={() => downloadReport('users', 'csv')}>
-            <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
         </div>
@@ -606,8 +597,7 @@ export default function AdminReportsPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Claims Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-zinc-50 rounded-lg"><TableIcon className="h-5 w-5 text-zinc-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total Claims</p>
             <div className="flex items-baseline gap-1.5">
@@ -618,25 +608,22 @@ export default function AdminReportsPage() {
             </div>
           </div>
         </div>
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-green-50 rounded-lg"><CheckCircle2 className="h-5 w-5 text-green-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Approved</p>
-            <p className="text-xl font-black text-green-600">{reportData?.claims?.approved || 0}</p>
+            <p className="text-xl font-black text-zinc-900">{reportData?.claims?.approved || 0}</p>
           </div>
         </div>
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-yellow-50 rounded-lg"><Clock className="h-5 w-5 text-yellow-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Pending</p>
-            <p className="text-xl font-black text-yellow-600">{reportData?.claims?.pending || 0}</p>
+            <p className="text-xl font-black text-zinc-900">{reportData?.claims?.pending || 0}</p>
           </div>
         </div>
-        <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-          <div className="p-2 bg-red-50 rounded-lg"><AlertCircle className="h-5 w-5 text-red-600" /></div>
+        <div className="p-4 rounded-xl border bg-white shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Rejected</p>
-            <p className="text-xl font-black text-red-600">{reportData?.claims?.rejected || 0}</p>
+            <p className="text-xl font-black text-zinc-900">{reportData?.claims?.rejected || 0}</p>
           </div>
         </div>
       </div>
@@ -657,11 +644,9 @@ export default function AdminReportsPage() {
          </div>
          <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" className="rounded-full shadow-sm text-red-600 border-red-100 hover:bg-red-50" onClick={() => downloadReport('claims', 'pdf')}>
-              <FileText className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
             <Button size="sm" variant="outline" className="rounded-full shadow-sm" onClick={() => downloadReport('claims', 'csv')}>
-              <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
          </div>
@@ -711,8 +696,7 @@ export default function AdminReportsPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
        {/* High-level Distribution & Stats */}
        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg"><TableIcon className="h-5 w-5 text-blue-600" /></div>
+          <div className="p-4 rounded-xl border bg-white shadow-sm">
             <div>
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Recorded In Period</p>
               <div className="flex items-baseline gap-1.5">
@@ -723,25 +707,22 @@ export default function AdminReportsPage() {
               </div>
             </div>
           </div>
-          <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg"><CheckCircle2 className="h-5 w-5 text-green-600" /></div>
+          <div className="p-4 rounded-xl border bg-white shadow-sm">
             <div>
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Verified Records</p>
-              <p className="text-xl font-black text-green-600">{reportData?.ids?.verified || 0}</p>
+              <p className="text-xl font-black text-zinc-900">{reportData?.ids?.verified || 0}</p>
             </div>
           </div>
-          <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-            <div className="p-2 bg-purple-50 rounded-lg"><HandHeart className="h-5 w-5 text-purple-600" /></div>
+          <div className="p-4 rounded-xl border bg-white shadow-sm">
             <div>
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Successfully Returned</p>
-              <p className="text-xl font-black text-purple-600">{reportData?.ids?.returned || 0}</p>
+              <p className="text-xl font-black text-zinc-900">{reportData?.ids?.returned || 0}</p>
             </div>
           </div>
-          <div className="p-4 rounded-xl border bg-white shadow-sm flex items-center gap-3">
-            <div className="p-2 bg-yellow-50 rounded-lg"><Clock className="h-5 w-5 text-yellow-600" /></div>
+          <div className="p-4 rounded-xl border bg-white shadow-sm">
             <div>
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Awaiting Verification</p>
-              <p className="text-xl font-black text-yellow-600">{reportData?.ids?.pending || 0}</p>
+              <p className="text-xl font-black text-zinc-900">{reportData?.ids?.pending || 0}</p>
             </div>
           </div>
        </div>
@@ -780,11 +761,9 @@ export default function AdminReportsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                    <Button size="sm" variant="outline" className="rounded-full shadow-sm text-red-600 border-red-100" onClick={() => downloadReport('ids', 'pdf')}>
-                      <FileText className="h-4 w-4 mr-2" />
                       PDF
                    </Button>
                    <Button size="sm" variant="outline" className="rounded-full shadow-sm" onClick={() => downloadReport('ids', 'csv')}>
-                      <Download className="h-4 w-4 mr-2" />
                       CSV
                    </Button>
                 </div>
@@ -880,11 +859,9 @@ export default function AdminReportsPage() {
         </div>
         <div className="flex items-center gap-2">
            <Button size="sm" variant="outline" className="rounded-full shadow-sm text-red-600 border-red-100 hover:bg-red-50" onClick={() => downloadReport('submissions', 'pdf')}>
-              <FileText className="h-4 w-4 mr-2" />
               Export PDF
            </Button>
            <Button size="sm" variant="outline" className="rounded-full shadow-sm" onClick={() => downloadReport('submissions', 'csv')}>
-              <Download className="h-4 w-4 mr-2" />
               Export CSV
            </Button>
         </div>
@@ -995,7 +972,6 @@ export default function AdminReportsPage() {
                 : "bg-white text-zinc-500 border border-zinc-100 hover:border-[#0B3D91]/30 hover:text-[#0B3D91]"
             }`}
           >
-            <tab.icon className="h-4 w-4" />
             {tab.label}
           </button>
         ))}
@@ -1022,12 +998,9 @@ export default function AdminReportsPage() {
   );
 }
 
-function MetricCard({ title, value, sub, icon: Icon, color, bg }: any) {
+function MetricCard({ title, value, sub, color, bg }: any) {
   return (
     <Card className="border-0 shadow-sm overflow-hidden group">
-       <div className={`h-1.5 w-full ${bg} relative overflow-hidden`}>
-          <div className={`absolute inset-y-0 left-0 w-1/3 ${color.replace('text-', 'bg-')} bg-current opacity-60`} />
-       </div>
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
              <div className="space-y-1">
@@ -1036,9 +1009,6 @@ function MetricCard({ title, value, sub, icon: Icon, color, bg }: any) {
                    <h3 className="text-2xl font-bold text-zinc-900 mt-1">{value}</h3>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium opacity-80 mt-1">{sub}</p>
-             </div>
-             <div className={`p-3 ${bg} rounded-2xl group-hover:scale-110 transition-transform shadow-sm`}>
-                <Icon className={`h-6 w-6 ${color}`} />
              </div>
           </div>
         </CardContent>

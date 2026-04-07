@@ -6,7 +6,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, FileSearch, HandHeart, BarChart3, Loader2, Calendar } from 'lucide-react';
-import { authFetch } from '@/app/lib/apiClient';
+import { useApiGet, CACHE_CONFIG } from '@/app/lib/useApiCache';
 
 interface AnalyticsData {
   totalIds: number;
@@ -36,6 +36,12 @@ interface RecentActivity {
   created_at: string;
 }
 
+interface AdminDashboardData {
+  analytics: AnalyticsData;
+  users: RecentUser[];
+  recentActivity: RecentActivity[];
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isLoading: authLoading, isAdmin } = useAuth();
@@ -44,6 +50,25 @@ export default function AdminDashboardPage() {
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
 
+  // SWR hook for admin dashboard with caching
+  // TTL: 60s (moderate change analytics data)
+  const { data, isLoading: isLoadingData, error } = useApiGet<{ success: boolean; data: AdminDashboardData }>(
+    '/api/admin/dashboard',
+    {
+      ttl: CACHE_CONFIG.adminDashboard.ttl,
+      revalidateOnFocus: false,
+    }
+  );
+
+  // Update state when data changes
+  useEffect(() => {
+    if (data?.success && data.data) {
+      setAnalytics(data.data.analytics);
+      setRecentUsers(data.data.users || []);
+      setRecentActivity(data.data.recentActivity || []);
+    }
+  }, [data]);
+
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
       router.push('/dashboard');
@@ -51,86 +76,9 @@ export default function AdminDashboardPage() {
   }, [authLoading, user, isAdmin, router]);
 
   useEffect(() => {
-    if (user && isAdmin) {
-      fetchDashboardData();
-    }
-  }, [user, isAdmin]);
-
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      // Fetch analytics
-      const analyticsRes = await authFetch('/api/admin/analytics');
-      const analyticsData = await analyticsRes.json();
-      if (analyticsData.success) {
-        setAnalytics(analyticsData.data);
-      }
-
-      // Fetch recent users
-      const usersRes = await authFetch('/api/admin/users?limit=5');
-      const usersData = await usersRes.json();
-      if (usersData.success) {
-        setRecentUsers(usersData.data || []);
-      }
-
-      // Fetch recent activity from multiple sources
-      const activityPromises = [
-        authFetch('/api/admin/ids?limit=3'),
-        authFetch('/api/admin/claims?limit=3'),
-        authFetch('/api/admin/requests?limit=3'),
-      ];
-
-      const [idsRes, claimsRes, requestsRes] = await Promise.all(activityPromises);
-      
-      const idsData = await idsRes.json();
-      const claimsData = await claimsRes.json();
-      const requestsData = await requestsRes.json();
-
-      const activities: RecentActivity[] = [];
-      
-      if (idsData.success) {
-        (idsData.data || []).forEach((item: any) => {
-          activities.push({
-            id: item.id,
-            type: 'id_found',
-            description: `New ID found: ${item.full_name}`,
-            created_at: item.created_at,
-          });
-        });
-      }
-
-      if (claimsData.success) {
-        (claimsData.data || []).forEach((item: any) => {
-          activities.push({
-            id: item.id,
-            type: 'claim',
-            description: `Claim ${item.status}: ${item.ids_found?.full_name || 'Unknown'}`,
-            created_at: item.created_at,
-          });
-        });
-      }
-
-      if (requestsData.success) {
-        (requestsData.data || []).forEach((item: any) => {
-          activities.push({
-            id: item.id,
-            type: 'request',
-            description: `Lost request: ${item.full_name}`,
-            created_at: item.created_at,
-          });
-        });
-      }
-
-      // Sort by created_at and take top 5
-      activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setRecentActivity(activities.slice(0, 5));
-
-    } catch (error) {
-      // Silently fail or handle gracefully
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Update loading state based on SWR loading
+    setIsLoading(isLoadingData);
+  }, [isLoadingData]);
 
   if (authLoading || isLoading) {
     return (
@@ -151,7 +99,6 @@ export default function AdminDashboardPage() {
       ) : '+0%',
       changeType: analytics && analytics.thisMonthUsers >= analytics.lastMonthUsers ? 'increase' : 'decrease',
       description: 'Registered users',
-      icon: Users,
       color: 'bg-blue-100 text-blue-600',
     },
     {
@@ -164,7 +111,6 @@ export default function AdminDashboardPage() {
       ) : '+0%',
       changeType: analytics && analytics.thisMonthLost >= analytics.lastMonthLost ? 'increase' : 'decrease',
       description: 'Lost IDs reported',
-      icon: FileSearch,
       color: 'bg-orange-100 text-orange-600',
     },
     {
@@ -177,7 +123,6 @@ export default function AdminDashboardPage() {
       ) : '+0%',
       changeType: analytics && analytics.thisMonthIds >= analytics.lastMonthIds ? 'increase' : 'decrease',
       description: 'Found and submitted',
-      icon: HandHeart,
       color: 'bg-green-100 text-green-600',
     },
     {
@@ -186,7 +131,6 @@ export default function AdminDashboardPage() {
       change: `${(analytics?.recoveryRate || 0) >= (analytics?.lastMonthRecoveryRate || 0) ? '+' : ''}${((analytics?.recoveryRate || 0) - (analytics?.lastMonthRecoveryRate || 0)).toFixed(0)}%`,
       changeType: (analytics?.recoveryRate || 0) >= (analytics?.lastMonthRecoveryRate || 0) ? 'increase' : 'decrease',
       description: 'IDs returned to owners',
-      icon: BarChart3,
       color: 'bg-purple-100 text-purple-600',
     },
   ];
@@ -222,14 +166,9 @@ export default function AdminDashboardPage() {
         {stats.map((stat) => (
           <Card key={stat.title} className="border-0 shadow-sm">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                </div>
-                <div className={`p-3 rounded-lg ${stat.color}`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                <p className="text-3xl font-bold mt-1">{stat.value}</p>
               </div>
             </CardContent>
           </Card>
@@ -246,7 +185,6 @@ export default function AdminDashboardPage() {
           <CardContent>
             {recentUsers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No recent registrations</p>
               </div>
             ) : (
@@ -254,11 +192,6 @@ export default function AdminDashboardPage() {
                 {recentUsers.map((user) => (
                   <div key={user.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-xs font-medium text-primary">
-                          {user.full_name?.charAt(0) || 'U'}
-                        </span>
-                      </div>
                       <div>
                         <p className="text-sm font-medium">{user.full_name}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -282,7 +215,6 @@ export default function AdminDashboardPage() {
           <CardContent>
             {recentActivity.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No recent activity</p>
               </div>
             ) : (

@@ -333,72 +333,60 @@ export default function AdminClaimsPage() {
       {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card 
-          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'all' ? 'ring-2 ring-primary bg-primary/10' : 'bg-primary/5'}`}
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'all' ? 'ring-2 ring-primary bg-zinc-50' : 'bg-white'}`}
           onClick={() => setFilterStatus('all')}
         >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Total Claims</p>
-                <p className="text-3xl font-bold mt-1 text-primary">{isLoadingStats ? '...' : stats.total}</p>
-                <p className="text-[10px] text-primary/60 font-medium mt-1">View all records</p>
-              </div>
-              <div className="p-3 bg-primary/10 rounded-xl">
-                <ClipboardList className="h-6 w-6 text-primary" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.total}</p>
+                <p className="text-[10px] text-zinc-400 font-medium mt-1">View all records</p>
               </div>
             </div>
           </CardContent>
         </Card>
  
         <Card 
-          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'pending' ? 'ring-2 ring-yellow-500 bg-yellow-100/50' : 'bg-yellow-50/50'}`}
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'pending' ? 'ring-2 ring-primary bg-zinc-50' : 'bg-white'}`}
           onClick={() => setFilterStatus('pending')}
         >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Pending</p>
-                <p className="text-3xl font-bold mt-1 text-yellow-600">{isLoadingStats ? '...' : stats.pending}</p>
-                <p className="text-[10px] text-yellow-600/60 font-medium mt-1">Needs attention</p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-xl">
-                <Clock className="h-6 w-6 text-yellow-600" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.pending}</p>
+                <p className="text-[10px] text-zinc-400 font-medium mt-1">Needs attention</p>
               </div>
             </div>
           </CardContent>
         </Card>
  
         <Card 
-          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'approved' ? 'ring-2 ring-green-500 bg-green-100/50' : 'bg-green-50/50'}`}
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'approved' ? 'ring-2 ring-primary bg-zinc-50' : 'bg-white'}`}
           onClick={() => setFilterStatus('approved')}
         >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Approved</p>
-                <p className="text-3xl font-bold mt-1 text-green-600">{isLoadingStats ? '...' : stats.approved}</p>
-                <p className="text-[10px] text-green-600/60 font-medium mt-1">Verified records</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-xl">
-                <ThumbsUp className="h-6 w-6 text-green-600" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.approved}</p>
+                <p className="text-[10px] text-zinc-400 font-medium mt-1">Verified records</p>
               </div>
             </div>
           </CardContent>
         </Card>
  
         <Card 
-          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'completed' ? 'ring-2 ring-blue-500 bg-blue-100/50' : 'bg-blue-50/50'}`}
+          className={`border-0 shadow-sm transition-all cursor-pointer hover:shadow-md ${filterStatus === 'completed' ? 'ring-2 ring-primary bg-zinc-50' : 'bg-white'}`}
           onClick={() => setFilterStatus('completed')}
         >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Completed</p>
-                <p className="text-3xl font-bold mt-1 text-blue-600">{isLoadingStats ? '...' : stats.completed}</p>
-                <p className="text-[10px] text-blue-600/60 font-medium mt-1">Closed claims</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <PackageCheck className="h-6 w-6 text-blue-600" />
+                <p className="text-3xl font-bold mt-1 text-zinc-900">{isLoadingStats ? '...' : stats.completed}</p>
+                <p className="text-[10px] text-zinc-400 font-medium mt-1">Closed claims</p>
               </div>
             </div>
           </CardContent>
@@ -422,7 +410,6 @@ export default function AdminClaimsPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search claimant name, email or ID details..."
                 value={searchQuery}
@@ -430,7 +417,7 @@ export default function AdminClaimsPage() {
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="pl-10"
+                className="px-4"
               />
             </div>
             <select
@@ -464,7 +451,6 @@ export default function AdminClaimsPage() {
             </div>
           ) : claims.length === 0 ? (
             <div className="text-center py-12">
-              <HandHeart className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-semibold mb-2">No Claims Found</h3>
               <p className="text-muted-foreground">
                 No claims match your filter criteria.

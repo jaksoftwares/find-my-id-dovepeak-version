@@ -2,6 +2,15 @@ import { getSessionUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+/**
+ * Notifications API
+ * 
+ * Cache Strategy: 
+ * - Short TTL (30s) - notifications change frequently
+ * - User-specific data - cannot be shared across users
+ */
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const session = await getSessionUser();

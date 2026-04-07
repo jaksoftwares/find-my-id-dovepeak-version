@@ -15,12 +15,20 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authFetch } from '@/app/lib/apiClient';
+import { useApiGet, CACHE_CONFIG } from '@/app/lib/useApiCache';
 
 interface DashboardStats {
   activeReports: number;
   pendingClaims: number;
   foundItems: number;
   myClaims: number;
+}
+
+interface DashboardData {
+  requests: any[];
+  claims: any[];
+  ids: any[];
+  stats: DashboardStats;
 }
 
 export default function DashboardPage() {
@@ -32,7 +40,23 @@ export default function DashboardPage() {
     foundItems: 0,
     myClaims: 0,
   });
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  // SWR hook for dashboard data with caching
+  // TTL: 60s (moderate change data)
+  const { data, isLoading: isLoadingStats, error } = useApiGet<{ success: boolean; data: DashboardData }>(
+    '/api/dashboard',
+    {
+      ttl: CACHE_CONFIG.dashboard.ttl,
+      revalidateOnFocus: false,
+    }
+  );
+
+  // Update stats when data changes
+  useEffect(() => {
+    if (data?.success && data.data?.stats) {
+      setStats(data.data.stats);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -40,74 +64,26 @@ export default function DashboardPage() {
     }
   }, [authLoading, user, router]);
 
-  useEffect(() => {
-    if (user) {
-      fetchStats();
-    }
-  }, [user]);
-
-  const fetchStats = async () => {
-    setIsLoadingStats(true);
-    try {
-      // Fetch requests count
-      const requestsResponse = await authFetch('/api/requests');
-      const requestsData = await requestsResponse.json();
-      
-      // Fetch claims count
-      const claimsResponse = await authFetch('/api/claims');
-      const claimsData = await claimsResponse.json();
-      
-      // Fetch IDs count
-      const idsResponse = await authFetch('/api/ids?status=verified&limit=100');
-      const idsData = await idsResponse.json();
-
-      if (requestsData.success && claimsData.success && idsData.success) {
-        const requests = requestsData.data || [];
-        const claims = claimsData.data || [];
-        const ids = idsData.data || [];
-
-        setStats({
-          activeReports: requests.filter((r: any) => r.status === 'submitted').length,
-          pendingClaims: claims.filter((c: any) => c.status === 'pending').length,
-          foundItems: ids.length,
-          myClaims: claims.length,
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-    } finally {
-      setIsLoadingStats(false);
-    }
-  };
-
   const statCards = [
     {
       title: 'Active Reports',
       value: stats.activeReports,
       description: 'Lost IDs reported',
-      icon: FileSearch,
-      color: 'bg-orange-100 text-orange-600',
     },
     {
       title: 'Pending Claims',
       value: stats.pendingClaims,
       description: 'Awaiting response',
-      icon: Clock,
-      color: 'bg-yellow-100 text-yellow-600',
     },
     {
       title: 'Found Items',
       value: stats.foundItems,
       description: 'IDs found and submitted',
-      icon: CheckCircle2,
-      color: 'bg-green-100 text-green-600',
     },
     {
       title: 'My Claims',
       value: stats.myClaims,
       description: 'Claims submitted',
-      icon: HandHeart,
-      color: 'bg-purple-100 text-purple-600',
     },
   ];
 
@@ -116,26 +92,23 @@ export default function DashboardPage() {
       title: 'Report Lost ID',
       description: 'Submit a report for a lost identification card',
       href: '/dashboard/requests',
-      icon: FilePlus,
     },
     {
       title: 'Browse Found IDs',
       description: 'Search for found identification cards',
       href: '/dashboard/ids',
-      icon: FileSearch,
     },
     {
       title: 'View Claims',
       description: 'Check status of your claims',
       href: '/dashboard/claims',
-      icon: HandHeart,
     },
   ];
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[400px] text-zinc-400 italic text-sm">
+        Loading dashboard...
       </div>
     );
   }
@@ -145,7 +118,7 @@ export default function DashboardPage() {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">
-          Welcome back, {user?.full_name?.split(' ')[0] || 'User'}!
+          Welcome back, {user?.full_name?.split(' ')[0] || 'User'}
         </h1>
         <p className="text-primary-foreground/90">
           Track your lost ID reports and manage your claims all in one place.
@@ -154,18 +127,13 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoadingStats ? (
+        {isLoadingStats && !data ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} className="border-0 shadow-sm">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Loading...</p>
-                    <div className="h-8 w-16 bg-gray-200 animate-pulse mt-1 rounded"></div>
-                  </div>
-                  <div className="p-3 bg-gray-100 rounded-lg">
-                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                  </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Loading...</p>
+                  <div className="h-8 w-16 bg-gray-200 animate-pulse mt-1 rounded"></div>
                 </div>
               </CardContent>
             </Card>
@@ -174,15 +142,10 @@ export default function DashboardPage() {
           statCards.map((stat) => (
             <Card key={stat.title} className="border-0 shadow-sm">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
                 </div>
               </CardContent>
             </Card>
@@ -197,15 +160,7 @@ export default function DashboardPage() {
           {quickActions.map((action) => (
             <Link key={action.title} href={action.href}>
               <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <action.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <CardTitle className="text-base">{action.title}</CardTitle>
                   <CardDescription className="mt-1">
                     {action.description}
@@ -232,7 +187,7 @@ export default function DashboardPage() {
               </p>
               <Link href="/dashboard/requests">
                 <button className="text-primary text-sm font-medium hover:underline">
-                  Report Lost ID →
+                  Report Lost ID
                 </button>
               </Link>
             </div>
@@ -243,7 +198,7 @@ export default function DashboardPage() {
               </p>
               <Link href="/dashboard/ids">
                 <button className="text-primary text-sm font-medium hover:underline">
-                  Browse Found IDs →
+                  Browse Found IDs
                 </button>
               </Link>
             </div>

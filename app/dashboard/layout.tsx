@@ -134,24 +134,23 @@ export default function DashboardLayout({
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                    ${isActive 
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                    }
-                  `}
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              );
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`
+                      flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                      ${isActive 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      }
+                    `}
+                    onClick={() => setIsSidebarOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                );
             })}
           </nav>
 
@@ -214,7 +213,6 @@ export default function DashboardLayout({
               <NotificationBell />
               <Link href="/dashboard/profile">
                 <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="h-4 w-4" />
                   <span className="hidden sm:inline">{user?.full_name?.split(' ')[0]}</span>
                 </Button>
               </Link>

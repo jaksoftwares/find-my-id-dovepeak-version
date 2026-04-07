@@ -160,7 +160,6 @@ export default function AdminLayout({
                     `}
                     onClick={() => setIsSidebarOpen(false)}
                   >
-                    <item.icon className="h-5 w-5" />
                     {item.name}
                   </Link>
                 );
@@ -190,7 +189,6 @@ export default function AdminLayout({
                     variant="ghost"
                     className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800"
                   >
-                    <Globe className="h-4 w-4 mr-2" />
                     Visit Website
                   </Button>
                 </Link>
@@ -199,7 +197,6 @@ export default function AdminLayout({
                     variant="ghost"
                     className="w-full justify-start text-gray-400 hover:text-white hover:bg-gray-800"
                   >
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
                     User Dashboard
                   </Button>
                 </Link>
@@ -209,11 +206,6 @@ export default function AdminLayout({
                   onClick={handleLogout}
                   disabled={isLoggingOut}
                 >
-                  {isLoggingOut ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <LogOut className="h-4 w-4 mr-2" />
-                  )}
                   Logout
                 </Button>
               </div>

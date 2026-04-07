@@ -78,7 +78,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <FileSearch className="h-5 w-5 text-blue-600" />
               <span className="text-2xl font-bold">{analytics?.totalIds || 0}</span>
             </div>
           </CardContent>
@@ -92,7 +91,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <HandHeart className="h-5 w-5 text-green-600" />
               <span className="text-2xl font-bold">{analytics?.verifiedIds || 0}</span>
             </div>
           </CardContent>
@@ -106,7 +104,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
               <span className="text-2xl font-bold">{analytics?.recoveredIds || 0}</span>
             </div>
           </CardContent>
@@ -120,7 +117,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-orange-600" />
               <span className="text-2xl font-bold">{analytics?.lostRequests || 0}</span>
             </div>
           </CardContent>
@@ -134,7 +130,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
               <span className="text-2xl font-bold">{analytics?.recoveryRate || 0}%</span>
             </div>
           </CardContent>
@@ -148,7 +143,6 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
               <span className="text-2xl font-bold">{analytics?.thisMonthFound || 0}</span>
             </div>
           </CardContent>
@@ -215,16 +209,9 @@ export default function AdminAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                  <span className="text-sm">Claimed</span>
+                  <span className="text-sm">Recovered Total</span>
                 </div>
-                <span className="font-medium">{Math.floor((analytics?.recoveredIds || 0) / 2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                  <span className="text-sm">Returned</span>
-                </div>
-                <span className="font-medium">{Math.ceil((analytics?.recoveredIds || 0) / 2)}</span>
+                <span className="font-medium">{analytics?.recoveredIds || 0}</span>
               </div>
             </div>
           </CardContent>

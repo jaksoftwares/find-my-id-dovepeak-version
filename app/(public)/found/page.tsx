@@ -2,21 +2,17 @@
 
 import { SubmitFoundForm } from "@/components/forms/SubmitFoundForm";
 import { motion } from "framer-motion";
-import { HandHeart, Camera, ShieldCheck, Info, FileQuestion, CheckCircle2 } from "lucide-react";
 
 const steps = [
   {
-    icon: <HandHeart className="h-6 w-6 text-primary" />,
     title: "1. Post Details",
     description: "Provide the card specifics so the owner can recognize it.",
   },
   {
-    icon: <Camera className="h-6 w-6 text-secondary" />,
     title: "2. Document",
     description: "Accurate details help us match the ID to its owner faster.",
   },
   {
-    icon: <CheckCircle2 className="h-6 w-6 text-primary" />,
     title: "3. Secure Return",
     description: "Once verified, you'll get instructions for the security drop-off.",
   },
@@ -62,7 +58,6 @@ export default function FoundPage() {
             <div className="hidden md:grid grid-cols-1 gap-4 w-full max-w-sm mt-8 md:mt-0">
                {steps.map((step, i) => (
                  <div key={i} className="flex items-start gap-4 p-4 rounded-3xl bg-zinc-50 border border-zinc-100 shadow-sm transition-all hover:border-primary/20">
-                   <div className="mt-1">{step.icon}</div>
                    <div>
                      <h3 className="font-bold text-sm text-zinc-900">{step.title}</h3>
                      <p className="text-xs text-zinc-500">{step.description}</p>
@@ -86,8 +81,7 @@ export default function FoundPage() {
             className="lg:col-span-7"
           >
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-zinc-900 mb-2 flex items-center">
-                <Camera className="mr-2 h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold text-zinc-900 mb-2">
                 Submit Found Details
               </h2>
               <p className="text-zinc-600">
@@ -109,8 +103,7 @@ export default function FoundPage() {
               transition={{ delay: 0.3 }}
               className="bg-white p-8 rounded-[2rem] shadow-sm border border-zinc-200"
             >
-              <h3 className="text-xl font-bold text-zinc-900 mb-6 flex items-center">
-                <Info className="mr-2 h-5 w-5 text-secondary" />
+              <h3 className="text-xl font-bold text-zinc-900 mb-6">
                 Helpful Tips
               </h3>
               <ul className="space-y-4">
@@ -148,8 +141,7 @@ export default function FoundPage() {
               transition={{ delay: 0.4 }}
               className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10"
             >
-              <h3 className="text-xl font-bold text-zinc-900 mb-6 flex items-center">
-                <FileQuestion className="mr-2 h-5 w-5 text-primary" />
+              <h3 className="text-xl font-bold text-zinc-900 mb-6">
                 Common Questions
               </h3>
               <div className="space-y-6">

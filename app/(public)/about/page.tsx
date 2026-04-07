@@ -176,11 +176,11 @@ export default function AboutPage() {
                    FindMyID exists so that if you ever lose your ID, the community has your back. And if you find one, you can be the help someone else needs.
                  </p>
                  <div className="pt-8">
-                   <Link href="/ids">
-                      <Button size="lg" className="rounded-full bg-white text-primary hover:bg-zinc-50 px-12 h-14 text-lg font-bold">
-                        Search Database
-                      </Button>
-                   </Link>
+                   <Button asChild size="lg" className="rounded-full bg-white text-primary hover:bg-zinc-50 px-12 h-14 text-lg font-bold">
+                    <Link href="/ids">
+                       Search Database
+                    </Link>
+                   </Button>
                  </div>
               </div>
            </motion.div>

@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageSquare, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 
@@ -51,28 +50,24 @@ export default function ContactPage() {
 
   const contactInfo = [
     {
-      icon: <Mail className="h-5 w-5" />,
       title: "Email Us",
       description: "Send us a message anytime",
       value: "amuyunzu.joseph@students.jkuat.ac.ke",
       color: "bg-orange-100 text-orange-600"
     },
     {
-      icon: <Phone className="h-5 w-5" />,
       title: "Call Us",
       description: "Direct community support",
       value: "+254 714703374",
       color: "bg-purple-100 text-purple-600"
     },
     {
-      icon: <MapPin className="h-5 w-5" />,
       title: "Recovery Points",
       description: "Official pickup locations",
       value: "Main Gate / Hall 6 / Library",
       color: "bg-orange-100 text-orange-600"
     },
     {
-      icon: <Clock className="h-5 w-5" />,
       title: "Available Hours",
       description: "When we're around",
       value: "Monday - Friday: 8:00 AM - 5:00 PM",
@@ -104,9 +99,6 @@ export default function ContactPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center"
           >
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-10 w-10 text-green-600" />
-            </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Message Received!</h2>
             <p className="text-muted-foreground mb-6">
               Thanks for reaching out. We'll get back to you as soon as we can.
@@ -153,8 +145,7 @@ export default function ContactPage() {
           >
             <Card className="border-zinc-200 shadow-sm rounded-3xl overflow-hidden">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <MessageSquare className="h-5 w-5 text-primary" />
+                <CardTitle className="text-xl">
                   Send us a Message
                 </CardTitle>
                 <CardDescription>
@@ -225,17 +216,7 @@ export default function ContactPage() {
                     className="w-full bg-primary hover:bg-primary/90 rounded-full h-12 text-base font-bold"
                     disabled={loading}
                   >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Sending...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Send className="h-4 w-4" />
-                        Send Message
-                      </span>
-                    )}
+                    {loading ? "Sending..." : "Send Message"}
                   </Button>
                 </form>
               </CardContent>
@@ -254,9 +235,6 @@ export default function ContactPage() {
               {contactInfo.map((item, index) => (
                 <Card key={index} className="border-zinc-100 shadow-sm hover:shadow-md transition-shadow rounded-2xl">
                   <CardContent className="pt-6">
-                    <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center mb-4`}>
-                      {item.icon}
-                    </div>
                     <h3 className="font-bold text-foreground mb-1">{item.title}</h3>
                     <p className="text-sm text-muted-foreground mb-1">{item.description}</p>
                     <p className="font-medium text-primary break-all">{item.value}</p>

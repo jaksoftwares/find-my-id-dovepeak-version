@@ -1,14 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, Eye, Database, ShieldCheck, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const sections = [
-  { id: "intro", title: "Introduction", icon: <Lock className="w-4 h-4" /> },
-  { id: "collection", title: "Data Collection", icon: <Database className="w-4 h-4" /> },
-  { id: "usage", title: "How We Use Data", icon: <Eye className="w-4 h-4" /> },
-  { id: "protection", title: "Data Protection", icon: <ShieldCheck className="w-4 h-4" /> },
+  { id: "intro", title: "Introduction" },
+  { id: "collection", title: "Data Collection" },
+  { id: "usage", title: "How We Use Data" },
+  { id: "protection", title: "Data Protection" },
 ];
 
 export default function PrivacyPolicyPage() {
@@ -26,9 +26,6 @@ export default function PrivacyPolicyPage() {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-3xl"
           >
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-4">
-              Privacy First
-            </span>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#0B3D91] mb-6">
               Privacy <span className="text-primary">Policy</span>
             </h1>
@@ -53,7 +50,6 @@ export default function PrivacyPolicyPage() {
                     onClick={() => scrollTo(section.id)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-zinc-600 hover:text-primary hover:bg-zinc-50 rounded-xl transition-all text-left"
                   >
-                    {section.icon}
                     {section.title}
                   </button>
                 ))}
@@ -101,7 +97,6 @@ export default function PrivacyPolicyPage() {
                          "Location & Date found"
                        ].map((item, i) => (
                          <li key={i} className="flex items-start gap-3 p-4 bg-zinc-50 rounded-2xl border border-zinc-100 text-sm font-medium">
-                            <Database className="w-5 h-5 text-primary shrink-0" />
                             {item}
                          </li>
                        ))}
@@ -156,15 +151,13 @@ export default function PrivacyPolicyPage() {
                         <h3 className="text-2xl font-bold">Privacy Concerns?</h3>
                         <p className="opacity-70 max-w-sm">If you have questions about how your data is handled, please reach out.</p>
                       </div>
-                      <Link href="/contact">
-                        <button className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-2 group transition-all">
+                      <Button asChild className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-2xl flex items-center transition-all h-auto">
+                        <Link href="/contact">
                           Contact Support
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                      </Link>
+                        </Link>
+                      </Button>
                    </div>
                 </section>
-
              </div>
           </motion.div>
 

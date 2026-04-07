@@ -2,21 +2,17 @@
 
 import { ReportLostForm } from "@/components/forms/ReportLostForm";
 import { motion } from "framer-motion";
-import { ClipboardList, Search, BellRing, ShieldCheck, Info, FileQuestion } from "lucide-react";
 
 const steps = [
   {
-    icon: <ClipboardList className="h-6 w-6 text-primary" />,
     title: "1. Report it",
     description: "Provide details about your card so we can help identify it.",
   },
   {
-    icon: <Search className="h-6 w-6 text-secondary" />,
     title: "2. We Match it",
     description: "Our team checks newly found cards against your report.",
   },
   {
-    icon: <BellRing className="h-6 w-6 text-primary" />,
     title: "3. Get Email",
     description: "Receive an email once your ID is recovered and approved.",
   },
@@ -62,7 +58,6 @@ export default function ReportLostPage() {
             <div className="hidden md:grid grid-cols-1 gap-4 w-full max-w-sm mt-8 md:mt-0">
                {steps.map((step, i) => (
                  <div key={i} className="flex items-start gap-4 p-4 rounded-3xl bg-zinc-50 border border-zinc-100 shadow-sm">
-                   <div className="mt-1">{step.icon}</div>
                    <div>
                      <h3 className="font-bold text-sm text-foreground">{step.title}</h3>
                      <p className="text-xs text-muted-foreground">{step.description}</p>
@@ -86,8 +81,7 @@ export default function ReportLostPage() {
             className="lg:col-span-7"
           >
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center">
-                <ClipboardList className="mr-2 h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground mb-2">
                 Lost ID Report
               </h2>
               <p className="text-muted-foreground">
@@ -107,8 +101,7 @@ export default function ReportLostPage() {
               transition={{ delay: 0.3 }}
               className="bg-white p-8 rounded-[2rem] shadow-sm border border-zinc-200"
             >
-              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center">
-                <Info className="mr-2 h-5 w-5 text-secondary" />
+              <h3 className="text-xl font-bold text-foreground mb-6">
                 Helpful Tips
               </h3>
               <ul className="space-y-4">
@@ -146,8 +139,7 @@ export default function ReportLostPage() {
               transition={{ delay: 0.4 }}
               className="bg-primary/5 p-8 rounded-[2rem] border border-primary/10"
             >
-              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center">
-                <FileQuestion className="mr-2 h-5 w-5 text-primary" />
+              <h3 className="text-xl font-bold text-foreground mb-6">
                 Common Questions
               </h3>
               <div className="space-y-6">

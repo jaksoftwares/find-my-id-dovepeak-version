@@ -1,14 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Scale, ShieldAlert, Gavel, HelpCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const sections = [
-  { id: "intro", title: "Introduction", icon: <Scale className="w-4 h-4" /> },
-  { id: "purpose", title: "Purpose", icon: <HelpCircle className="w-4 h-4" /> },
-  { id: "liability", title: "Liability", icon: <ShieldAlert className="w-4 h-4" /> },
-  { id: "responsibility", title: "Responsibility", icon: <Gavel className="w-4 h-4" /> },
+  { id: "intro", title: "Introduction" },
+  { id: "purpose", title: "Purpose" },
+  { id: "liability", title: "Liability" },
+  { id: "responsibility", title: "Responsibility" },
 ];
 
 export default function TermsAndConditionsPage() {
@@ -26,9 +26,6 @@ export default function TermsAndConditionsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-3xl"
           >
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary mb-4">
-              Legal Information
-            </span>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#0B3D91] mb-6">
               Terms & <span className="text-primary">Conditions</span>
             </h1>
@@ -53,7 +50,6 @@ export default function TermsAndConditionsPage() {
                     onClick={() => scrollTo(section.id)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-zinc-600 hover:text-primary hover:bg-zinc-50 rounded-xl transition-all text-left"
                   >
-                    {section.icon}
                     {section.title}
                   </button>
                 ))}
@@ -114,7 +110,6 @@ export default function TermsAndConditionsPage() {
                          "Verification errors during the return process"
                        ].map((item, i) => (
                          <li key={i} className="flex items-start gap-3 p-4 bg-zinc-50 rounded-2xl border border-zinc-100 text-sm">
-                            <ShieldAlert className="w-5 h-5 text-zinc-300 shrink-0" />
                             {item}
                          </li>
                        ))}
@@ -154,15 +149,13 @@ export default function TermsAndConditionsPage() {
                         <h3 className="text-2xl font-bold">Have Questions?</h3>
                         <p className="opacity-70 max-w-sm">If you need clarification on these terms, our support team is ready to help.</p>
                       </div>
-                      <Link href="/contact">
-                        <button className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-2xl flex items-center gap-2 group transition-all">
+                      <Button asChild className="bg-primary hover:bg-primary/90 text-white font-bold py-4 px-10 rounded-2xl flex items-center group transition-all h-auto">
+                        <Link href="/contact">
                           Contact Support
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                      </Link>
+                        </Link>
+                      </Button>
                    </div>
                 </section>
-
              </div>
           </motion.div>
 

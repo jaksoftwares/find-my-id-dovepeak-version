@@ -62,15 +62,15 @@ export function Footer() {
               <h4 className="font-bold text-foreground mb-6">Stay Updated</h4>
               <p className="text-muted-foreground text-sm mb-4">Help us keep the community informed. Join our forum!</p>
               <div className="flex gap-2">
-                 <Link href="/forum" className="w-full">
-                    <Button size="sm" className="rounded-md w-full">Go to Forum</Button>
-                 </Link>
+                 <Button size="sm" className="rounded-md w-full" asChild>
+                    <Link href="/forum">Go to Forum</Link>
+                 </Button>
               </div>
            </div>
         </div>
         
         <div className="border-t border-zinc-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-           <p>&copy; {new Date().getFullYear()} FindMyID. All rights reserved.</p>
+           <p>&copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> FindMyID. All rights reserved.</p>
            <div className="flex gap-6">
               <Link href="/privacy" className="hover:text-foreground transition-colors underline-offset-4 hover:underline">Privacy Policy</Link>
               <Link href="/disclaimer" className="hover:text-foreground transition-colors underline-offset-4 hover:underline">Disclaimer</Link>

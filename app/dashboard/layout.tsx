@@ -44,15 +44,29 @@ export default function DashboardLayout({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const hasRedirected = useRef(false);
 
+  // Reset redirect flag when user becomes authenticated
+  // This prevents the brief flash to login when navigating to dashboard
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      hasRedirected.current = false;
+    }
+  }, [isAuthenticated, user]);
+
   // Redirect to login if not authenticated - with timeout to prevent infinite loading
   useEffect(() => {
+    // Skip if still loading auth or already authenticated
+    if (isLoading || isAuthenticated) return;
+    
+    // Skip if we've already redirected (and user is not now authenticated)
+    if (hasRedirected.current) return;
+
     // Add a maximum wait time to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (!isAuthenticated && !hasRedirected.current) {
         hasRedirected.current = true;
         router.push('/login?redirect=' + encodeURIComponent(pathname));
       }
-    }, 5000); // 5 second timeout
+    }, 5000);
 
     if (!isLoading && !isAuthenticated && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -60,7 +74,7 @@ export default function DashboardLayout({
     }
 
     return () => clearTimeout(timeoutId);
-  }, [isLoading, isAuthenticated, router, pathname]);
+  }, [isLoading, isAuthenticated, router, pathname, user]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);

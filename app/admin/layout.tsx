@@ -57,7 +57,7 @@ export default function AdminLayout({
 
   // Redirect to login if not authenticated or not admin
   useEffect(() => {
-    // Only run after auth has finished loading
+    // Skip if auth is still loading
     if (isLoading) return;
     
     // If not authenticated, redirect to login
@@ -71,7 +71,7 @@ export default function AdminLayout({
       router.push('/dashboard');
     }
     // If isAdmin is true, stay on this page
-  }, [isLoading, isAuthenticated, user, router, pathname]);
+  }, [isLoading, isAuthenticated, user, isAdmin, router, pathname]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);

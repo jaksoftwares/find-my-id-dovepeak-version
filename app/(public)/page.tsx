@@ -151,6 +151,7 @@ function HomeContent() {
                  <button
                    key={cat.value}
                    type="button"
+                   suppressHydrationWarning
                    onClick={() => handleCategoryClick(cat.value)}
                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                      selectedCategory === cat.value

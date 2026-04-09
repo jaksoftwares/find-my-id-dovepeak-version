@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
+import { NotificationProvider } from '@/app/context/NotificationContext';
 import { NotificationBell } from '@/components/shared/NotificationBell';
 
 const navigation = [
@@ -42,39 +43,23 @@ export default function DashboardLayout({
   const { user, logout, isLoading, isAuthenticated } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const hasRedirected = useRef(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Reset redirect flag when user becomes authenticated
-  // This prevents the brief flash to login when navigating to dashboard
+  // Use mounted state to handle hydration and client-side redirects safely
   useEffect(() => {
-    if (isAuthenticated && user) {
-      hasRedirected.current = false;
-    }
-  }, [isAuthenticated, user]);
+    setMounted(true);
+  }, []);
 
-  // Redirect to login if not authenticated - with timeout to prevent infinite loading
+  // Redirect to login if not authenticated
   useEffect(() => {
-    // Skip if still loading auth or already authenticated
-    if (isLoading || isAuthenticated) return;
+    // Wait for hydration and auth stability
+    if (!mounted || isLoading) return;
     
-    // Skip if we've already redirected (and user is not now authenticated)
-    if (hasRedirected.current) return;
-
-    // Add a maximum wait time to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (!isAuthenticated && !hasRedirected.current) {
-        hasRedirected.current = true;
-        router.push('/login?redirect=' + encodeURIComponent(pathname));
-      }
-    }, 5000);
-
-    if (!isLoading && !isAuthenticated && !hasRedirected.current) {
-      hasRedirected.current = true;
+    if (!isAuthenticated) {
+      console.log('[DashboardLayout] Unauthorized, redirecting from:', pathname);
       router.push('/login?redirect=' + encodeURIComponent(pathname));
     }
-
-    return () => clearTimeout(timeoutId);
-  }, [isLoading, isAuthenticated, router, pathname, user]);
+  }, [mounted, isLoading, isAuthenticated, router, pathname]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -83,8 +68,8 @@ export default function DashboardLayout({
     router.refresh();
   };
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Prevent hydration flicker
+  if (!mounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="flex flex-col items-center gap-4">
@@ -110,7 +95,8 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <NotificationProvider>
+      <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
         <div 
@@ -239,6 +225,6 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
-    </div>
+    </NotificationProvider>
   );
 }

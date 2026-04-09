@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/context/AuthContext';
+import { NotificationProvider } from '@/app/context/NotificationContext';
 import { RoleProtectedRoute } from '@/app/components/auth';
 import { NotificationBell } from '@/components/shared/NotificationBell';
 
@@ -54,24 +55,30 @@ export default function AdminLayout({
   const { user, logout, isLoading, isAuthenticated, isAdmin } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Redirect to login if not authenticated or not admin
+  // Use mounted state to handle hydration safely
   useEffect(() => {
-    // Skip if auth is still loading
-    if (isLoading) return;
+    setMounted(true);
+  }, []);
+
+  // Redirect logic
+  useEffect(() => {
+    if (!mounted || isLoading) return;
     
-    // If not authenticated, redirect to login
-    if (!isAuthenticated || !user) {
+    // If not authenticated (no session), redirect to login
+    if (!isAuthenticated) {
+      console.log('[AdminLayout] No session found, redirecting to login.');
       router.push('/login?redirect=' + encodeURIComponent(pathname));
       return;
     }
-    
-    // Check if user is admin - if not, redirect to dashboard
+
+    // If authenticated but not admin, redirect to dashboard
     if (!isAdmin) {
+      console.log('[AdminLayout] Not an admin, redirecting to dashboard.');
       router.push('/dashboard');
     }
-    // If isAdmin is true, stay on this page
-  }, [isLoading, isAuthenticated, user, isAdmin, router, pathname]);
+  }, [mounted, isLoading, isAuthenticated, isAdmin, router, pathname]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -80,8 +87,8 @@ export default function AdminLayout({
     router.refresh();
   };
 
-  // If still loading auth, show spinner
-  if (isLoading) {
+  // Prevent hydration flicker
+  if (!mounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -95,7 +102,8 @@ export default function AdminLayout({
   }
 
   return (
-    <RoleProtectedRoute allowedRoles={['admin']}>
+    <NotificationProvider>
+      <RoleProtectedRoute allowedRoles={['admin']}>
       <div className="min-h-screen bg-gray-50">
         {/* Mobile sidebar overlay */}
         {isSidebarOpen && (
@@ -249,5 +257,6 @@ export default function AdminLayout({
         </div>
       </div>
     </RoleProtectedRoute>
+    </NotificationProvider>
   );
 }

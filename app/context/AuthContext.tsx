@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         auth: {
           persistSession: true,
           storageKey: 'jkuat-auth-session',
-          storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
         }
       }
     )

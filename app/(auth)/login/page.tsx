@@ -53,12 +53,17 @@ function LoginForm() {
   }, [searchParams]);
 
   // Check if already authenticated - redirect to home
+  
   useEffect(() => {
-    if (!authLoading && isAuthenticated && authUser) {
-      window.location.replace('/');
+  if (!authLoading && isAuthenticated && authUser) {
+    if (authUser.role === 'admin' || authUser.role === 'super_admin') {
+      router.replace('/admin');
+    } else {
+      router.replace('/dashboard');
     }
-  }, [authLoading, isAuthenticated, authUser]);
-
+  }
+}, [authLoading, isAuthenticated, authUser, router]);
+    
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -84,15 +89,18 @@ function LoginForm() {
         
         console.log('Login success, user role:', userRole, 'Full user data:', result.data?.user);
         
-        if (userRole === 'admin') {
-          window.location.replace('/admin'); // Admins can still go to admin panel if they want, but USER said "main website page"
-          // Let's stick to '/' for everyone as requested for the main experience
-          window.location.replace('/');
+        // If there's a redirect parameter from the URL, use it
+        if (redirectParam) {
+          window.location.replace(redirectParam);
           return;
         }
-        
-        // Default redirect for all users to the main landing page
-        window.location.replace('/');
+
+        // Otherwise, redirect based on role
+        if (userRole === 'admin' || userRole === 'super_admin') {
+          window.location.replace('/admin');
+        } else {
+          window.location.replace('/dashboard');
+        }
       } else {
         // Check if error is about email confirmation or verification
         const message = result.message?.toLowerCase() || '';

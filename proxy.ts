@@ -12,6 +12,9 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: {
+        storageKey: 'jkuat-auth-session',
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -36,6 +39,11 @@ export async function proxy(request: NextRequest) {
   // REFRESH SESSION: This is the security part. 
   // It forces the token to be re-validated with the backend.
   const { data: { user } } = await supabase.auth.getUser();
+  
+  // Debug log for troubleshooting
+  if (request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/dashboard')) {
+      console.log(`[Proxy] Path: ${request.nextUrl.pathname}, User: ${user?.id || 'none'}, Cookies: ${request.cookies.getAll().length}`);
+  }
 
   // Paths that should be accessible without authentication
   const publicPaths = [
@@ -55,8 +63,10 @@ export async function proxy(request: NextRequest) {
                           request.nextUrl.pathname.startsWith('/dashboard');
 
   if (isProtectedRoute && !user) {
-    // If accessing protected UI route and not logged in, redirect to login page immediately
-    return NextResponse.redirect(new URL('/login', request.url));
+    // If accessing protected UI route and not logged in, redirect to login page with original URL as redirect param
+    const url = new URL('/login', request.url);
+    url.searchParams.set('redirect', request.nextUrl.pathname);
+    return NextResponse.redirect(url);
   }
 
   // Handle protected API routes

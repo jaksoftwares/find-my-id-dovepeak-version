@@ -7,7 +7,6 @@ export const supabase = createBrowserClient(
     auth: {
       persistSession: true,
       storageKey: 'jkuat-auth-session',
-      storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
     }
   }
 )

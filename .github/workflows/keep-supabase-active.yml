@@ -1,0 +1,17 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Runs at 00:00 every 3 days to prevent pausing due to inactivity
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allows you to manually run the workflow from the Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Auth Health Check
+        run: |
+          curl -s -X GET "${{ secrets.SUPABASE_URL }}/auth/v1/health" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
